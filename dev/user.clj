@@ -5,12 +5,24 @@
 
 (set! *warn-on-reflection* true)
 
-(defn handler
+(defn error
+  [ctx]
+  {:response/status 400
+   :response/body   "Error!"})
+
+(defn handle
   [ctx]
   {:response/status 200
    :response/body   "Hello World!"})
 
-(def servlet
+(def xf
+  (comp (c/map #(assoc % :error (= (:request/path %) "/error")))
+        (c/terminate :error error)))
+
+(def handler
+  (xf handle))
+
+(defonce servlet
   (c/servlet #'handler))
 
 (defonce ^Server server
