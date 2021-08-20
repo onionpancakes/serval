@@ -12,8 +12,11 @@
 
 (defn handle
   [ctx]
-  {:response/status 200
-   :response/body   "Hello World!"})
+  {:response/status  200
+   :response/headers {"Foo"   "Bar"
+                      "Test"  1
+                      "Test2" [1 2 3]}
+   :response/body    "Hello World!"})
 
 (def xf
   (comp (c/map #(assoc % :error (= (:request/path %) "/error")))

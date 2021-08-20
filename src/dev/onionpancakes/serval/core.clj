@@ -4,6 +4,29 @@
            [jakarta.servlet.http
             HttpServlet HttpServletRequest HttpServletResponse]))
 
+(defprotocol IHeaderValue
+  (write-header! [this k io]))
+
+(extend-protocol IHeaderValue
+  String
+  (write-header! [this k io]
+    (let [resp (:service/response io)]
+      (.addHeader ^HttpServletResponse resp k this)))
+  Long
+  (write-header! [this k io]
+    (let [resp (:service/response io)]
+      (.addIntHeader ^HttpServletResponse resp k this)))
+  java.util.Collection
+  (write-header! [this k io]
+    (let [resp (:service/response io)]
+      (doseq [v this]
+        (write-header! v k io)))))
+
+(defn write-headers!
+  [headers io]
+  (doseq [[k v] headers]
+    (write-header! v k io)))
+
 (defprotocol IResponseBody
   (write-body! [this io]))
 
@@ -31,6 +54,8 @@
     (let [^HttpServletResponse resp (:service/response io)]
       (if-let [status (:response/status this)]
         (.setStatus resp status))
+      (if-let [headers (:response/headers this)]
+        (write-headers! headers io))
       (if-let [body (:response/body this)]
         (write-body! body io)))))
 
