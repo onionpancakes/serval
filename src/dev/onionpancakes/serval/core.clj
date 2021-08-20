@@ -77,3 +77,13 @@
       (if (pred input)
         (f input)
         (handler input)))))
+
+;; Handler
+
+(def chain-xf
+  (clojure.core/map #(% identity)))
+
+(defn chain
+  [& xfs]
+  (->> (into '() chain-xf xfs)
+       (apply comp)))
