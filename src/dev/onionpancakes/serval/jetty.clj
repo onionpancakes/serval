@@ -16,22 +16,19 @@
       (.setSendServerVersion http-config ssv?))
     http-config))
 
-(defmulti connection-factories :type)
+(defmulti connection-factories :protocol)
 
 (defmethod connection-factories :http
   [config]
   (let [http-config (http-configuration config)]
     [(HttpConnectionFactory. http-config)]))
 
-(defn server-connector
-  [server config]
-  (let [connector (ServerConnector. server)]
-    (.setConnectionFactories connector (connection-factories config))
-    (if-let [port (:port config)]
-      (.setPort connector port))
-    (if-let [host (:host config)]
-      (.setHost connector host))
-    connector))
+(defn configure-connector!
+  [conn config]
+  (doto conn
+    (.setConnectionFactories (connection-factories config))
+    (cond-> (:port config) (.setPort (:port config))
+            (:host config) (.setHost (:host config)))))
 
 ;; Servlet
 
@@ -76,10 +73,15 @@
 
 ;; Server
 
+(defn configure-server!
+  [server config]
+  (.setHandler server (handler (:handler config)))
+  (doseq [conn-config (:connectors config)
+          :let        [conn (ServerConnector. server)]]
+    (configure-connector! conn conn-config)
+    (.addConnector server conn)))
+
 (defn server
   [config]
-  (let [server (Server.)]
-    (.setHandler server (handler (:handler config)))
-    (doseq [conn-config (:connectors config)]
-      (.addConnector server (server-connector server conn-config)))
-    server))
+  (doto (Server.)
+    (configure-server! config)))

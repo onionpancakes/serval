@@ -37,8 +37,8 @@
   (c/servlet #'handler))
 
 (defonce ^Server server
-  (j/server {:connectors [{:type :http
-                           :port 3000}]
+  (j/server {:connectors [{:protocol :http
+                           :port     3000}]
              :handler    [["/" servlet]]}))
 
 (defn restart []
