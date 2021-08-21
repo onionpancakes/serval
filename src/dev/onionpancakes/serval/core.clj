@@ -110,5 +110,5 @@
 
 (defn handler
   [& xfs]
-  (->> (into '() chain-xf xfs)
+  (->> (into '() handler-xf xfs)
        (apply comp)))
