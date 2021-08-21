@@ -9,13 +9,11 @@
 
 (defn error
   [ctx]
-  (pprint ctx)
   {:serval.response/status 400
    :serval.response/body   "Error!"})
 
 (defn handle
   [ctx]
-  (pprint ctx)
   {:serval.response/status  200
    :serval.response/headers {"Foo"   "Bar"
                              "Test"  1
@@ -41,7 +39,7 @@
 (defonce ^Server server
   (j/server {:connectors [{:type :http
                            :port 3000}]
-             :context    [["/" servlet]]}))
+             :handler    [["/" servlet]]}))
 
 (defn restart []
   (.stop server)
