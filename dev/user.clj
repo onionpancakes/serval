@@ -9,13 +9,13 @@
 
 (defn error
   [ctx]
-  (println r/*match*)
+  (pprint ctx)
   {:serval.response/status 400
    :serval.response/body   "Error!"})
 
 (defn handle
   [ctx]
-  (println r/*match*)
+  (pprint ctx)
   {:serval.response/status  200
    :serval.response/headers {"Foo"   "Bar"
                              "Test"  1
@@ -23,7 +23,7 @@
    :serval.response/body    "Hello World!"})
 
 (def router
-  (rt/router [["/"      {:GET {:name    :root
+  (rt/router [["/"      {:GET {:key     :foo
                                :handler handle}}]
               ["/error" {:GET {:handler error}}]]))
 
