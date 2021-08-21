@@ -105,10 +105,10 @@
 
 ;; Handler
 
-(def chain-xf
+(def handler-xf
   (clojure.core/map #(% identity)))
 
-(defn chain
+(defn handler
   [& xfs]
   (->> (into '() chain-xf xfs)
        (apply comp)))
