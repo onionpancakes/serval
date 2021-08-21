@@ -10,15 +10,15 @@
 (extend-protocol IHeaderValue
   String
   (write-header! [this k io]
-    (let [resp (:service/response io)]
+    (let [resp (:serval.service/response io)]
       (.addHeader ^HttpServletResponse resp k this)))
   Long
   (write-header! [this k io]
-    (let [resp (:service/response io)]
+    (let [resp (:serval.service/response io)]
       (.addIntHeader ^HttpServletResponse resp k this)))
   java.util.Collection
   (write-header! [this k io]
-    (let [resp (:service/response io)]
+    (let [resp (:serval.service/response io)]
       (doseq [v this]
         (write-header! v k io)))))
 
@@ -36,12 +36,12 @@
   ;; https://clojure.atlassian.net/browse/CLJ-1381
   (Class/forName "[B")
   (write-body! [this io]
-    (-> ^HttpServletResponse (:service/response io)
+    (-> ^HttpServletResponse (:serval.service/response io)
         (.getOutputStream)
         (.write ^bytes this)))
   String
   (write-body! [this io]
-    (-> ^HttpServletResponse (:service/response io)
+    (-> ^HttpServletResponse (:serval.service/response io)
         (.getOutputStream)
         (.print this))))
 
@@ -51,24 +51,24 @@
 (extend-protocol IResponse
   java.util.Map
   (write-response! [this io]
-    (let [^HttpServletResponse resp (:service/response io)]
-      (if-let [status (:response/status this)]
+    (let [^HttpServletResponse resp (:serval.service/response io)]
+      (if-let [status (:serval.response/status this)]
         (.setStatus resp status))
-      (if-let [headers (:response/headers this)]
+      (if-let [headers (:serval.response/headers this)]
         (write-headers! headers io))
-      (if-let [body (:response/body this)]
+      (if-let [body (:serval.response/body this)]
         (write-body! body io)))))
 
 ;; Servlet
 
 (defn context
   [servlet ^HttpServletRequest request response]
-  {:service/servlet      servlet
-   :service/request      request
-   :service/response     response
-   :request/method       (.getMethod request)
-   :request/path         (.getRequestURI request)
-   :request/query-string (.getQueryString request)})
+  {:serval.service/servlet      servlet
+   :serval.service/request      request
+   :serval.service/response     response
+   :serval.request/method       (keyword (.getMethod request))
+   :serval.request/path         (.getRequestURI request)
+   :serval.request/query-string (.getQueryString request)})
 
 (defn service-fn
   [handler]
