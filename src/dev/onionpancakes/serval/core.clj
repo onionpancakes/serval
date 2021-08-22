@@ -16,6 +16,10 @@
   (write-header! [this k io]
     (let [resp (:serval.service/response io)]
       (.addIntHeader ^HttpServletResponse resp k this)))
+  Integer
+  (write-header! [this k io]
+    (let [resp (:serval.service/response io)]
+      (.addIntHeader ^HttpServletResponse resp k this)))
   java.util.Collection
   (write-header! [this k io]
     (let [resp (:serval.service/response io)]
@@ -43,7 +47,12 @@
   (write-body! [this io]
     (-> ^HttpServletResponse (:serval.service/response io)
         (.getOutputStream)
-        (.print this))))
+        (.print this)))
+  java.io.InputStream
+  (write-body! [this io]
+    (->> ^HttpServletResponse (:serval.service/response io)
+         (.getOutputStream)
+         (.transferTo this))))
 
 (defprotocol IResponse
   (write-response! [this io]))
