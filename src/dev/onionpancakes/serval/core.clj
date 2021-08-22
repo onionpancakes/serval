@@ -68,16 +68,65 @@
       (if-let [body (:serval.response/body this)]
         (write-body! body io)))))
 
-;; Servlet
+;; Context
+
+(deftype Attributes [^HttpServletRequest request]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (.getAttribute request k)))
+
+(deftype AttributeNames [^HttpServletRequest request]
+  clojure.lang.Seqable
+  (seq [this]
+    (->> (.getAttributeNames request)
+         (enumeration-seq))))
+
+(deftype Headers [^HttpServletRequest request]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.valAt this k nil))
+  (valAt [this k not-found]
+    (->> (.getHeaders request k)
+         (enumeration-seq)
+         (vec))))
+
+(deftype HeaderNames [^HttpServletRequest request]
+  clojure.lang.Seqable
+  (seq [this]
+    (->> (.getHeaderNames request)
+         (enumeration-seq))))
+
+(def parameter-map-xf
+  (clojure.core/map (juxt key (comp vec val))))
+
+(defn parameter-map
+  [m]
+  (into {} parameter-map-xf m))
 
 (defn context
   [servlet ^HttpServletRequest request response]
-  {:serval.service/servlet      servlet
-   :serval.service/request      request
-   :serval.service/response     response
-   :serval.request/method       (keyword (.getMethod request))
-   :serval.request/path         (.getRequestURI request)
-   :serval.request/query-string (.getQueryString request)})
+  {:serval.service/servlet  servlet
+   :serval.service/request  request
+   :serval.service/response response
+   
+   :serval.request/method          (keyword (.getMethod request))
+   :serval.request/path            (.getRequestURI request)
+   :serval.request/query-string    (.getQueryString request)
+   :serval.request/parameters      (parameter-map (.getParameterMap request))
+
+   :serval.request/attributes      (Attributes. request)
+   :serval.request/attribute-names (AttributeNames. request)
+   :serval.request/headers         (Headers. request)
+   :serval.request/header-names    (HeaderNames. request)
+   
+   :serval.request/body               (.getInputStream request)
+   :serval.request/content-length     (.getContentLengthLong request)
+   :serval.request/content-type       (.getContentType request)
+   :serval.request/character-encoding (.getCharacterEncoding request)})
+
+;; Servlet
 
 (defn service-fn
   [handler]

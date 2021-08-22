@@ -14,15 +14,30 @@
 
 (defn handle
   [ctx]
+  (pprint ctx)
+  #_(println (get-in ctx [:serval.request/headers "User-Agent" 0] :foo))
+  #_(println :body (slurp (:serval.request/body ctx)))
+  #_(println (seq (:serval.request/headers ctx)))
+  (println (:serval.request/header-names ctx))
+  (println (-> (:serval.request/headers ctx)
+               (get "Accept")))
+  (println (seq (:serval.request/attribute-names ctx)))
   {:serval.response/status  200
    :serval.response/headers {"Foo"   "Bar"
                              "Test"  1
-                             "Test2" [1 2 3]}
-   :serval.response/body    "Hello World!"})
+                             "Test2" [1 2 3]
+                             "Content-Type" "text/plain; charset=UTF-8"}
+   :serval.response/body    "Hello World! やばい"})
 
 (def router
   (rt/router [["/"      {:GET {:key     :foo
                                :handler handle}}]
+              ["/post" {:POST {:handler (fn [ctx]
+                                          (println :POST)
+                                          (println ctx)
+                                          #_(println :body (slurp (:serval.request/body ctx)))
+                                          
+                                          ctx)}}]
               ["/error" {:GET {:handler error}}]
               ["/error/" {:GET {:handler error}}]]))
 
