@@ -67,13 +67,13 @@
 (extend-protocol IHandler
   clojure.lang.Fn
   (handler [this]
-    (servlet-context-handler [["/" this]]))
+    (servlet-context-handler [["/*" this]]))
   clojure.lang.Var
   (handler [this]
-    (servlet-context-handler [["/" this]]))
+    (servlet-context-handler [["/*" this]]))
   Servlet
   (handler [this]
-    (servlet-context-handler [["/" this]]))
+    (servlet-context-handler [["/*" this]]))
   java.util.Collection
   (handler [this]
     (servlet-context-handler this))
