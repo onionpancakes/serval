@@ -1,11 +1,12 @@
 (ns dev.onionpancakes.serval.jetty
   (:require [dev.onionpancakes.serval.core :as c])
   (:import [jakarta.servlet Servlet]
-           [org.eclipse.jetty.server Server Handler
-            ConnectionFactory
-            ServerConnector HttpConnectionFactory HttpConfiguration]
-           [org.eclipse.jetty.servlet
-            ServletHolder ServletContextHandler]))
+           [org.eclipse.jetty.server
+            Server Handler
+            ServerConnector ConnectionFactory
+            HttpConnectionFactory HttpConfiguration]
+           [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
+           [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
 
 ;; Connectors
 
@@ -20,8 +21,16 @@
 
 (defmethod connection-factories :http
   [config]
-  (let [http-config (http-configuration config)]
-    [(HttpConnectionFactory. http-config)]))
+  (let [http-config (http-configuration config)
+        http1       (HttpConnectionFactory. http-config)]
+    [http1]))
+
+(defmethod connection-factories :http2c
+  [config]
+  (let [http-config (http-configuration config)
+        http1       (HttpConnectionFactory. http-config)
+        http2       (HTTP2CServerConnectionFactory. http-config)]
+    [http1 http2]))
 
 (defn configure-connector!
   [conn config]

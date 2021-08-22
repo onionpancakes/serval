@@ -38,7 +38,9 @@
 
 (defonce ^Server server
   (j/server {:connectors [{:protocol :http
-                           :port     3000}]
+                           :port     3000}
+                          {:protocol :http2c
+                           :port     3001}]
              :handler    [["/" servlet]]}))
 
 (defn restart []
