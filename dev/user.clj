@@ -23,7 +23,8 @@
 (def router
   (rt/router [["/"      {:GET {:key     :foo
                                :handler handle}}]
-              ["/error" {:GET {:handler error}}]]))
+              ["/error" {:GET {:handler error}}]
+              ["/error/" {:GET {:handler error}}]]))
 
 (def xf
   (comp (c/map #(assoc % :error (= (:serval.request/path %) "/error")))
