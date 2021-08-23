@@ -36,11 +36,6 @@
                                           (println)
                                           (println :POST)
                                           (pprint ctx)
-                                          #_(println :body (slurp (:serval.request/body ctx)))
-                                          #_(doseq [l (:serval.request/locales ctx)]
-                                            (println :locale l))
-
-                                          #_(println :llll (first (:serval.request/locales ctx)))
                                           ctx)}}]
               ["/error" {:GET {:handler error}}]
               ["/error/" {:GET {:handler error}}]]))

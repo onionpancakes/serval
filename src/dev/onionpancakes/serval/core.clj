@@ -98,12 +98,6 @@
     (->> (.getHeaderNames request)
          (enumeration-seq))))
 
-(deftype Locales [^HttpServletRequest request]
-  clojure.lang.Seqable
-  (seq [this]
-    (->> (.getLocales request)
-         (enumeration-seq))))
-
 (def parameter-map-xf
   (clojure.core/map (juxt key (comp vec val))))
 
@@ -116,17 +110,6 @@
   {:serval.service/servlet  servlet
    :serval.service/request  request
    :serval.service/response response
-
-   :serval.request/protocol    (.getProtocol request)
-   :serval.request/scheme      (.getScheme request)
-   :serval.request/server-name (.getServerName request)
-   :serval.request/server-port (.getServerPort request)
-   :serval.request/remote-addr (.getRemoteAddr request)
-   :serval.request/remote-host (.getRemoteHost request)
-   :serval.request/remote-port (.getRemotePort request)
-   :serval.request/local-name  (.getLocalName request)
-   :serval.request/local-addr  (.getLocalAddr request)
-   :serval.request/local-port  (.getLocalPort request)
    
    :serval.request/method       (keyword (.getMethod request))
    :serval.request/path         (.getRequestURI request)
@@ -136,14 +119,7 @@
    :serval.request/attributes      (Attributes. request)
    :serval.request/attribute-names (AttributeNames. request)
    :serval.request/headers         (Headers. request)
-   :serval.request/header-names    (HeaderNames. request)
-   :serval.request/locale          (.getLocale request)
-   :serval.request/locales         (Locales. request)
-   
-   :serval.request/body               (.getInputStream request)
-   :serval.request/content-length     (.getContentLengthLong request)
-   :serval.request/content-type       (.getContentType request)
-   :serval.request/character-encoding (.getCharacterEncoding request)})
+   :serval.request/header-names    (HeaderNames. request)})
 
 ;; Servlet
 
