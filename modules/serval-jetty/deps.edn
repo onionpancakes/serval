@@ -1,0 +1,6 @@
+{:deps  {org.clojure/clojure                  {:mvn/version "1.10.3"}
+         jakarta.servlet/jakarta.servlet-api  {:mvn/version "5.0.0"}
+         org.eclipse.jetty/jetty-servlet      {:mvn/version "11.0.6"}
+         org.eclipse.jetty/jetty-server       {:mvn/version "11.0.6"}
+         org.eclipse.jetty.http2/http2-server {:mvn/version "11.0.6"}}
+ :paths ["src"]}

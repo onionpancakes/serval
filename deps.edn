@@ -1,4 +1,6 @@
-{:deps {dev.onionpancakes/serval-core {:local/root "./modules/serval-core"}}
+{:deps {dev.onionpancakes/serval-core   {:local/root "./modules/serval-core"}
+        dev.onionpancakes/serval-jetty  {:local/root "./modules/serval-jetty"}
+        dev.onionpancakes/serval-reitit {:local/root "./modules/serval-reitit"}}
 
  :aliases
  {:dev
