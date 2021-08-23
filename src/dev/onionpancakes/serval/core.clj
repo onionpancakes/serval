@@ -50,9 +50,12 @@
         (.print this)))
   java.io.InputStream
   (write-body! [this io]
-    (->> ^HttpServletResponse (:serval.service/response io)
-         (.getOutputStream)
-         (.transferTo this))))
+    (try
+      (->> ^HttpServletResponse (:serval.service/response io)
+           (.getOutputStream)
+           (.transferTo this))
+      (finally
+        (.close this)))))
 
 (defprotocol IResponse
   (write-response! [this io]))
