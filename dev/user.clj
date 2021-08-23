@@ -23,12 +23,12 @@
   (println (-> (:serval.request/headers ctx)
                (get "Accept")))
   (println (seq (:serval.request/attribute-names ctx)))
-  {:serval.response/status  200
-   :serval.response/headers {"Foo"   "Bar"
-                             "Test"  1
-                             "Test2" [1 2 3]
-                             "Content-Type" "text/plain; charset=UTF-8"}
-   :serval.response/body    "Hello World! やばい"})
+  {:serval.response/status       200
+   :serval.response/headers      {"Foo"          "Bar"
+                                  "Test"         1
+                                  "Test2"        [1 2 3]
+                                  "Content-Type" "text/plain; charset=utf-8"}
+   :serval.response/body         "Hello World! やばい"})
 
 (def router
   (rt/router [["/"      {:GET {:key     :foo
@@ -37,6 +37,14 @@
                                           (println)
                                           (println :POST)
                                           (pprint ctx)
+                                          (println (get-in ctx [:serval.request/headers "Content-Type"]))
+                                          (-> (:serval.service/request ctx)
+                                              (.getCharacterEncoding)
+                                              (println))
+                                          (-> (:serval.service/request ctx)
+                                              (.getReader)
+                                              (slurp)
+                                              (println))
                                           ctx)}}]
               ["/error" {:GET {:handler error}}]
               ["/error/" {:GET {:handler error}}]]))
@@ -57,6 +65,10 @@
                            :port     3000}
                           {:protocol :http2c
                            :port     3001}]
+             :servlets [["/" (c/servlet handle)]
+                        ["/error" (c/servlet error)]
+                        ["/foo/*" (c/servlet handle)]]
+             #_#_
              :servlets   servlet}))
 
 (defn restart []

@@ -45,9 +45,12 @@
         (.write ^bytes this)))
   String
   (write-body! [this io]
-    (-> ^HttpServletResponse (:serval.service/response io)
+    #_(-> ^HttpServletResponse (:serval.service/response io)
         (.getOutputStream)
-        (.print this)))
+        (.print this))
+    (-> ^HttpServletResponse (:serval.service/response io)
+        (.getWriter)
+        (.write this)))
   java.io.InputStream
   (write-body! [this io]
     (try
@@ -116,6 +119,9 @@
    
    :serval.request/method       (keyword (.getMethod request))
    :serval.request/path         (.getRequestURI request)
+   :serval.request/context-path (.getContextPath request)
+   :serval.request/servlet-path (.getServletPath request)
+   :serval.request/path-info    (.getPathInfo request)
    :serval.request/query-string (.getQueryString request)
    :serval.request/parameters   (parameter-map (.getParameterMap request))
    
