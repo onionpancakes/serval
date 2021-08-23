@@ -1,5 +1,4 @@
 (ns dev.onionpancakes.serval.jetty
-  (:require [dev.onionpancakes.serval.core :as c])
   (:import [jakarta.servlet Servlet]
            [org.eclipse.jetty.server
             Server Handler
@@ -41,7 +40,7 @@
     [http1 http2]))
 
 (defn configure-connector!
-  [conn config]
+  [^ServerConnector conn config]
   (.setConnectionFactories conn (connection-factories config))
   (if (contains? config :port)
     (.setPort conn (:port config)))
@@ -50,38 +49,19 @@
   (if (contains? config :idle-timeout)
     (.setIdleTimeout conn (:idle-timeout config))))
 
-;; Servlet
-
-(defprotocol IServlet
-  (^Servlet servlet [this]))
-
-(extend-protocol IServlet
-  clojure.lang.Fn
-  (servlet [this] (c/servlet this))
-  clojure.lang.Var
-  (servlet [this] (c/servlet this))
-  Servlet
-  (servlet [this] this))
-
 ;; Handler
 
 (defn servlet-context-handler
   [path-to-servlets]
   (let [^ServletContextHandler sch (ServletContextHandler.)]
-    (doseq [[^String path serv] path-to-servlets]
-      (.addServlet sch (ServletHolder. (servlet serv)) path))
+    (doseq [[^String path ^Servlet serv] path-to-servlets]
+      (.addServlet sch (ServletHolder. serv) path))
     sch))
 
 (defprotocol IHandler
   (handler [this]))
 
 (extend-protocol IHandler
-  clojure.lang.Fn
-  (handler [this]
-    (servlet-context-handler [["/*" this]]))
-  clojure.lang.Var
-  (handler [this]
-    (servlet-context-handler [["/*" this]]))
   Servlet
   (handler [this]
     (servlet-context-handler [["/*" this]]))
@@ -94,8 +74,8 @@
 ;; Server
 
 (defn configure-server!
-  [server config]
-  (.setHandler server (handler (:handler config)))
+  [^Server server config]
+  (.setHandler server (handler (:servlets config)))
   (doseq [conn-config (:connectors config)
           :let        [conn (ServerConnector. server)]]
     (configure-connector! conn conn-config)

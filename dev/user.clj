@@ -2,7 +2,8 @@
   (:require [dev.onionpancakes.serval.core :as c]
             [dev.onionpancakes.serval.jetty :as j]
             [dev.onionpancakes.serval.reitit :as r]
-            [reitit.core :as rt])
+            [reitit.core :as rt]
+            [clojure.pprint :refer [pprint]])
   (:import [org.eclipse.jetty.server Server]))
 
 (set! *warn-on-reflection* true)
@@ -56,7 +57,7 @@
                            :port     3000}
                           {:protocol :http2c
                            :port     3001}]
-             :handler    #'handler}))
+             :servlets   servlet}))
 
 (defn restart []
   (.stop server)
