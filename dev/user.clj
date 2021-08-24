@@ -37,25 +37,16 @@
                                           (println)
                                           (println :POST)
                                           (pprint ctx)
-                                          (println (get-in ctx [:serval.request/headers "Content-Type"]))
-                                          (-> (:serval.service/request ctx)
-                                              (.getCharacterEncoding)
-                                              (println))
-                                          (-> (:serval.service/request ctx)
-                                              (.getReader)
-                                              (slurp)
-                                              (println))
                                           ctx)}}]
               ["/error" {:GET {:handler error}}]
               ["/error/" {:GET {:handler error}}]]))
 
-(def xf
+#_(def xf
   (comp (c/map #(assoc % :error (= (:serval.request/path %) "/error")))
         (c/terminate :error error)))
 
 (def handler
-  (r/route-handler router)
-  #_(xf handle))
+  (r/route-handler router))
 
 (defonce servlet
   (c/servlet #'handler))
@@ -65,11 +56,11 @@
                            :port     3000}
                           {:protocol :http2c
                            :port     3001}]
-             :servlets [["/" (c/servlet handle)]
-                        ["/error" (c/servlet error)]
-                        ["/foo/*" (c/servlet handle)]]
+             :servlets   [["/" (c/servlet handle)]
+                          ["/error" (c/servlet error)]
+                          ["/foo/*" (c/servlet handle)]]
              #_#_
-             :servlets   servlet}))
+             :servlet    servlet}))
 
 (defn restart []
   (.stop server)
