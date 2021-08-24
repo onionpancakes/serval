@@ -1,9 +1,8 @@
 (ns dev.onionpancakes.serval.jetty
   (:import [jakarta.servlet Servlet]
            [org.eclipse.jetty.server
-            Server Handler
-            ServerConnector ConnectionFactory
-            HttpConnectionFactory HttpConfiguration]
+            Server Handler ServerConnector
+            ConnectionFactory HttpConnectionFactory HttpConfiguration]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
 
@@ -58,24 +57,17 @@
       (.addServlet sch (ServletHolder. serv) path))
     sch))
 
-(defprotocol IHandler
-  (handler [this]))
-
-(extend-protocol IHandler
-  Servlet
-  (handler [this]
-    (servlet-context-handler [["/*" this]]))
-  java.util.Collection
-  (handler [this]
-    (servlet-context-handler this))
-  Handler
-  (handler [this] this))
+(defn handler
+  [config]
+  (cond
+    (:servlets config) (servlet-context-handler (:servlets config))
+    (:servlet config)  (servlet-context-handler [["/*" (:servlet config)]])))
 
 ;; Server
 
 (defn configure-server!
   [^Server server config]
-  (.setHandler server (handler (:servlets config)))
+  (.setHandler server (handler config))
   (doseq [conn-config (:connectors config)
           :let        [conn (ServerConnector. server)]]
     (configure-connector! conn conn-config)
