@@ -48,20 +48,21 @@
 (def handler
   (r/route-handler router))
 
-(defonce servlet
+(def servlet
   (c/servlet #'handler))
 
+(def config
+  {:connectors [{:protocol :http
+                 :port     3000}
+                {:protocol :http2c
+                 :port     3001}]
+   :servlet    servlet})
+
 (defonce ^Server server
-  (j/server {:connectors [{:protocol :http
-                           :port     3000}
-                          {:protocol :http2c
-                           :port     3001}]
-             :servlets   [["/" (c/servlet handle)]
-                          ["/error" (c/servlet error)]
-                          ["/foo/*" (c/servlet handle)]]
-             #_#_
-             :servlet    servlet}))
+  (j/server {}))
 
 (defn restart []
-  (.stop server)
-  (.start server))
+  (doto server
+    (.stop)
+    (j/configure-server! config)
+    (.start)))

@@ -61,17 +61,20 @@
   [config]
   (cond
     (:servlets config) (servlet-context-handler (:servlets config))
-    (:servlet config)  (servlet-context-handler [["/*" (:servlet config)]])))
+    (:servlet config)  (servlet-context-handler [["/*" (:servlet config)]])
+    :else              nil))
 
 ;; Server
 
 (defn configure-server!
   [^Server server config]
-  (.setHandler server (handler config))
-  (doseq [conn-config (:connectors config)
-          :let        [conn (ServerConnector. server)]]
-    (configure-connector! conn conn-config)
-    (.addConnector server conn)))
+  (if-let [h (handler config)]
+    (.setHandler server h))
+  (->> (:connectors config)
+       (map #(doto (ServerConnector. server)
+               (configure-connector! %)))
+       (into-array ServerConnector)
+       (.setConnectors server)))
 
 (defn server
   [config]
