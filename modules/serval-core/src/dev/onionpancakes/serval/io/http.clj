@@ -1,19 +1,20 @@
 (ns dev.onionpancakes.serval.io.http
   (:import [jakarta.servlet.http
-            HttpServletRequest HttpServletResponse]))
+            HttpServlet HttpServletRequest HttpServletResponse]))
 
-(defprotocol IResponseHeader
-  (write-header* [this resp k]))
+;; Servlet
 
-(defprotocol IResponseBody
-  (write-body* [this resp]))
+(deftype HttpServletProxy [^HttpServlet servlet]
+  clojure.lang.ILookup
+  (valAt [this key]
+    (.vatAt this key nil))
+  (valAt [this key not-found]
+    (case key
+      :instance servlet
+      
+      not-found)))
 
-(defn write-headers!
-  [resp headers]
-  (doseq [[k v] headers]
-    (write-header* v resp k)))
-
-;; Context
+;; Request
 
 (deftype Attributes [^HttpServletRequest request]
   clojure.lang.ILookup
@@ -50,26 +51,73 @@
   [m]
   (into {} parameter-map-xf m))
 
-;; Read / Write API
+(deftype HttpServletRequestProxy [^HttpServletRequest request]
+  clojure.lang.ILookup
+  (valAt [this key]
+    (.valAt this key nil))
+  (valAt [this key not-found]
+    (case key
+      :instance request
+      
+      ;; URL
+      :method       (keyword (.getMethod request))
+      :path         (.getRequestURI request)
+      :context-path (.getContextPath request)
+      :servlet-path (.getServletPath request)
+      :path-info    (.getPathInfo request)
+      :query-string (.getQueryString request)
+      :parameters   (parameter-map (.getParameterMap request))
+      
+      ;; Attributes / Headers
+      :attributes      (Attributes. request)
+      :attribute-names (AttributeNames. request)
+      :headers         (Headers. request)
+      :header-names    (HeaderNames. request)
+      
+      ;; Body
+      :reader             (.getReader request)
+      :input-stream       (.getInputStream request)
+      :content-length     (.getContentLengthLong request)
+      :content-type       (.getContentType request)
+      :character-encoding (.getCharacterEncoding request)
+      
+      not-found)))
+
+;; Response
+
+(deftype HttpServletResponseProxy [^HttpServletResponse response]
+  clojure.lang.ILookup
+  (valAt [this key]
+    (.valAt this key nil))
+  (valAt [this key not-found]
+    (case key
+      :instance response
+
+      :writer        (.getWriter response)
+      :output-stream (.getOutputStream response)
+
+      not-found)))
+
+;; Read
 
 (defn read-context
   [servlet ^HttpServletRequest request response]
-  {:serval.service/servlet  servlet
-   :serval.service/request  request
-   :serval.service/response response
-   
-   :serval.request/method       (keyword (.getMethod request))
-   :serval.request/path         (.getRequestURI request)
-   :serval.request/context-path (.getContextPath request)
-   :serval.request/servlet-path (.getServletPath request)
-   :serval.request/path-info    (.getPathInfo request)
-   :serval.request/query-string (.getQueryString request)
-   :serval.request/parameters   (parameter-map (.getParameterMap request))
-   
-   :serval.request/attributes      (Attributes. request)
-   :serval.request/attribute-names (AttributeNames. request)
-   :serval.request/headers         (Headers. request)
-   :serval.request/header-names    (HeaderNames. request)})
+  {:serval.service/servlet  (HttpServletProxy. servlet)
+   :serval.service/request  (HttpServletRequestProxy. request)
+   :serval.service/response (HttpServletResponseProxy. response)})
+
+;; Write
+
+(defprotocol IResponseHeader
+  (write-header* [this resp k]))
+
+(defprotocol IResponseBody
+  (write-body* [this resp]))
+
+(defn write-headers!
+  [resp headers]
+  (doseq [[k v] headers]
+    (write-header* v resp k)))
 
 (defn write-context!
   [servlet request ^HttpServletResponse response ctx]
@@ -113,3 +161,4 @@
       (.transferTo this (.getOutputStream resp))
       (finally
         (.close this)))))
+

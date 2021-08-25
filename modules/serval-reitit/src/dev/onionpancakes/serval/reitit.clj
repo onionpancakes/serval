@@ -3,8 +3,9 @@
 
 (defn match-handler
   [router]
-  (fn [{:serval.request/keys [path] :as ctx}]
-    (let [match (r/match-by-path router path)]
+  (fn [{:serval.service/keys [request] :as ctx}]
+    (let [path  (get request :path)
+          match (r/match-by-path router path)]
       (assoc ctx :serval.reitit/match match))))
 
 (defn not-found
@@ -13,9 +14,10 @@
              :serval.response/body   "Not found!"}))
 
 (defn invoke-match-handler
-  [{:serval.request/keys [method] :as ctx} opts]
+  [{:serval.service/keys [request] :as ctx} opts]
   (let [default (:not-found opts not-found)
         match   (get ctx :serval.reitit/match)
+        method  (get request :method)
         handler (get-in match [:data method :handler] default)]
     (handler ctx)))
 

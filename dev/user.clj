@@ -16,13 +16,8 @@
 (defn handle
   [ctx]
   (pprint ctx)
-  #_(println (get-in ctx [:serval.request/headers "User-Agent" 0] :foo))
-  #_(println :body (slurp (:serval.request/body ctx)))
-  #_(println (seq (:serval.request/headers ctx)))
-  (println (:serval.request/header-names ctx))
-  (println (-> (:serval.request/headers ctx)
-               (get "Accept")))
-  (println (seq (:serval.request/attribute-names ctx)))
+  (println (get-in ctx [:serval.service/request :headers "User-Agent"]))
+
   {:serval.response/status       200
    :serval.response/headers      {"Foo"          "Bar"
                                   "Test"         1
@@ -40,10 +35,6 @@
                                           ctx)}}]
               ["/error" {:GET {:handler error}}]
               ["/error/" {:GET {:handler error}}]]))
-
-#_(def xf
-  (comp (c/map #(assoc % :error (= (:serval.request/path %) "/error")))
-        (c/terminate :error error)))
 
 (def handler
   (r/route-handler router))
