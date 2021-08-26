@@ -5,7 +5,8 @@
             ConnectionFactory HttpConnectionFactory HttpConfiguration]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
-           [org.eclipse.jetty.server.handler.gzip GzipHandler]))
+           [org.eclipse.jetty.server.handler.gzip GzipHandler]
+           [org.eclipse.jetty.util.thread QueuedThreadPool]))
 
 ;; Connectors
 
@@ -99,6 +100,17 @@
 
 ;; Server
 
+(defn thread-pool
+  [config]
+  (let [pool (QueuedThreadPool.)]
+    (when-let [min-threads (:min-threads config)]
+      (.setMinThreads pool min-threads))
+    (when-let [max-threads (:max-threads config)]
+      (.setMaxThreads pool max-threads))
+    (when-let [timeout (:idle-timeout config)]
+      (.setIdleTimeout pool timeout))
+    pool))
+
 (defn configure-server!
   [^Server server config]
   (if-let [handler (servlet-handler config)]
@@ -113,5 +125,7 @@
 
 (defn server
   [config]
-  (doto (Server.)
+  (doto (if (:thread-pool config)
+          (Server. (thread-pool (:thread-pool config)))
+          (Server.))
     (configure-server! config)))

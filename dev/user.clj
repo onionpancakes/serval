@@ -49,20 +49,21 @@
   (c/servlet #'handler))
 
 (def config
-  {:connectors [{:protocol :http
-                 :port     3000}
-                {:protocol :http2c
-                 :port     3001}]
-   :servlet    servlet
-   :gzip       {:included-methods    [:GET :POST]
-                :included-mime-types ["text/plain"]
-                :included-paths      ["/*"]
-                :excluded-methods    []
-                :excluded-mime-types []
-                :excluded-paths      []}})
+  {:connectors  [{:protocol :http
+                  :port     3000}
+                 {:protocol :http2c
+                  :port     3001}]
+   :servlet     servlet
+   :gzip        {:included-methods    [:GET :POST]
+                 :included-mime-types ["text/plain"]
+                 :included-paths      ["/*"]
+                 :excluded-methods    []
+                 :excluded-mime-types []
+                 :excluded-paths      []}})
 
 (defonce ^Server server
-  (j/server {}))
+  (j/server {:thread-pool {:min-threads  1
+                           :max-threads  8}}))
 
 (defn restart []
   (doto server
