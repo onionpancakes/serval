@@ -4,7 +4,8 @@
             Server Handler ServerConnector
             ConnectionFactory HttpConnectionFactory HttpConfiguration]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
-           [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
+           [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
+           [org.eclipse.jetty.server.handler.gzip GzipHandler]))
 
 ;; Connectors
 
@@ -57,19 +58,53 @@
       (.addServlet sch (ServletHolder. serv) path))
     sch))
 
-(defn handler
+(defn servlet-handler
   [config]
   (cond
     (:servlets config) (servlet-context-handler (:servlets config))
     (:servlet config)  (servlet-context-handler [["/*" (:servlet config)]])
     :else              nil))
 
+(defn gzip-handler
+  [config]
+  (let [handler (GzipHandler.)]
+    (when-let [methods (:excluded-methods config)]
+      (->> (map name methods)
+           (into-array String)
+           (.setExcludedMethods handler)))
+    (when-let [mime-types (:excluded-mime-types config)]
+      (->> (into-array String mime-types)
+           (.setExcludedMimeTypes handler)))
+    (when-let [paths (:excluded-paths config)]
+      (->> (into-array String paths)
+           (.setExcludedPaths handler)))
+    (when-let [methods (:included-methods config)]
+      (->> (map name methods)
+           (into-array String)
+           (.setIncludedMethods handler)))
+    (when-let [mime-types (:included-mime-types config)]
+      (->> (into-array String mime-types)
+           (.setIncludedMimeTypes handler)))
+    (when-let [paths (:included-paths config)]
+      (->> (into-array String paths)
+           (.setIncludedPaths handler)))
+    (when-let [size (:min-gzip-size config)]
+      (.setMinGzipSize handler size))
+    handler))
+
+(defn set-handler!
+  [this handler]
+  (doto this
+    (.setHandler handler)))
+
 ;; Server
 
 (defn configure-server!
   [^Server server config]
-  (if-let [h (handler config)]
-    (.setHandler server h))
+  (if-let [handler (servlet-handler config)]
+    (cond->> handler
+      (:gzip config) (set-handler! (gzip-handler (:gzip config)))
+      true           (set-handler! server)))
   (->> (:connectors config)
        (map #(doto (ServerConnector. server)
                (configure-connector! %)))

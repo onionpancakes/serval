@@ -26,11 +26,14 @@
                                   "Test"         1
                                   "Test2"        [1 2 3]
                                   "Content-Type" "text/plain; charset=utf-8"}
-   :serval.response/body         "Hello World! やばい"})
+   :serval.response/body         "Hello World! やばい foo bar baz"})
 
 (def router
   (rt/router [["/"      {:GET {:key     :foo
                                :handler handle}}]
+              ["/foo" {:GET {:handler handle}}]
+              ["/foo/bar" {:GET {:handler handle}}]
+              ["/foo/baz" {:GET {:handler handle}}]
               ["/post" {:POST {:handler (fn [ctx]
                                           (println)
                                           (println :POST)
@@ -50,7 +53,13 @@
                  :port     3000}
                 {:protocol :http2c
                  :port     3001}]
-   :servlet    servlet})
+   :servlet    servlet
+   :gzip       {:included-methods    [:GET :POST]
+                :included-mime-types ["text/plain"]
+                :included-paths      ["/*"]
+                :excluded-methods    []
+                :excluded-mime-types []
+                :excluded-paths      []}})
 
 (defonce ^Server server
   (j/server {}))
