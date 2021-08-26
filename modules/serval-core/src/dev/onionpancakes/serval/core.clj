@@ -1,15 +1,9 @@
 (ns dev.onionpancakes.serval.core
-  (:refer-clojure :exclude [map])
+  (:refer-clojure :exclude [map merge])
   (:require [dev.onionpancakes.serval.io.http :as io.http])
   (:import [jakarta.servlet GenericServlet]))
 
 ;; Servlet
-
-(defn http-service-fn
-  [handler]
-  (fn [servlet request response]
-    (let [ctx (io.http/context servlet request response)]
-      (io.http/write-response! ctx (handler ctx)))))
 
 (defn servlet*
   [service-fn]
@@ -17,7 +11,15 @@
     (service [request response]
       (service-fn this request response))))
 
-(defn servlet
+;; Http Servlet
+
+(defn http-service-fn
+  [handler]
+  (fn [servlet request response]
+    (let [ctx (io.http/context servlet request response)]
+      (io.http/write-response! ctx (handler ctx)))))
+
+(defn http-servlet
   [handler]
   (servlet* (http-service-fn handler)))
 

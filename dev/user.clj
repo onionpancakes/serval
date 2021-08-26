@@ -56,7 +56,7 @@
 (def handler
   (r/route-handler router))
 
-(def servlet
+(def http-servlet
   (c/servlet #'handler))
 
 (def config
@@ -64,7 +64,7 @@
                   :port     3000}
                  {:protocol :http2c
                   :port     3001}]
-   :servlet     servlet
+   :servlet     http-servlet
    :gzip        {:included-methods    [:GET :POST]
                  :included-mime-types ["text/plain"]
                  :included-paths      ["/*"]
