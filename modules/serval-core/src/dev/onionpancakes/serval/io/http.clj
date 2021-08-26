@@ -1,18 +1,7 @@
 (ns dev.onionpancakes.serval.io.http
   (:import [jakarta.servlet.http
-            HttpServlet HttpServletRequest HttpServletResponse]))
-
-;; Servlet
-
-(deftype HttpServletProxy [^HttpServlet servlet]
-  clojure.lang.ILookup
-  (valAt [this key]
-    (.vatAt this key nil))
-  (valAt [this key not-found]
-    (case key
-      :instance servlet
-      
-      not-found)))
+            HttpServlet HttpServletRequest HttpServletResponse
+            HttpServletRequestWrapper]))
 
 ;; Request
 
@@ -51,60 +40,47 @@
   [m]
   (into {} parameter-map-xf m))
 
-(deftype HttpServletRequestProxy [^HttpServletRequest request]
-  clojure.lang.ILookup
-  (valAt [this key]
-    (.valAt this key nil))
-  (valAt [this key not-found]
-    (case key
-      :instance request
-      
-      ;; URL
-      :method       (keyword (.getMethod request))
-      :path         (.getRequestURI request)
-      :context-path (.getContextPath request)
-      :servlet-path (.getServletPath request)
-      :path-info    (.getPathInfo request)
-      :query-string (.getQueryString request)
-      :parameters   (parameter-map (.getParameterMap request))
-      
-      ;; Attributes / Headers
-      :attributes      (Attributes. request)
-      :attribute-names (AttributeNames. request)
-      :headers         (Headers. request)
-      :header-names    (HeaderNames. request)
-      
-      ;; Body
-      :reader             (.getReader request)
-      :input-stream       (.getInputStream request)
-      :content-length     (.getContentLengthLong request)
-      :content-type       (.getContentType request)
-      :character-encoding (.getCharacterEncoding request)
-      
-      not-found)))
+(defn servlet-request-proxy
+  [^HttpServletRequest request]
+  (proxy [HttpServletRequestWrapper clojure.lang.ILookup] [request]
+    (valAt
+      ([key]
+       (.valAt ^clojure.lang.ILookup this key nil))
+      ([key not-found]
+       (case key
+         ;; URL
+         :method       (keyword (.getMethod request))
+         :path         (.getRequestURI request)
+         :context-path (.getContextPath request)
+         :servlet-path (.getServletPath request)
+         :path-info    (.getPathInfo request)
+         :query-string (.getQueryString request)
+         :parameters   (parameter-map (.getParameterMap request))
+         
+         ;; Attributes
+         :attributes      (Attributes. request)
+         :attribute-names (AttributeNames. request)
 
-;; Response
+         ;; Headers
+         :headers         (Headers. request)
+         :header-names    (HeaderNames. request)
+         
+         ;; Body
+         :reader             (.getReader request)
+         :input-stream       (.getInputStream request)
+         :content-length     (.getContentLengthLong request)
+         :content-type       (.getContentType request)
+         :character-encoding (.getCharacterEncoding request)
+         
+         not-found)))))
 
-(deftype HttpServletResponseProxy [^HttpServletResponse response]
-  clojure.lang.ILookup
-  (valAt [this key]
-    (.valAt this key nil))
-  (valAt [this key not-found]
-    (case key
-      :instance response
+;; Context
 
-      :writer        (.getWriter response)
-      :output-stream (.getOutputStream response)
-
-      not-found)))
-
-;; Read
-
-(defn read-context
-  [servlet ^HttpServletRequest request response]
-  {:serval.service/servlet  (HttpServletProxy. servlet)
-   :serval.service/request  (HttpServletRequestProxy. request)
-   :serval.service/response (HttpServletResponseProxy. response)})
+(defn context
+  [servlet request response]
+  {:serval.service/servlet  servlet
+   :serval.service/request  (servlet-request-proxy request)
+   :serval.service/response response})
 
 ;; Write
 
@@ -114,19 +90,17 @@
 (defprotocol IResponseBody
   (write-body* [this resp]))
 
-(defn write-headers!
-  [resp headers]
-  (doseq [[k v] headers]
-    (write-header* v resp k)))
-
-(defn write-context!
-  [servlet request ^HttpServletResponse response ctx]
-  (if-let [status (:serval.response/status ctx)]
-    (.setStatus response status))
-  (if-let [headers (:serval.response/headers ctx)]
-    (write-headers! response headers))
-  (if-let [body (:serval.response/body ctx)]
-    (write-body* body response)))
+(defn write-response!
+  [init-ctx resp-ctx]
+  (let [^HttpServletResponse out (or (:serval.service/response resp-ctx)
+                                     (:serval.service/response init-ctx))]
+    (if-let [status (:serval.response/status resp-ctx)]
+      (.setStatus out status))
+    (if-let [headers (:serval.response/headers resp-ctx)]
+      (doseq [[k v] headers]
+        (write-header* v out k)))
+    (if-let [body (:serval.response/body resp-ctx)]
+      (write-body* body out))))
 
 ;; Impl
 

@@ -5,18 +5,11 @@
 
 ;; Servlet
 
-(def default-service-fn-opts
-  {:read-fn  io.http/read-context
-   :write-fn io.http/write-context!})
-
-(defn service-fn
-  ([handler]
-   (service-fn handler default-service-fn-opts))
-  ([handler {:keys [read-fn write-fn]}]
-   (fn [servlet request response]
-     (->> (read-fn servlet request response)
-          (handler)
-          (write-fn servlet request response)))))
+(defn http-service-fn
+  [handler]
+  (fn [servlet request response]
+    (let [ctx (io.http/context servlet request response)]
+      (io.http/write-response! ctx (handler ctx)))))
 
 (defn servlet*
   [service-fn]
@@ -25,10 +18,8 @@
       (service-fn this request response))))
 
 (defn servlet
-  ([handler]
-   (servlet* (service-fn handler)))
-  ([handler opts]
-   (servlet* (service-fn handler opts))))
+  [handler]
+  (servlet* (http-service-fn handler)))
 
 ;; Middleware
 

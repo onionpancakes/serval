@@ -16,7 +16,10 @@
 (defn handle
   [ctx]
   (pprint ctx)
-  (println (get-in ctx [:serval.service/request :headers "User-Agent"]))
+  #_(println (get-in ctx [:serval.service/request :headers "User-Agent"]))
+  
+  #_(println (get-in ctx [:serval.service/request :headers "User-Agent"]))
+  #_(println (. (get ctx :serval.service/request) (getHeaders "User-Agent")))
 
   {:serval.response/status       200
    :serval.response/headers      {"Foo"          "Bar"
