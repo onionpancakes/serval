@@ -8,9 +8,12 @@
          :or   {from          [:serval.service/request :reader]
                 to            [:serval.request/body]
                 object-mapper j/default-object-mapper}}]
-   (let [source (get-in ctx from)
-         value  (j/read-value source object-mapper)]
-     (assoc-in ctx to value))))
+   (try
+     (let [source (get-in ctx from)
+           value  (j/read-value source object-mapper)]
+       (assoc-in ctx to value))
+     (catch com.fasterxml.jackson.core.JsonParseException ex
+       (assoc ctx :serval.jsonista/error {:exception ex})))))
 
 #_(defrecord Json [value]
   IResponseBody

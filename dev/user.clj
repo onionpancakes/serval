@@ -38,6 +38,9 @@
 
 (def post-xf
   (comp (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
+        (c/terminate :serval.jsonista/error (fn [ctx]
+                                              {:serval.response/status 400
+                                               :serval.response/body   "Bad json"}))
         (c/map handle-post)))
 
 (def router
