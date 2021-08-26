@@ -2,7 +2,9 @@
   (:require [dev.onionpancakes.serval.core :as c]
             [dev.onionpancakes.serval.jetty :as j]
             [dev.onionpancakes.serval.reitit :as r]
+            [dev.onionpancakes.serval.jsonista :as js]
             [reitit.core :as rt]
+            [jsonista.core :as json]
             [clojure.pprint :refer [pprint]])
   (:import [org.eclipse.jetty.server Server]))
 
@@ -28,17 +30,23 @@
                                   "Content-Type" "text/plain; charset=utf-8"}
    :serval.response/body         "Hello World! やばい foo bar baz"})
 
+(defn handle-post
+  [ctx]
+  #_(println ctx)
+  (conj ctx {:serval.response/status 200
+             :serval.response/body   "Hi post!"}))
+
+(def post-xf
+  (comp (c/map js/read-json)
+        (c/map handle-post)))
+
 (def router
   (rt/router [["/"      {:GET {:key     :foo
                                :handler handle}}]
               ["/foo" {:GET {:handler handle}}]
               ["/foo/bar" {:GET {:handler handle}}]
               ["/foo/baz" {:GET {:handler handle}}]
-              ["/post" {:POST {:handler (fn [ctx]
-                                          (println)
-                                          (println :POST)
-                                          (pprint ctx)
-                                          ctx)}}]
+              ["/post" {:POST {:handler (c/handler post-xf)}}]
               ["/error" {:GET {:handler error}}]
               ["/error/" {:GET {:handler error}}]]))
 
