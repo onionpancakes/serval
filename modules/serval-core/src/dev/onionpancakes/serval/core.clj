@@ -24,17 +24,17 @@
 ;; Middleware
 
 (defn map
-  [f]
+  [f & args]
   (fn [handler]
     (fn [input]
-      (handler (f input)))))
+      (handler (apply f input args)))))
 
 (defn terminate
-  [pred f]
+  [pred f & args]
   (fn [handler]
     (fn [input]
       (if (pred input)
-        (f input)
+        (apply f input args)
         (handler input)))))
 
 ;; Handler

@@ -32,12 +32,12 @@
 
 (defn handle-post
   [ctx]
-  #_(println ctx)
+  (println ctx)
   (conj ctx {:serval.response/status 200
              :serval.response/body   "Hi post!"}))
 
 (def post-xf
-  (comp (c/map js/read-json)
+  (comp (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
         (c/map handle-post)))
 
 (def router
