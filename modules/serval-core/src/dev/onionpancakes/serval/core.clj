@@ -48,8 +48,3 @@
   [& xfs]
   (->> (clojure.core/into '() handler-xf xfs)
        (apply comp)))
-
-(defn into
-  [m]
-  (fn [ctx]
-    (clojure.core/into ctx m)))

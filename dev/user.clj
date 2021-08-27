@@ -25,22 +25,18 @@
   #_(println (. (get ctx :serval.service/request) (getHeaders "User-Agent")))
 
   {:serval.response/status       200
-   :serval.response/headers      {"Foo"          "Bar"
-                                  "Test"         1
+   :serval.response/headers      {"Foo"          ["Bar"]
+                                  "Test"         [1]
                                   "Test2"        [1 2 3]
-                                  "Content-Type" "text/plain"}
+                                  "Content-Type" ["text/plain"]}
    :serval.response/body         "Hello World! やばい foo bar baz"})
 
-(defn handle-post
-  [ctx]
-  (println ctx)
-  (conj ctx {:serval.response/status 200
-             :serval.response/body   "Hi post!"}))
-
 (def post-xf
-  (comp (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
-        (c/terminate :serval.jsonista/error (http/response 400 "Bad Json." "text/plain" "utf-8"))
-        (c/map (http/response 200 "Hi Post!" "text/plain" "utf-8"))))
+  (comp (c/map into {:foo :bar})
+        (c/map #(doto % (println)))
+        (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
+        (c/terminate :serval.jsonista/error http/response 400 "Bad Json!" "text/plain" "utf-8")
+        (c/map http/response 200 "Hi Post!!!" "text/plain" "utf-8")))
 
 (def router
   (rt/router [["/"      {:GET {:key     :foo
