@@ -1,4 +1,5 @@
 (ns dev.onionpancakes.serval.io.http
+  (:require [dev.onionpancakes.serval.io.protocols :as p])
   (:import [jakarta.servlet.http
             HttpServlet HttpServletRequest HttpServletResponse
             HttpServletRequestWrapper]))
@@ -84,12 +85,6 @@
 
 ;; Write
 
-(defprotocol IResponseHeader
-  (write-header* [this resp k]))
-
-(defprotocol IResponseBody
-  (write-body* [this resp]))
-
 (defn write-response!
   [init-ctx resp-ctx]
   (let [^HttpServletResponse out (or (:serval.service/response resp-ctx)
@@ -103,37 +98,6 @@
     (if-let [headers (:serval.response/headers resp-ctx)]
       (doseq [[name values] headers
               value         values]
-        (write-header* value out name)))
+        (p/write-header value out name)))
     (if-let [body (:serval.response/body resp-ctx)]
-      (write-body* body out))))
-
-;; Impl
-
-(extend-protocol IResponseHeader
-  String
-  (write-header* [this ^HttpServletResponse resp k]
-    (.addHeader resp k this))
-  Long
-  (write-header* [this ^HttpServletResponse resp k]
-    (.addIntHeader resp k this))
-  Integer
-  (write-header* [this ^HttpServletResponse resp k]
-    (.addIntHeader resp k this)))
-
-(extend-protocol IResponseBody
-  ;; To extend, primitive array must be first.
-  ;; Also can't refer to primitives directly.
-  ;; https://clojure.atlassian.net/browse/CLJ-1381
-  (Class/forName "[B")
-  (write-body* [this ^HttpServletResponse resp]
-    (.write (.getOutputStream resp) ^bytes this))
-  String
-  (write-body* [this ^HttpServletResponse resp]
-    (.write (.getWriter resp) this))
-  java.io.InputStream
-  (write-body* [this ^HttpServletResponse resp]
-    (try
-      (.transferTo this (.getOutputStream resp))
-      (finally
-        (.close this)))))
-
+      (p/write-body body out))))
