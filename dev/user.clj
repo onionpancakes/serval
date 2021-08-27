@@ -19,7 +19,9 @@
 (defn handle
   [ctx]
   (pprint ctx)
-  #_(println (get-in ctx [:serval.service/request :headers "User-Agent"]))
+  (println (get-in ctx [:serval.service/request :headers "user-agent"]))
+  (println (vec (seq (get-in ctx [:serval.service/request :header-names]))))
+  (println (get-in ctx [:serval.service/request :method]))
   
   #_(println (get-in ctx [:serval.service/request :headers "User-Agent"]))
   #_(println (. (get ctx :serval.service/request) (getHeaders "User-Agent")))
@@ -33,26 +35,34 @@
 
 (def post-xf
   (comp (c/map into {:foo :bar})
-        (c/map #(doto % (println)))
+        #_(c/map #(doto % (println)))
         (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
         (c/terminate :serval.jsonista/error http/response 400 "Bad Json!" "text/plain" "utf-8")
         (c/map http/response 200 "Hi Post!!!" "text/plain" "utf-8")))
 
 (def router
-  (rt/router [["/"      {:GET {:key     :foo
-                               :handler handle}}]
-              ["/foo" {:GET {:handler handle}}]
+  (rt/router [["/"        {:GET {:key     :foo
+                                 :handler handle}}]
+              ["/foo"     {:GET {:handler handle}}]
               ["/foo/bar" {:GET {:handler handle}}]
               ["/foo/baz" {:GET {:handler handle}}]
-              ["/post" {:POST {:handler (c/handler post-xf)}}]
-              ["/error" {:GET {:handler error}}]
-              ["/error/" {:GET {:handler error}}]]))
+              ["/post"    {:POST {:handler (c/handler post-xf)}}]
+              ["/error"   {:GET {:handler error}}]
+              ["/error/"  {:GET {:handler error}}]]))
+
+(defn not-found
+  [ctx]
+  (http/response ctx 404 "Not Found lol?" "text/plain" "utf-8"))
+
+(def handler-xf
+  (comp (c/map r/match-by-path router)
+        (c/map r/handle-match-by-method {:default not-found})))
 
 (def handler
-  (r/route-handler router))
+  (c/handler handler-xf))
 
 (def http-servlet
-  (c/servlet #'handler))
+  (c/http-servlet #'handler))
 
 (def config
   {:connectors  [{:protocol :http

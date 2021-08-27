@@ -1,27 +1,23 @@
 (ns dev.onionpancakes.serval.reitit
   (:require [reitit.core :as r]))
 
-(defn match-handler
-  [router]
-  (fn [{:serval.service/keys [request] :as ctx}]
-    (let [path  (get request :path)
-          match (r/match-by-path router path)]
-      (assoc ctx :serval.reitit/match match))))
+(defn match-by-path
+  ([ctx router]
+   (match-by-path ctx router nil))
+  ([ctx router {:keys [path-key match-key]
+                :or   {path-key  [:serval.service/request :path]
+                       match-key [:serval.reitit/match]}}]
+   (let [path  (get-in ctx path-key)
+         match (r/match-by-path router path)]
+     (assoc-in ctx match-key match))))
 
-(defn not-found
-  [ctx]
-  (conj ctx {:serval.response/status 404
-             :serval.response/body   "Not found!"}))
-
-(defn invoke-match-handler
-  [{:serval.service/keys [request] :as ctx} opts]
-  (let [default (:not-found opts not-found)
-        match   (get ctx :serval.reitit/match)
-        method  (get request :method)
-        handler (get-in match [:data method :handler] default)]
-    (handler ctx)))
-
-(defn route-handler
-  ([router] (route-handler router nil))
-  ([router opts]
-   (comp #(invoke-match-handler % opts) (match-handler router))))
+(defn handle-match-by-method
+  ([ctx]
+   (handle-match-by-method ctx nil))
+  ([ctx {:keys [match-key default]
+         :or   {match-key [:serval.reitit/match]
+                default   identity}}]
+   (let [match   (get-in ctx match-key)
+         method  (get-in ctx [:serval.service/request :method])
+         handler (get-in match [:data method :handler] default)]
+     (handler ctx))))
