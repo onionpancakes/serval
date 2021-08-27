@@ -18,13 +18,14 @@
      (catch com.fasterxml.jackson.core.JsonParseException ex
        (assoc-in ctx error {:exception ex})))))
 
-(defrecord JsonBody [value object-mapper]
+(defrecord Json [value options]
   p/ResponseBody
   (p/write-body [this response]
-    (j/write-value (.getWriter ^ServletResponse response) value object-mapper)))
+    (let [object-mapper (get options :object-mapper j/default-object-mapper)]
+      (j/write-value (.getWriter ^ServletResponse response) value object-mapper))))
 
-(defn json-body
+(defn json
   ([value]
-   (JsonBody. value j/default-object-mapper))
-  ([value object-mapper]
-   (JsonBody. value object-mapper)))
+   (Json. value nil))
+  ([value options]
+   (Json. value options)))
