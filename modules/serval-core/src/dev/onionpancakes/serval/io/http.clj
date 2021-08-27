@@ -94,11 +94,16 @@
   [init-ctx resp-ctx]
   (let [^HttpServletResponse out (or (:serval.service/response resp-ctx)
                                      (:serval.service/response init-ctx))]
+    (if-let [content-type (:serval.response/content-type resp-ctx)]
+      (.setContentType out content-type))
+    (if-let [encoding (:serval.response/character-encoding resp-ctx)]
+      (.setCharacterEncoding out encoding))
     (if-let [status (:serval.response/status resp-ctx)]
       (.setStatus out status))
     (if-let [headers (:serval.response/headers resp-ctx)]
-      (doseq [[k v] headers]
-        (write-header* v out k)))
+      (doseq [[name values] headers
+              value         values]
+        (write-header* value out name)))
     (if-let [body (:serval.response/body resp-ctx)]
       (write-body* body out))))
 
@@ -113,11 +118,7 @@
     (.addIntHeader resp k this))
   Integer
   (write-header* [this ^HttpServletResponse resp k]
-    (.addIntHeader resp k this))
-  java.util.Collection
-  (write-header* [this resp k]
-    (doseq [v this]
-      (write-header* v resp k))))
+    (.addIntHeader resp k this)))
 
 (extend-protocol IResponseBody
   ;; To extend, primitive array must be first.

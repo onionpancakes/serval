@@ -48,3 +48,8 @@
   [& xfs]
   (->> (into '() handler-xf xfs)
        (apply comp)))
+
+(defn merge
+  [m]
+  (fn [ctx]
+    (conj ctx m)))

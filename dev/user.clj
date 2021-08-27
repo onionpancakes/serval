@@ -1,5 +1,6 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as c]
+            [dev.onionpancakes.serval.handler.http :as http]
             [dev.onionpancakes.serval.jetty :as j]
             [dev.onionpancakes.serval.reitit :as r]
             [dev.onionpancakes.serval.jsonista :as js]
@@ -27,7 +28,7 @@
    :serval.response/headers      {"Foo"          "Bar"
                                   "Test"         1
                                   "Test2"        [1 2 3]
-                                  "Content-Type" "text/plain; charset=utf-8"}
+                                  "Content-Type" "text/plain"}
    :serval.response/body         "Hello World! やばい foo bar baz"})
 
 (defn handle-post
@@ -38,9 +39,7 @@
 
 (def post-xf
   (comp (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
-        (c/terminate :serval.jsonista/error (fn [ctx]
-                                              {:serval.response/status 400
-                                               :serval.response/body   "Bad json"}))
+        (c/terminate :serval.jsonista/error (http/response 400 "Bad Json." "text/plain" "utf-8"))
         (c/map handle-post)))
 
 (def router
