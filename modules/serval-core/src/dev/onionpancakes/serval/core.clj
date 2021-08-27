@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.core
-  (:refer-clojure :exclude [map merge])
+  (:refer-clojure :exclude [map into])
   (:require [dev.onionpancakes.serval.io.http :as io.http])
   (:import [jakarta.servlet GenericServlet]))
 
@@ -46,10 +46,10 @@
 
 (defn handler
   [& xfs]
-  (->> (into '() handler-xf xfs)
+  (->> (clojure.core/into '() handler-xf xfs)
        (apply comp)))
 
-(defn merge
+(defn into
   [m]
   (fn [ctx]
-    (conj ctx m)))
+    (clojure.core/into ctx m)))

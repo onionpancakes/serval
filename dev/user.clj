@@ -40,7 +40,7 @@
 (def post-xf
   (comp (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
         (c/terminate :serval.jsonista/error (http/response 400 "Bad Json." "text/plain" "utf-8"))
-        (c/map handle-post)))
+        (c/map (http/response 200 "Hi Post!" "text/plain" "utf-8"))))
 
 (def router
   (rt/router [["/"      {:GET {:key     :foo
