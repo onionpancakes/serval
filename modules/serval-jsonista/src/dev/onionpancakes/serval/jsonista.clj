@@ -6,16 +6,17 @@
 (defn read-json
   ([ctx]
    (read-json ctx nil))
-  ([ctx {:keys [to from object-mapper]
+  ([ctx {:keys [to from error object-mapper]
          :or   {from          [:serval.service/request :reader]
                 to            [:serval.request/body]
+                error         [:serval.jsonista/error]
                 object-mapper j/default-object-mapper}}]
    (try
      (let [source (get-in ctx from)
            value  (j/read-value source object-mapper)]
        (assoc-in ctx to value))
      (catch com.fasterxml.jackson.core.JsonParseException ex
-       (assoc ctx :serval.jsonista/error {:exception ex})))))
+       (assoc-in ctx error {:exception ex})))))
 
 (defrecord JsonBody [value object-mapper]
   p/ResponseBody
