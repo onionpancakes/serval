@@ -1,5 +1,7 @@
 (ns dev.onionpancakes.serval.jsonista
-  (:require [jsonista.core :as j]))
+  (:require [dev.onionpancakes.serval.io.protocols :as p]
+            [jsonista.core :as j])
+  (:import [jakarta.servlet ServletResponse]))
 
 (defn read-json
   ([ctx]
@@ -15,6 +17,13 @@
      (catch com.fasterxml.jackson.core.JsonParseException ex
        (assoc ctx :serval.jsonista/error {:exception ex})))))
 
-#_(defrecord Json [value]
-  IResponseBody
-  (write-body* [this resp]))
+(defrecord JsonBody [value object-mapper]
+  p/ResponseBody
+  (p/write-body [this response]
+    (j/write-value (.getWriter ^ServletResponse response) value object-mapper)))
+
+(defn json-body
+  ([value]
+   (JsonBody. value j/default-object-mapper))
+  ([value object-mapper]
+   (JsonBody. value object-mapper)))

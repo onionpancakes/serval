@@ -33,6 +33,10 @@
                                   "Content-Type" ["text/plain"]}
    :serval.response/body         "Hello World! やばい foo bar baz"})
 
+(defn handle-json
+  [ctx]
+  (http/response ctx 200 (js/json-body {:foo "bar"}) "application/json"))
+
 (def post-xf
   (comp (c/map into {:foo :bar})
         #_(c/map #(doto % (println)))
@@ -43,7 +47,7 @@
 (def router
   (rt/router [["/"        {:GET {:key     :foo
                                  :handler handle}}]
-              ["/foo"     {:GET {:handler handle}}]
+              ["/foo"     {:GET {:handler handle-json}}]
               ["/foo/bar" {:GET {:handler handle}}]
               ["/foo/baz" {:GET {:handler handle}}]
               ["/post"    {:POST {:handler (c/handler post-xf)}}]
