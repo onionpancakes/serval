@@ -85,19 +85,41 @@
 
 ;; Write
 
-(defn write-response!
-  [init-ctx resp-ctx]
-  (let [^HttpServletResponse out (or (:serval.service/response resp-ctx)
-                                     (:serval.service/response init-ctx))]
-    (if-let [content-type (:serval.response/content-type resp-ctx)]
+(defprotocol Response
+  (write-response [this ctx]))
+
+(defprotocol ResponseHeader
+  (write-header [this response name]))
+
+(extend-protocol ResponseHeader
+  String
+  (write-header [this ^HttpServletResponse response name]
+    (.addHeader response name this))
+  Long
+  (write-header [this ^HttpServletResponse response name]
+    (.addIntHeader response name this))
+  Integer
+  (write-header [this ^HttpServletResponse response name]
+    (.addIntHeader response name this)))
+
+(defn write-response-map
+  [m ctx]
+  (let [^HttpServletResponse out (or (:serval.service/response m)
+                                     (:serval.service/response ctx))]
+    (if-let [content-type (:serval.response/content-type m)]
       (.setContentType out content-type))
-    (if-let [encoding (:serval.response/character-encoding resp-ctx)]
+    (if-let [encoding (:serval.response/character-encoding m)]
       (.setCharacterEncoding out encoding))
-    (if-let [status (:serval.response/status resp-ctx)]
+    (if-let [status (:serval.response/status m)]
       (.setStatus out status))
-    (if-let [headers (:serval.response/headers resp-ctx)]
+    (if-let [headers (:serval.response/headers m)]
       (doseq [[name values] headers
               value         values]
-        (p/write-header value out name)))
-    (if-let [body (:serval.response/body resp-ctx)]
+        (write-header value out name)))
+    (if-let [body (:serval.response/body m)]
       (p/write-body body out))))
+
+(extend-protocol Response
+  java.util.Map
+  (write-response [this ctx]
+    (write-response-map this ctx)))

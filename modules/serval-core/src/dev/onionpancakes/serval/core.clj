@@ -17,7 +17,7 @@
   [handler]
   (fn [servlet request response]
     (let [ctx (io.http/context servlet request response)]
-      (io.http/write-response! ctx (handler ctx)))))
+      (io.http/write-response (handler ctx) ctx))))
 
 (defn http-servlet
   [handler]

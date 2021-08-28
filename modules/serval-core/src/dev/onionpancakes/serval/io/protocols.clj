@@ -21,19 +21,3 @@
       (.transferTo this (.getOutputStream response))
       (finally
         (.close this)))))
-
-;; HTTP
-
-(defprotocol ResponseHeader
-  (write-header [this response name]))
-
-(extend-protocol ResponseHeader
-  String
-  (write-header [this ^HttpServletResponse response name]
-    (.addHeader response name this))
-  Long
-  (write-header [this ^HttpServletResponse response name]
-    (.addIntHeader response name this))
-  Integer
-  (write-header [this ^HttpServletResponse response name]
-    (.addIntHeader response name this)))
