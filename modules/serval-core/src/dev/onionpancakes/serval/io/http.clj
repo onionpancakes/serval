@@ -1,7 +1,10 @@
 (ns dev.onionpancakes.serval.io.http
-  (:require [dev.onionpancakes.serval.io.protocols :as p])
-  (:import [jakarta.servlet.http
-            HttpServlet HttpServletRequest HttpServletResponse
+  (:require [dev.onionpancakes.serval.io :as io])
+  (:import [java.util.concurrent CompletionStage CompletableFuture]
+           [java.util.function Function]
+           [jakarta.servlet.http
+            HttpServletRequest
+            HttpServletResponse
             HttpServletRequestWrapper]))
 
 ;; Request
@@ -86,6 +89,7 @@
 ;; Write
 
 (defprotocol Response
+  (async-response? [this])
   (write-response [this ctx]))
 
 (defprotocol ResponseHeader
@@ -117,9 +121,41 @@
               value         values]
         (write-header value out name)))
     (if-let [body (:serval.response/body m)]
-      (p/write-body body out))))
+      ;; Body is last expression, so if it returns a CompletionStage,
+      ;; so does this.
+      (io/write-body body out))))
 
 (extend-protocol Response
   java.util.Map
+  (async-response? [this]
+    (if-let [body (get this :serval.response/body)]
+      (io/async-body? body)
+      false))
   (write-response [this ctx]
-    (write-response-map this ctx)))
+    (write-response-map this ctx))
+  CompletionStage
+  (async-response? [this] true)
+  (write-response [this ctx]
+    (.thenCompose this (reify Function
+                         (apply [this input]
+                           (or (write-response input ctx)
+                               (CompletableFuture/completedStage nil)))))))
+
+;; Service fn
+
+(defn service-fn
+  [handler]
+  (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
+    (let [ctx                     (context servlet request response)
+          hresp                   (handler ctx)
+          async-ctx               (if (async-response? hresp)
+                                    (.startAsync request))
+          ;; TODO: Async listener / timeout
+          ^CompletionStage cstage (write-response (handler ctx) ctx)]
+      (when (and async-ctx (or cstage (CompletableFuture/completedStage nil)))
+        (-> cstage
+            (.thenRun (fn [] (.complete async-ctx)))
+            (.exceptionally (reify Function
+                              (apply [_ input]
+                                (.sendError response 500 (.getMessage ^Throwable input))
+                                (.complete async-ctx)))))))))

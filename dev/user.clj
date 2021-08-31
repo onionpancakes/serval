@@ -1,5 +1,7 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as c]
+            [dev.onionpancakes.serval.io :as io]
+            [dev.onionpancakes.serval.io.http :as io.http]
             [dev.onionpancakes.serval.handler.http :as http]
             [dev.onionpancakes.serval.jetty :as j]
             [dev.onionpancakes.serval.reitit :as r]
@@ -7,7 +9,8 @@
             [reitit.core :as rt]
             [jsonista.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import [org.eclipse.jetty.server Server]))
+  (:import [org.eclipse.jetty.server Server]
+           [java.util.concurrent CompletableFuture]))
 
 (set! *warn-on-reflection* true)
 
@@ -68,12 +71,59 @@
 (def http-servlet
   (c/http-servlet #'handler))
 
+;;
+
+(defn async-handler2
+  [ctx]
+  (let [resp (get ctx :serval.service/response)
+        body (.getBytes "Aync bytes" "utf-8")
+        os   (.getOutputStream resp)
+        cf   (CompletableFuture.)
+        cb   (io/bytes-write-listener body os cf)
+        a    (.startAsync (get ctx :serval.service/request))]
+    #_(.. resp getOutputStream (println "foobar"))
+    (.thenRun cf (fn [] (.complete a)))
+    (.. resp getOutputStream (setWriteListener cb)))
+  (println :foobar333)
+  #_{:serval.response/body "Async foobar."}
+  #_{:serval.response/body (io/async-bytes (.getBytes "Aync bytes" "utf-8"))}
+  {})
+
+(defn async-handler
+  [ctx]
+  (let [cf   (CompletableFuture.)
+        resp {:serval.response/body "Async foobar."}
+        resp2 {:serval.response/body (io/async-bytes (.getBytes "Aync bytes lol" "utf-8"))
+               :serval.response/content-type "text/plain"
+               :serval.response/character-encoding "utf-8"
+               }]
+    (.complete cf resp)
+    (.thenApply cf (reify java.util.function.Function
+                     (apply [_ input]
+                       #_(throw (ex-info "foobar" {}))
+                       #_(println :async (.startAsync (get ctx :serval.service/request)))
+                       #_(println :foobar :lol :thing)
+                       resp2)))
+    #_(.thenRun cf (fn [] (throw (ex-info "uhoh" {}))))
+    #_(.completeExceptionally cf (ex-info "foo" {}))
+    #_(.completeOnTimeout cf resp 2 java.util.concurrent.TimeUnit/SECONDS)
+    #_cf
+    #_(CompletableFuture/completedStage resp)))
+
+(def service-fn
+  (io.http/service-fn #'async-handler))
+
+(def http-servlet2
+  (c/servlet* service-fn))
+
+;;
+
 (def config
   {:connectors  [{:protocol :http
                   :port     3000}
                  {:protocol :http2c
                   :port     3001}]
-   :servlet     http-servlet
+   :servlet     http-servlet2
    :gzip        {:included-methods    [:GET :POST]
                  :included-mime-types ["text/plain"]
                  :included-paths      ["/*"]
