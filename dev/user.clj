@@ -73,22 +73,6 @@
 
 ;;
 
-(defn async-handler2
-  [ctx]
-  (let [resp (get ctx :serval.service/response)
-        body (.getBytes "Aync bytes" "utf-8")
-        os   (.getOutputStream resp)
-        cf   (CompletableFuture.)
-        cb   (io/bytes-write-listener body os cf)
-        a    (.startAsync (get ctx :serval.service/request))]
-    #_(.. resp getOutputStream (println "foobar"))
-    (.thenRun cf (fn [] (.complete a)))
-    (.. resp getOutputStream (setWriteListener cb)))
-  (println :foobar333)
-  #_{:serval.response/body "Async foobar."}
-  #_{:serval.response/body (io/async-bytes (.getBytes "Aync bytes" "utf-8"))}
-  {})
-
 (defn async-handler
   [ctx]
   (let [cf   (CompletableFuture.)
@@ -114,7 +98,7 @@
   (io.http/service-fn #'async-handler))
 
 (def http-servlet2
-  (c/servlet* service-fn))
+  (c/http-servlet #'async-handler))
 
 ;;
 
