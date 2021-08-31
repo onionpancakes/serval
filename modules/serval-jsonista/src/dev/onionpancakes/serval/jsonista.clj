@@ -23,7 +23,14 @@
   (io.body/async-body? [this _] false)
   (io.body/write-body [this {^ServletResponse resp :serval.service/response}]
     (let [object-mapper (:object-mapper options j/default-object-mapper)]
-      (j/write-value (.getWriter resp) value object-mapper))))
+      (j/write-value (.getWriter resp) value object-mapper)))
+
+  io.body/AsyncWritable
+  (io.body/write-listener [this ctx cb]
+    (let [object-mapper         (:object-mapper options j/default-object-mapper)
+          ^ServletResponse resp (:serval.service/response ctx)]
+      (-> (j/write-value-as-bytes value object-mapper)
+          (io.body/bytes-write-listener (.getOutputStream resp) cb)))))
 
 (defn json
   ([value]

@@ -74,10 +74,11 @@
 
 (defn async-handler
   [ctx]
-  (let [body (io.body/async-body "Async string lol やばい")
-        resp {:serval.response/body               body
-              :serval.response/content-type       "text/plain"
-              :serval.response/character-encoding "utf-8"}]
+  (let [body  (io.body/async-body "Async string lol やばい")
+        body2 (io.body/async-body (js/json {:foo "bar"}))
+        resp  {:serval.response/body               body2
+               :serval.response/content-type       "application/json"
+               :serval.response/character-encoding "utf-8"}]
     (-> (CompletableFuture/completedStage resp)
         (.thenApply (reify java.util.function.Function
                       (apply [_ input]
