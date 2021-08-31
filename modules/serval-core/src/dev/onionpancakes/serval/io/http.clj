@@ -144,10 +144,12 @@
 (defn service-fn
   [handler]
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
-    (let [ctx                     (context servlet request response)
-          hresp                   (handler ctx)
-          async-ctx               (if (async-response? hresp ctx)
-                                    (.startAsync request))
+    (let [ctx       (context servlet request response)
+          hresp     (handler ctx)
+          async-ctx (cond
+                      (.isAsyncStarted request)   (.getAsyncContext request)
+                      (async-response? hresp ctx) (.startAsync request))
+          
           ;; TODO: Async listener / timeout
           ^CompletionStage cstage (write-response hresp ctx)]
       (when async-ctx
