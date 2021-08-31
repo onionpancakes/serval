@@ -94,7 +94,7 @@
                   :port     3000}
                  {:protocol :http2c
                   :port     3001}]
-   :servlet     http-servlet
+   :servlet     http-servlet2
    :gzip        {:included-methods    [:GET :POST]
                  :included-mime-types ["text/plain"]
                  :included-paths      ["/*"]

@@ -150,10 +150,11 @@
                                     (.startAsync request))
           ;; TODO: Async listener / timeout
           ^CompletionStage cstage (write-response hresp ctx)]
-      (when (and async-ctx (or cstage (CompletableFuture/completedStage nil)))
-        (-> cstage
+      (when async-ctx
+        (-> (or cstage (CompletableFuture/completedStage nil))
             (.thenRun (fn [] (.complete async-ctx)))
             (.exceptionally (reify Function
                               (apply [_ input]
-                                (.sendError response 500 (.getMessage ^Throwable input))
-                                (.complete async-ctx)))))))))
+                                (let [msg (.getMessage ^Throwable input)]
+                                  (.sendError response 500 msg)
+                                  (.complete async-ctx))))))))))
