@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.jsonista
-  (:require [dev.onionpancakes.serval.io :as io]
+  (:require [dev.onionpancakes.serval.io.body :as io.body]
             [jsonista.core :as j])
   (:import [jakarta.servlet ServletResponse]))
 
@@ -19,11 +19,11 @@
        (assoc-in ctx error {:exception ex})))))
 
 (defrecord Json [value options]
-  io/ResponseBody
-  (io/async-body? [this] false)
-  (io/write-body [this response]
-    (let [object-mapper (get options :object-mapper j/default-object-mapper)]
-      (j/write-value (.getWriter ^ServletResponse response) value object-mapper))))
+  io.body/ResponseBody
+  (io.body/async-body? [this _] false)
+  (io.body/write-body [this {^ServletResponse resp :serval.service/response}]
+    (let [object-mapper (:object-mapper options j/default-object-mapper)]
+      (j/write-value (.getWriter resp) value object-mapper))))
 
 (defn json
   ([value]

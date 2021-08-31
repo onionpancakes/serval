@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.io.http
-  (:require [dev.onionpancakes.serval.io :as io])
+  (:require [dev.onionpancakes.serval.io.body :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [java.util.function Function]
            [jakarta.servlet.http
@@ -89,7 +89,7 @@
 ;; Write
 
 (defprotocol Response
-  (async-response? [this])
+  (async-response? [this ctx])
   (write-response [this ctx]))
 
 (defprotocol ResponseHeader
@@ -108,8 +108,7 @@
 
 (defn write-response-map
   [m ctx]
-  (let [^HttpServletResponse out (or (:serval.service/response m)
-                                     (:serval.service/response ctx))]
+  (let [^HttpServletResponse out (:serval.service/response ctx)]
     (if-let [content-type (:serval.response/content-type m)]
       (.setContentType out content-type))
     (if-let [encoding (:serval.response/character-encoding m)]
@@ -123,18 +122,17 @@
     (if-let [body (:serval.response/body m)]
       ;; Body is last expression, so if it returns a CompletionStage,
       ;; so does this.
-      (io/write-body body out))))
+      (io.body/write-body body ctx))))
 
 (extend-protocol Response
   java.util.Map
-  (async-response? [this]
-    (if-let [body (get this :serval.response/body)]
-      (io/async-body? body)
-      false))
+  (async-response? [this ctx]
+    (-> (:serval.response/body this)
+        (io.body/async-body? ctx)))
   (write-response [this ctx]
     (write-response-map this ctx))
   CompletionStage
-  (async-response? [this] true)
+  (async-response? [this _] true)
   (write-response [this ctx]
     (.thenCompose this (reify Function
                          (apply [this input]
@@ -148,10 +146,10 @@
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
     (let [ctx                     (context servlet request response)
           hresp                   (handler ctx)
-          async-ctx               (if (async-response? hresp)
+          async-ctx               (if (async-response? hresp ctx)
                                     (.startAsync request))
           ;; TODO: Async listener / timeout
-          ^CompletionStage cstage (write-response (handler ctx) ctx)]
+          ^CompletionStage cstage (write-response hresp ctx)]
       (when (and async-ctx (or cstage (CompletableFuture/completedStage nil)))
         (-> cstage
             (.thenRun (fn [] (.complete async-ctx)))

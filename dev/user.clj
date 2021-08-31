@@ -1,6 +1,6 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as c]
-            [dev.onionpancakes.serval.io :as io]
+            [dev.onionpancakes.serval.io.body :as io.body]
             [dev.onionpancakes.serval.io.http :as io.http]
             [dev.onionpancakes.serval.handler.http :as http]
             [dev.onionpancakes.serval.jetty :as j]
@@ -41,8 +41,7 @@
   (http/response ctx 200 (js/json {:foo "bar"}) "application/json"))
 
 (def post-xf
-  (comp (c/map into {:foo :bar})
-        #_(c/map #(doto % (println)))
+  (comp #_(c/map #(doto % (println)))
         (c/map js/read-json {:object-mapper json/keyword-keys-object-mapper})
         (c/terminate :serval.jsonista/error http/response 400 "Bad Json!" "text/plain" "utf-8")
         (c/map http/response 200 "Hi Post!!!" "text/plain" "utf-8")))
@@ -75,7 +74,7 @@
 
 (defn async-handler
   [ctx]
-  (let [body (io/async-bytes (.getBytes "Aync bytes lol" "utf-8"))
+  (let [body (io.body/async-bytes (.getBytes "Aync bytes lol" "utf-8"))
         resp {:serval.response/body               body
               :serval.response/content-type       "text/plain"
               :serval.response/character-encoding "utf-8"}]
@@ -95,7 +94,7 @@
                   :port     3000}
                  {:protocol :http2c
                   :port     3001}]
-   :servlet     http-servlet2
+   :servlet     http-servlet
    :gzip        {:included-methods    [:GET :POST]
                  :included-mime-types ["text/plain"]
                  :included-paths      ["/*"]
