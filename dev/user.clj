@@ -75,27 +75,15 @@
 
 (defn async-handler
   [ctx]
-  (let [cf   (CompletableFuture.)
-        resp {:serval.response/body "Async foobar."}
-        resp2 {:serval.response/body (io/async-bytes (.getBytes "Aync bytes lol" "utf-8"))
-               :serval.response/content-type "text/plain"
-               :serval.response/character-encoding "utf-8"
-               }]
-    (.complete cf resp)
-    (.thenApply cf (reify java.util.function.Function
-                     (apply [_ input]
-                       #_(throw (ex-info "foobar" {}))
-                       #_(println :async (.startAsync (get ctx :serval.service/request)))
-                       #_(println :foobar :lol :thing)
-                       resp2)))
-    #_(.thenRun cf (fn [] (throw (ex-info "uhoh" {}))))
-    #_(.completeExceptionally cf (ex-info "foo" {}))
-    #_(.completeOnTimeout cf resp 2 java.util.concurrent.TimeUnit/SECONDS)
-    #_cf
-    #_(CompletableFuture/completedStage resp)))
-
-(def service-fn
-  (io.http/service-fn #'async-handler))
+  (let [body (io/async-bytes (.getBytes "Aync bytes lol" "utf-8"))
+        resp {:serval.response/body               body
+              :serval.response/content-type       "text/plain"
+              :serval.response/character-encoding "utf-8"}]
+    (-> (CompletableFuture/completedStage resp)
+        (.thenApply (reify java.util.function.Function
+                      (apply [_ input]
+                        #_(throw (ex-info "foobar" {}))
+                        input))))))
 
 (def http-servlet2
   (c/http-servlet #'async-handler))
