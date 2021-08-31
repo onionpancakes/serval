@@ -74,7 +74,7 @@
 
 (defn async-handler
   [ctx]
-  (let [body (io.body/async-bytes (.getBytes "Aync bytes lol" "utf-8"))
+  (let [body (io.body/async-body "Async string lol やばい")
         resp {:serval.response/body               body
               :serval.response/content-type       "text/plain"
               :serval.response/character-encoding "utf-8"}]

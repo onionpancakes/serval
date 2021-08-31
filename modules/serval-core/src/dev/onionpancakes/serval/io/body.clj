@@ -57,29 +57,42 @@
   [^bytes bytes os cb]
   (BytesWriteListener. bytes 0 (alength bytes) os cb))
 
-(defn set-bytes-write-listener!
-  [bytes ^ServletResponse resp cb]
-  (let [os (.getOutputStream resp)
-        wl (bytes-write-listener bytes os cb)]
-    (.setWriteListener os wl)))
+(defprotocol AsyncWritable
+  (write-listener [this ctx cb]))
 
-(defrecord AsyncBytes [bytes]
+(extend-protocol AsyncWritable
+
+  (Class/forName "[B")
+  (write-listener [this {^ServletResponse resp :serval.service/response} cb]
+    (bytes-write-listener this (.getOutputStream resp) cb))
+
+  String
+  (write-listener [this {^ServletResponse resp :serval.service/response} cb]
+    (-> (.getBytes this (.getCharacterEncoding resp))
+        (bytes-write-listener (.getOutputStream resp) cb))))
+
+(defrecord AsyncBody [body]
   ResponseBody
   (async-body? [this {^ServletRequest req :serval.service/request}]
     (.isAsyncSupported req))
   (write-body [this {^ServletRequest req   :serval.service/request
-                     ^ServletResponse resp :serval.service/response}]
+                     ^ServletResponse resp :serval.service/response
+                     :as                   ctx}]
     (if (.isAsyncSupported req)
       ;; Async write if supported.
+      ;; Note: will fail if underlying body does not implement AsyncWritable.
+      ;; It is possible to test if underlying satisfies AsyncWritable,
+      ;; and fall back to sync writes, but performance may suffer.
       (let [cf (CompletableFuture.)
             cb (fn
                  ([] (.complete cf nil))
-                 ([err] (.completeExceptionally cf err)))]
-        (set-bytes-write-listener! bytes resp cb)
+                 ([err] (.completeExceptionally cf err)))
+            wl (write-listener body ctx cb)]
+        (.. resp getOutputStream (setWriteListener wl))
         cf)
-      ;; Sync write when async not supported.
-      (.. resp getOutputStream (write ^bytes bytes)))))
+      ;; Sync write if async not supported.
+      (write-body body ctx))))
 
-(defn async-bytes
-  [bytes]
-  (AsyncBytes. bytes))
+(defn async-body
+  [body]
+  (AsyncBody. body))
