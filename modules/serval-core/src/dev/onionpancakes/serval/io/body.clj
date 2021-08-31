@@ -27,6 +27,7 @@
   (write-body [this {^ServletResponse resp :serval.service/response}]
     (try
       (.transferTo this (.getOutputStream resp))
+      nil ;; Return a nil, because transferTo returns a long.
       (finally
         (.close this))))
   
@@ -73,8 +74,9 @@
 
 (defrecord AsyncBody [body]
   ResponseBody
-  (async-body? [this {^ServletRequest req :serval.service/request}]
-    (.isAsyncSupported req))
+  (async-body? [this {^ServletRequest req :serval.service/request :as ctx}]
+    (or (.isAsyncSupported req)
+        (async-body? body ctx)))
   (write-body [this {^ServletRequest req   :serval.service/request
                      ^ServletResponse resp :serval.service/response
                      :as                   ctx}]
