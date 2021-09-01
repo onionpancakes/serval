@@ -1,8 +1,10 @@
 (ns dev.onionpancakes.serval.io.body
   (:import [java.util.concurrent CompletableFuture]
+           [java.nio ByteBuffer]
            [jakarta.servlet
             ServletRequest ServletResponse
-            ServletOutputStream WriteListener]))
+            ServletInputStream ServletOutputStream
+            ReadListener WriteListener]))
 
 ;; Body
 
@@ -34,6 +36,60 @@
   nil
   (async-body? [this _] false)
   (write-body [this _] nil))
+
+;; Async read support
+
+(deftype BytesReadChunk [bytes ^int length])
+
+(defn chunks-total-length
+  [^java.lang.Iterable chunks]
+  (let [iter (.iterator chunks)]
+    (loop [total-length 0]
+      (if (.hasNext iter)
+        (recur (->> (.-length ^BytesReadChunk (.next iter))
+                    (unchecked-add total-length)))
+        total-length))))
+
+(defn chunks-concat-bytes
+  [^java.lang.Iterable chunks]
+  (let [size   (chunks-total-length chunks)
+        barray (byte-array size)
+        buffer (ByteBuffer/wrap barray)
+        iter   (.iterator chunks)]
+    (while (.hasNext iter)
+      (let [^BytesReadChunk chunk (.next iter)]
+        (.put buffer (.-bytes chunk) 0 (.-length chunk))))
+    barray))
+
+(deftype BytesReadListener [chunk-size
+                            ^java.util.List chunks
+                            ^ServletInputStream is
+                            ^CompletableFuture cf]
+  ReadListener
+  (onAllDataRead [this]
+    (.complete cf (chunks-concat-bytes chunks)))
+  (onDataAvailable [this]
+    (loop [buffer (byte-array chunk-size)]
+      (let [readed (.read is buffer)]
+        (if-not (== readed  -1)
+          (.add chunks (BytesReadChunk. buffer readed))))
+      (if (and (not (.isFinished is)) (.isReady is))
+        (recur (byte-array chunk-size)))))
+  (onError [this throwable]
+    (.completeExceptionally cf throwable)))
+
+(defn bytes-read-listener
+  [chunk-size is cf]
+  (BytesReadListener. chunk-size (java.util.ArrayList.) is cf))
+
+(defn read-body-as-bytes-async!
+  [^ServletRequest request]
+  (let [cf (CompletableFuture.)
+        is (.getInputStream request)
+        rl (bytes-read-listener 1024 is cf)]
+    (.startAsync request)
+    (.setReadListener is rl)
+    cf))
 
 ;; Async write support
 

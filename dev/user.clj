@@ -9,7 +9,8 @@
             [reitit.core :as rt]
             [jsonista.core :as json]
             [clojure.pprint :refer [pprint]])
-  (:import [org.eclipse.jetty.server Server]
+  (:import [dev.onionpancakes.serval.io.body BytesReadChunk]
+           [org.eclipse.jetty.server Server]
            [java.util.concurrent CompletableFuture]))
 
 (set! *warn-on-reflection* true)
@@ -85,8 +86,16 @@
                         #_(throw (ex-info "foobar" {}))
                         input))))))
 
+(defn async-handler-post
+  [ctx]
+  (let [req (:serval.service/request ctx)]
+    (-> ^CompletableFuture (io.body/read-body-as-bytes-async! req)
+        (.thenApply (reify java.util.function.Function
+                      (apply [_ input]
+                        (http/response ctx 200 (String. ^bytes input) "application/json" "utf-8")))))))
+
 (def http-servlet2
-  (c/http-servlet #'async-handler))
+  (c/http-servlet #'async-handler-post))
 
 ;;
 
