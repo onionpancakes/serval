@@ -8,6 +8,7 @@
             [dev.onionpancakes.serval.jsonista :as js]
             [reitit.core :as rt]
             [jsonista.core :as json]
+            [promesa.core :as p]
             [clojure.pprint :refer [pprint]])
   (:import [dev.onionpancakes.serval.io.body BytesReadChunk]
            [org.eclipse.jetty.server Server]
@@ -94,8 +95,14 @@
                       (apply [_ input]
                         (http/response ctx 200 (io.body/async-body input) "application/json" "utf-8")))))))
 
+(defn async-handler-promise
+  [ctx]
+  (-> (:serval.service/request ctx)
+      (io.body/read-body-as-bytes-async!)
+      (p/then #(http/response ctx 200 (io.body/async-body %) "application/json"))))
+
 (def http-servlet2
-  (c/http-servlet #'async-handler-post))
+  (c/http-servlet #'async-handler-promise))
 
 ;;
 
