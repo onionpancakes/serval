@@ -69,12 +69,12 @@
   (onAllDataRead [this]
     (.complete cf (chunks-concat-bytes chunks)))
   (onDataAvailable [this]
-    (loop [buffer (byte-array chunk-size)]
-      (let [readed (.read is buffer)]
-        (if-not (== readed  -1)
-          (.add chunks (BytesReadChunk. buffer readed))))
-      (if (and (not (.isFinished is)) (.isReady is))
-        (recur (byte-array chunk-size)))))
+    (loop []
+      (let [buffer (byte-array chunk-size)
+            nread  (.read is buffer)]
+        (when-not (== nread -1)
+          (.add chunks (BytesReadChunk. buffer nread))
+          (if (.isReady is) (recur))))))
   (onError [this throwable]
     (.completeExceptionally cf throwable)))
 
