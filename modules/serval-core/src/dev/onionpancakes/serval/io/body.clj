@@ -84,13 +84,15 @@
   (BytesReadListener. chunk-size (java.util.ArrayList.) is cf))
 
 (defn read-body-as-bytes-async!
-  [^ServletRequest request]
-  (let [cf (CompletableFuture.)
-        is (.getInputStream request)
-        rl (bytes-read-listener 1024 is cf)]
-    (.startAsync request)
-    (.setReadListener is rl)
-    cf))
+  ([request] (read-body-as-bytes-async! request nil))
+  ([^ServletRequest request {:keys [chunk-size]
+                             :or   {chunk-size 1024}}]
+   (let [cf (CompletableFuture.)
+         is (.getInputStream request)
+         rl (bytes-read-listener chunk-size is cf)]
+     (.startAsync request)
+     (.setReadListener is rl)
+     cf)))
 
 ;; Async write support
 
