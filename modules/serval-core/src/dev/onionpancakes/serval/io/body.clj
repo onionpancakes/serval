@@ -70,6 +70,7 @@
     (.complete cf (chunks-concat-bytes chunks)))
   (onDataAvailable [this]
     (loop []
+      ;; Note: chunk-size is boxed. (byte-array) can't take primitives?
       (let [buffer (byte-array chunk-size)
             nread  (.read is buffer)]
         (when-not (== nread -1)
