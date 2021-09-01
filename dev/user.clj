@@ -92,7 +92,7 @@
     (-> ^CompletableFuture (io.body/read-body-as-bytes-async! req)
         (.thenApply (reify java.util.function.Function
                       (apply [_ input]
-                        (http/response ctx 200 (String. ^bytes input) "application/json" "utf-8")))))))
+                        (http/response ctx 200 (io.body/async-body input) "application/json" "utf-8")))))))
 
 (def http-servlet2
   (c/http-servlet #'async-handler-post))

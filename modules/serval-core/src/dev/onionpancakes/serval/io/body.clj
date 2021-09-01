@@ -98,7 +98,7 @@
                              ^:unsynchronized-mutable ^int offset
                              ^long length
                              ^ServletOutputStream os
-                             cb]
+                             ^CompletableFuture cf]
   WriteListener
   (onWritePossible [this]
     (loop []
@@ -107,13 +107,13 @@
           (.write os (aget bytes offset))
           (set! offset (unchecked-inc-int offset))
           (if (.isReady os) (recur)))
-        (cb))))
+        (.complete cf nil))))
   (onError [this throwable]
-    (cb throwable)))
+    (.completeExceptionally cf throwable)))
 
 (defn bytes-write-listener
-  [^bytes bytes os cb]
-  (BytesWriteListener. bytes 0 (alength bytes) os cb))
+  [^bytes bytes os cf]
+  (BytesWriteListener. bytes 0 (alength bytes) os cf))
 
 (defprotocol AsyncWritable
   (write-listener [this ctx cb]))
@@ -121,13 +121,13 @@
 (extend-protocol AsyncWritable
 
   (Class/forName "[B")
-  (write-listener [this {^ServletResponse resp :serval.service/response} cb]
-    (bytes-write-listener this (.getOutputStream resp) cb))
+  (write-listener [this {^ServletResponse resp :serval.service/response} cf]
+    (bytes-write-listener this (.getOutputStream resp) cf))
 
   String
-  (write-listener [this {^ServletResponse resp :serval.service/response} cb]
+  (write-listener [this {^ServletResponse resp :serval.service/response} cf]
     (-> (.getBytes this (.getCharacterEncoding resp))
-        (bytes-write-listener (.getOutputStream resp) cb))))
+        (bytes-write-listener (.getOutputStream resp) cf))))
 
 (defrecord AsyncBody [body]
   ResponseBody
@@ -143,10 +143,7 @@
       ;; It is possible to test if underlying satisfies AsyncWritable,
       ;; and fall back to sync writes, but performance may suffer.
       (let [cf (CompletableFuture.)
-            cb (fn
-                 ([] (.complete cf nil))
-                 ([err] (.completeExceptionally cf err)))
-            wl (write-listener body ctx cb)]
+            wl (write-listener body ctx cf)]
         (.. resp getOutputStream (setWriteListener wl))
         cf)
       ;; Sync write if async not supported.
