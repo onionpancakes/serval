@@ -24,17 +24,17 @@
 (defn handle
   [ctx]
   #_(pprint ctx)
-  (println (get-in ctx [:serval.service/request :headers "Cookie"]))
-  (println (get-in ctx [:serval.service/request :protocol]))
-  (println (get-in ctx [:serval.service/request :locales]))
-  (println (get-in ctx [:serval.service/request :cookies]))
-  (doseq [c (get-in ctx [:serval.service/request :cookies])]
+  #_(println (get-in ctx [:serval.service/request :headers "Cookie"]))
+  #_(println (get-in ctx [:serval.service/request :protocol]))
+  #_(println (get-in ctx [:serval.service/request :locales]))
+  #_(println (get-in ctx [:serval.service/request :cookies]))
+  #_(doseq [c (get-in ctx [:serval.service/request :cookies])]
     (println :cookie ))
 
-  (println (.getCookies (get ctx :serval.service/request)))
+  #_(println (.getCookies (get ctx :serval.service/request)))
 
   {:serval.response/status  200
-   :serval.response/cookies (get-in ctx [:serval.service/request :cookies])
+   #_#_:serval.response/cookies (get-in ctx [:serval.service/request :cookies])
    :serval.response/headers {"Foo"          ["Bar"]
                              "Test"         [1]
                              "Test2"        [1 2 3]

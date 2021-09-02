@@ -2,7 +2,8 @@
   (:import [jakarta.servlet Servlet MultipartConfigElement]
            [org.eclipse.jetty.server
             Server Handler ServerConnector
-            ConnectionFactory HttpConnectionFactory HttpConfiguration]
+            ConnectionFactory HttpConnectionFactory HttpConfiguration
+            CustomRequestLog]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
@@ -131,15 +132,16 @@
 
 (defn configure-server!
   [^Server server config]
-  (if-let [handler (servlet-handler config)]
-    (cond->> handler
-      (:gzip config) (set-handler! (gzip-handler (:gzip config)))
-      true           (set-handler! server)))
   (->> (:connectors config)
        (map #(doto (ServerConnector. server)
                (configure-connector! %)))
        (into-array ServerConnector)
-       (.setConnectors server)))
+       (.setConnectors server))
+  (if-let [handler (servlet-handler config)]
+    (cond->> handler
+      (:gzip config) (set-handler! (gzip-handler (:gzip config)))
+      true           (set-handler! server)))
+  (.setRequestLog server (CustomRequestLog.)))
 
 (defn server
   [config]
