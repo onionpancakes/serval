@@ -136,6 +136,8 @@
       (.setContentType out content-type))
     (if-let [encoding (:serval.response/character-encoding m)]
       (.setCharacterEncoding out encoding))
+    (doseq [cookie (:serval.response/cookies m)]
+      (.addCookie out cookie))
     (if-let [status (:serval.response/status m)]
       (.setStatus out status))
     (if-let [headers (:serval.response/headers m)]

@@ -24,17 +24,23 @@
 (defn handle
   [ctx]
   #_(pprint ctx)
-  (println (get-in ctx [:serval.service/request :headers "user-agent"]))
+  (println (get-in ctx [:serval.service/request :headers "Cookie"]))
   (println (get-in ctx [:serval.service/request :protocol]))
   (println (get-in ctx [:serval.service/request :locales]))
-  #_(println (get-in ctx [:serval.service/request :parts]))
+  (println (get-in ctx [:serval.service/request :cookies]))
+  (doseq [c (get-in ctx [:serval.service/request :cookies])]
+    (println :cookie ))
 
-  {:serval.response/status       200
-   :serval.response/headers      {"Foo"          ["Bar"]
-                                  "Test"         [1]
-                                  "Test2"        [1 2 3]
-                                  "Content-Type" ["text/plain"]}
-   :serval.response/body         "Hello World! やばい foo bar baz"})
+  (println (.getCookies (get ctx :serval.service/request)))
+
+  {:serval.response/status  200
+   :serval.response/cookies (get-in ctx [:serval.service/request :cookies])
+   :serval.response/headers {"Foo"          ["Bar"]
+                             "Test"         [1]
+                             "Test2"        [1 2 3]
+                             "Content-Type" ["text/plain"]
+                             #_#_"Set-Cookie"  ["Foobar=baz; SameSite=None; Secure"]}
+   :serval.response/body    "Hello World! やばい foo bar baz"})
 
 (defn handle-json
   [ctx]
