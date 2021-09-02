@@ -6,7 +6,7 @@
             [dev.onionpancakes.serval.jetty :as j]
             [dev.onionpancakes.serval.reitit :as r]
             [dev.onionpancakes.serval.jsonista :as js]
-            [dev.onionpancakes.serval.tests.test-core :as tc]
+            [dev.onionpancakes.serval.tests.test-core-handler :as tc]
             [reitit.core :as rt]
             [jsonista.core :as json]
             [promesa.core :as p]
