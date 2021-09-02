@@ -16,26 +16,14 @@
   (valAt [this k not-found]
     (.getAttribute request k)))
 
-(deftype AttributeNames [^HttpServletRequest request]
-  clojure.lang.Seqable
-  (seq [this]
-    (->> (.getAttributeNames request)
-         (enumeration-seq))))
-
 (deftype Headers [^HttpServletRequest request]
   clojure.lang.ILookup
-  (valAt [this k]
-    (.valAt this k nil))
-  (valAt [this k not-found]
-    (->> (.getHeaders request k)
+  (valAt [this key]
+    (.valAt this key nil))
+  (valAt [this key not-found]
+    (->> (.getHeaders request key)
          (enumeration-seq)
          (vec))))
-
-(deftype HeaderNames [^HttpServletRequest request]
-  clojure.lang.Seqable
-  (seq [this]
-    (->> (.getHeaderNames request)
-         (enumeration-seq))))
 
 (def parameter-map-xf
   (clojure.core/map (juxt key (comp vec val))))
@@ -44,39 +32,70 @@
   [m]
   (into {} parameter-map-xf m))
 
+(defn servlet-request-lookup
+  [^HttpServletRequest request key not-found]
+  (case key
+    ;; Attributes
+    :attributes      (Attributes. request)
+    :attribute-names (->> (.getAttributeNames request)
+                          (enumeration-seq)
+                          (vec))
+
+    :remote-addr (.getRemoteAddr request)
+    :remote-host (.getRemoteHost request)
+    :remote-port (.getRemotePort request)
+
+    :local-addr (.getLocalAddr request)
+    :local-name (.getLocalName request)
+    :local-port (.getLocalPort request)
+
+    :dispatcher-type (.getDispatcherType request)
+
+    ;; URL
+    :scheme       (.getScheme request)
+    :server-name  (.getServerName request)
+    :server-port  (.getServerPort request)
+    :path         (.getRequestURI request)
+    :context-path (.getContextPath request)
+    :servlet-path (.getServletPath request)
+    :path-info    (.getPathInfo request)
+    :query-string (.getQueryString request)
+    :parameters   (parameter-map (.getParameterMap request))
+
+    ;; HTTP
+    :protocol (.getProtocol request)
+    :method   (keyword (.getMethod request))
+
+    ;; Headers
+    :headers            (Headers. request)
+    :header-names       (->> (.getHeaderNames request)
+                             (enumeration-seq)
+                             (vec))
+    :content-length     (.getContentLengthLong request)
+    :content-type       (.getContentType request)
+    :character-encoding (.getCharacterEncoding request)
+    :locales            (->> (.getLocales request)
+                             (enumeration-seq)
+                             (vec))
+    :cookies            (vec (.getCookies request))
+
+    ;; Body
+    :reader       (.getReader request)
+    :input-stream (.getInputStream request)
+    :parts        (vec (.getParts request))
+
+    ;; TODO: Trailers fields?
+
+    not-found))
+
 (defn servlet-request-proxy
   [^HttpServletRequest request]
   (proxy [HttpServletRequestWrapper clojure.lang.ILookup] [request]
     (valAt
       ([key]
-       (.valAt ^clojure.lang.ILookup this key nil))
+       (servlet-request-lookup this key nil))
       ([key not-found]
-       (case key
-         ;; URL
-         :method       (keyword (.getMethod request))
-         :path         (.getRequestURI request)
-         :context-path (.getContextPath request)
-         :servlet-path (.getServletPath request)
-         :path-info    (.getPathInfo request)
-         :query-string (.getQueryString request)
-         :parameters   (parameter-map (.getParameterMap request))
-         
-         ;; Attributes
-         :attributes      (Attributes. request)
-         :attribute-names (AttributeNames. request)
-
-         ;; Headers
-         :headers         (Headers. request)
-         :header-names    (HeaderNames. request)
-         
-         ;; Body
-         :reader             (.getReader request)
-         :input-stream       (.getInputStream request)
-         :content-length     (.getContentLengthLong request)
-         :content-type       (.getContentType request)
-         :character-encoding (.getCharacterEncoding request)
-         
-         not-found)))))
+       (servlet-request-lookup this key not-found)))))
 
 ;; Context
 

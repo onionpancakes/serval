@@ -23,13 +23,11 @@
 
 (defn handle
   [ctx]
-  (pprint ctx)
+  #_(pprint ctx)
   (println (get-in ctx [:serval.service/request :headers "user-agent"]))
-  (println (vec (seq (get-in ctx [:serval.service/request :header-names]))))
-  (println (get-in ctx [:serval.service/request :method]))
-  
-  #_(println (get-in ctx [:serval.service/request :headers "User-Agent"]))
-  #_(println (. (get ctx :serval.service/request) (getHeaders "User-Agent")))
+  (println (get-in ctx [:serval.service/request :protocol]))
+  (println (get-in ctx [:serval.service/request :locales]))
+  #_(println (get-in ctx [:serval.service/request :parts]))
 
   {:serval.response/status       200
    :serval.response/headers      {"Foo"          ["Bar"]
@@ -49,8 +47,9 @@
         (c/map http/response 200 "Hi Post!!!" "text/plain" "utf-8")))
 
 (def router
-  (rt/router [["/"        {:GET {:key     :foo
-                                 :handler handle}}]
+  (rt/router [["/"        {:GET  {:key     :foo
+                                  :handler handle}
+                           :POST {:handler handle}}]
               ["/foo"     {:GET {:handler handle-json}}]
               ["/foo/bar" {:GET {:handler handle}}]
               ["/foo/baz" {:GET {:handler handle}}]
@@ -111,7 +110,7 @@
                   :port     3000}
                  {:protocol :http2c
                   :port     3001}]
-   :servlet     http-servlet2
+   :servlet     http-servlet
    :gzip        {:included-methods    [:GET :POST]
                  :included-mime-types ["text/plain"]
                  :included-paths      ["/*"]
