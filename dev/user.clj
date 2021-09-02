@@ -27,7 +27,7 @@
   (println (get-in ctx [:serval.service/request :headers "user-agent"]))
   (println (get-in ctx [:serval.service/request :protocol]))
   (println (get-in ctx [:serval.service/request :locales]))
-  #_(println (get-in ctx [:serval.service/request :parts]))
+  (println (get-in ctx [:serval.service/request :parts]))
 
   {:serval.response/status       200
    :serval.response/headers      {"Foo"          ["Bar"]
@@ -106,17 +106,17 @@
 ;;
 
 (def config
-  {:connectors  [{:protocol :http
-                  :port     3000}
-                 {:protocol :http2c
-                  :port     3001}]
-   :servlet     http-servlet
-   :gzip        {:included-methods    [:GET :POST]
-                 :included-mime-types ["text/plain"]
-                 :included-paths      ["/*"]
-                 :excluded-methods    []
-                 :excluded-mime-types []
-                 :excluded-paths      []}})
+  {:connectors [{:protocol :http
+                 :port     3000}
+                {:protocol :http2c
+                 :port     3001}]
+   :servlets   [["/*" http-servlet {:multipart {:location "/tmp"}}]]
+   :gzip       {:included-methods    [:GET :POST]
+                :included-mime-types ["text/plain"]
+                :included-paths      ["/*"]
+                :excluded-methods    []
+                :excluded-mime-types []
+                :excluded-paths      []}})
 
 (defonce ^Server server
   (j/server {:thread-pool {:min-threads  1

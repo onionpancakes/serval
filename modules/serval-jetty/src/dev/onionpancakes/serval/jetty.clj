@@ -1,12 +1,12 @@
 (ns dev.onionpancakes.serval.jetty
-  (:import [jakarta.servlet Servlet]
+  (:import [jakarta.servlet Servlet MultipartConfigElement]
            [org.eclipse.jetty.server
             Server Handler ServerConnector
             ConnectionFactory HttpConnectionFactory HttpConfiguration]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
-           [org.eclipse.jetty.util.thread QueuedThreadPool]))
+           [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
 
 ;; Connectors
 
@@ -52,11 +52,29 @@
 
 ;; Handler
 
+(defn multipart-config
+  [{:keys [location max-file-size max-request-size
+           file-size-threshold]
+    :or   {max-file-size       -1
+           max-request-size    -1
+           file-size-threshold 0}}]
+  (assert location)
+  (MultipartConfigElement. location max-file-size max-request-size
+                           file-size-threshold))
+
+(defn ^ServletHolder servlet-holder
+  [^Servlet servlet opts]
+  (let [holder (ServletHolder. servlet)]
+    (if-let [mconf (:multipart opts)]
+      (-> (.getRegistration holder)
+          (.setMultipartConfig (multipart-config mconf))))
+    holder))
+
 (defn servlet-context-handler
   [path-to-servlets]
   (let [^ServletContextHandler sch (ServletContextHandler.)]
-    (doseq [[^String path ^Servlet serv] path-to-servlets]
-      (.addServlet sch (ServletHolder. serv) path))
+    (doseq [[^String path ^Servlet serv opts] path-to-servlets]
+      (.addServlet sch (servlet-holder serv opts) path))
     sch))
 
 (defn servlet-handler
@@ -93,11 +111,6 @@
       (.setMinGzipSize handler size))
     handler))
 
-(defn set-handler!
-  [this handler]
-  (doto this
-    (.setHandler handler)))
-
 ;; Server
 
 (defn thread-pool
@@ -110,6 +123,11 @@
     (when-let [timeout (:idle-timeout config)]
       (.setIdleTimeout pool timeout))
     pool))
+
+(defn set-handler!
+  [this handler]
+  (doto this
+    (.setHandler handler)))
 
 (defn configure-server!
   [^Server server config]
@@ -126,6 +144,6 @@
 (defn server
   [config]
   (doto (if (:thread-pool config)
-          (Server. (thread-pool (:thread-pool config)))
+          (Server. ^ThreadPool (thread-pool (:thread-pool config)))
           (Server.))
     (configure-server! config)))
