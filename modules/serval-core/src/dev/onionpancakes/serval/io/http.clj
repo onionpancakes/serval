@@ -82,7 +82,11 @@
     ;; Body
     :reader       (.getReader request)
     :input-stream (.getInputStream request)
-    :parts        (vec (.getParts request))
+
+    ;; Multipart throws exceptions if servlet is not configured,
+    ;; or if request is malformed.
+    ;; Users should use method rather than ILookup to access parts.
+    ;; :parts        (vec (.getParts request))
 
     ;; TODO: Trailers fields?
 

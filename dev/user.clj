@@ -27,7 +27,7 @@
   (println (get-in ctx [:serval.service/request :headers "user-agent"]))
   (println (get-in ctx [:serval.service/request :protocol]))
   (println (get-in ctx [:serval.service/request :locales]))
-  (println (get-in ctx [:serval.service/request :parts]))
+  #_(println (get-in ctx [:serval.service/request :parts]))
 
   {:serval.response/status       200
    :serval.response/headers      {"Foo"          ["Bar"]
