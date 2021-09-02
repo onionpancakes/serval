@@ -26,11 +26,11 @@
       (j/write-value (.getWriter resp) value object-mapper)))
 
   io.body/AsyncWritable
-  (io.body/write-listener [this ctx cb]
+  (io.body/write-listener [this ctx cf]
     (let [object-mapper         (:object-mapper options j/default-object-mapper)
           ^ServletResponse resp (:serval.service/response ctx)]
       (-> (j/write-value-as-bytes value object-mapper)
-          (io.body/bytes-write-listener (.getOutputStream resp) cb)))))
+          (io.body/bytes-write-listener (.getOutputStream resp) cf)))))
 
 (defn json
   ([value]

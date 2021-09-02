@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.io.body
-  (:import [java.util.concurrent CompletableFuture]
+  (:import [java.util.concurrent CompletionStage CompletableFuture]
+           [java.util.function Function]
            [java.nio ByteBuffer]
            [jakarta.servlet
             ServletRequest ServletResponse
@@ -94,6 +95,14 @@
      (.setReadListener is rl)
      cf)))
 
+(defn read-body-as-string-async!
+  ([request] (read-body-as-string-async! request nil))
+  ([^ServletRequest request opts]
+   (-> ^CompletionStage (read-body-as-bytes-async! request opts)
+       (.thenApply (reify Function
+                     (apply [_ input]
+                       (String. ^bytes input (.getCharacterEncoding request))))))))
+
 ;; Async write support
 
 (deftype BytesWriteListener [^bytes bytes
@@ -118,7 +127,7 @@
   (BytesWriteListener. bytes 0 (alength bytes) os cf))
 
 (defprotocol AsyncWritable
-  (write-listener [this ctx cb]))
+  (write-listener [this ctx cf]))
 
 (extend-protocol AsyncWritable
 
