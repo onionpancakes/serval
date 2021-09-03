@@ -45,3 +45,6 @@
     {:stop true}             {:stop true :foo2 :bar2}
     {:stop true :stop2 true} {:stop true :stop2 true}))
 
+(defn run-tests []
+  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.core.test-core-handler))
+
