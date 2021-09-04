@@ -35,10 +35,37 @@
 
   ;; nil
   (let [resp (mock/mock-http-servlet-response)
-          ctx  {:serval.service/response resp}
-          _    (b/write-body nil ctx)]
+        ctx  {:serval.service/response resp}
+        _    (b/write-body nil ctx)]
     (is (== 0 (alength (.toByteArray (:output-stream resp)))))
     (is (= "" (str (:writer resp))))))
+
+(deftest test-async-read
+  ;; Bytes
+  (let [req (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        res (.get (b/read-body-as-bytes-async! req))]
+    (is (= "Foobar" (String. res "utf-8"))))
+
+  ;; String
+  (let [req (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        res (.get (b/read-body-as-string-async! req))]
+    (is (= "Foobar" res)))
+  
+  ;; Should fail without encoding set on request.
+  (let [req (mock/mock-http-servlet-request-string {} "やばい" "utf-16")
+        res (.get (b/read-body-as-string-async! req))]
+    (is (not= "やばい" res)))
+  
+  ;; Test encodings
+  (let [req (mock/mock-http-servlet-request-string {:character-encoding "utf-16"}
+                                                   "やばい" "utf-16")
+        res (.get (b/read-body-as-string-async! req))]
+    (is (= "やばい" res)))
+
+  ;; Async not supported
+  (let [req (mock/mock-http-servlet-request-string {:async-supported? false}
+                                                   "Foobar" "utf-8")]
+    (is (thrown? IllegalStateException (b/read-body-as-string-async! req)))))
 
 (defn run-tests []
   (clojure.test/run-tests 'dev.onionpancakes.serval.tests.core.test-body-io))

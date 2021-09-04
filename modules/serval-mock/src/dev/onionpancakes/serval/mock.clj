@@ -1,7 +1,9 @@
 (ns dev.onionpancakes.serval.mock
   (:require [clojure.core.protocols :as p])
   (:import [java.util Collections]
-           [jakarta.servlet ServletResponse ServletInputStream ServletOutputStream AsyncContext]
+           [jakarta.servlet ServletRequest ServletResponse
+            ServletInputStream ServletOutputStream AsyncContext
+            ReadListener]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse
             Cookie]
            [java.io ByteArrayInputStream ByteArrayOutputStream
@@ -20,9 +22,30 @@
 ;; Request
 
 (defn mock-servlet-input-stream
-  [^java.io.InputStream is]
-  (proxy [ServletInputStream] []
-    (read [] (.read is))))
+  [^ServletRequest req ^java.io.InputStream is]
+  (let [finished (atom nil)]
+    (proxy [ServletInputStream] []
+      (read
+        ([]
+         (let [ret (.read is)]
+           (if (== ret -1) (reset! finished true))
+           ret))
+        ([b]
+         (let [ret (.read is b)]
+           (if (== ret -1) (reset! finished true))
+           ret)))
+      (isReady [] true)
+      (isFinished [] @finished)
+      (setReadListener [^ReadListener rl]
+        (try
+          (if (.getAsyncContext req)
+            (do
+              (.onDataAvailable rl)
+              (if @finished
+                (.onAllDataRead rl)))
+            (throw (IllegalStateException. "Async not started.")))
+          (catch Exception e
+            (.onError rl e)))))))
 
 (defrecord MockHttpServletRequest [data body-bytes body-string]
   HttpServletRequest
@@ -104,7 +127,7 @@
         reader       (throw (IllegalStateException. "Reader already called."))
         input-stream input-stream
         :else        (->> (ByteArrayInputStream. body-bytes)
-                          (mock-servlet-input-stream)
+                          (mock-servlet-input-stream this)
                           (swap! data assoc :input-stream)
                           (:input-stream)))))
   (getReader [this]
@@ -121,7 +144,7 @@
   [data body ^String encoding]
   (MockHttpServletRequest. (atom data) (.getBytes body encoding) body))
 
-(defn mock-http-servlet-request-bytes-only
+#_(defn mock-http-servlet-request-bytes-only
   [data body]
   (MockHttpServletRequest. (atom data) body ""))
 

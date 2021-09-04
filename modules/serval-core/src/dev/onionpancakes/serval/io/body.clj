@@ -101,7 +101,9 @@
    (-> ^CompletionStage (read-body-as-bytes-async! request opts)
        (.thenApply (reify Function
                      (apply [_ input]
-                       (String. ^bytes input (.getCharacterEncoding request))))))))
+                       (if-let [encoding (.getCharacterEncoding request)]
+                         (String. ^bytes input encoding)
+                         (String. ^bytes input))))))))
 
 ;; Async write support
 
