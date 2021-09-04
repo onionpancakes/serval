@@ -130,10 +130,13 @@
 (defn mock-servlet-output-stream
   [^java.io.OutputStream os]
   (proxy [ServletOutputStream] []
-    (write [x]
-      (if (bytes? x)
-        (.write os ^bytes x)
-        (.write os ^int x)))))
+    (write
+      ([x]
+       (if (bytes? x)
+         (.write os ^bytes x)
+         (.write os ^int x)))
+      ([b off len]
+       (.write os b off len)))))
 
 (defrecord MockHttpServletResponse [data output-stream writer]
   HttpServletResponse
