@@ -52,15 +52,15 @@
     :dispatcher-type (.getDispatcherType request)
 
     ;; URL
-    :scheme       (.getScheme request)
-    :server-name  (.getServerName request)
-    :server-port  (.getServerPort request)
-    :path         (.getRequestURI request)
-    :context-path (.getContextPath request)
-    :servlet-path (.getServletPath request)
-    :path-info    (.getPathInfo request)
-    :query-string (.getQueryString request)
-    :parameters   (parameter-map (.getParameterMap request))
+    :scheme        (.getScheme request)
+    :server-name   (.getServerName request)
+    :server-port   (.getServerPort request)
+    :path          (.getRequestURI request)
+    :context-path  (.getContextPath request)
+    :servlet-path  (.getServletPath request)
+    :path-info     (.getPathInfo request)
+    :query-string  (.getQueryString request)
+    :parameter-map (parameter-map (.getParameterMap request))
 
     ;; HTTP
     :protocol (.getProtocol request)
