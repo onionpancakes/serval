@@ -2,7 +2,8 @@
   (:require [dev.onionpancakes.serval.io.body :as b]
             [dev.onionpancakes.serval.mock :as mock]
             [clojure.test :refer [deftest is]])
-  (:import [java.io ByteArrayInputStream]))
+  (:import [java.io ByteArrayInputStream]
+           [java.util.concurrent CompletionStage]))
 
 (deftest test-not-async-types
   (is (not (b/async-body? (byte-array 0) nil)))
@@ -61,11 +62,60 @@
                                                    "やばい" "utf-16")
         res (.get (b/read-body-as-string-async! req))]
     (is (= "やばい" res)))
-a
+
   ;; Should fail when async not supported.
   (let [req (mock/mock-http-servlet-request-string {:async-supported? false}
                                                    "Foobar" "utf-8")]
     (is (thrown? IllegalStateException (b/read-body-as-string-async! req)))))
+
+(deftest test-async-write
+  ;; Bytes
+  (let [req  (mock/mock-http-servlet-request-string {} "" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        body (b/async-body (.getBytes "Foobar" "utf-8"))
+        ret  (b/write-body body ctx)
+        res  (.toByteArray (:output-stream resp))]
+    (is (b/async-body? body ctx))
+    (is (instance? CompletionStage ret))
+    (is (= "Foobar" (String. res "utf-8"))))
+
+  ;; String with default encoding.
+  (let [req  (mock/mock-http-servlet-request-string {} "" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        body (b/async-body "Foobar")
+        ret  (b/write-body body ctx)
+        res  (.toByteArray (:output-stream resp))]
+    (is (b/async-body? body ctx))
+    (is (instance? CompletionStage ret))
+    (is (= "Foobar" (String. res "ISO-8859-1"))))
+
+  ;; String with encoding.
+  (let [req  (mock/mock-http-servlet-request-string {} "" "utf-8")
+        resp (mock/mock-http-servlet-response {:character-encoding "utf-16"} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        body (b/async-body "Foobar")
+        ret  (b/write-body body ctx)
+        res  (.toByteArray (:output-stream resp))]
+    (is (b/async-body? body ctx))
+    (is (instance? CompletionStage ret))
+    (is (= "Foobar" (String. res "utf-16"))))
+
+  ;; String with async disabled
+  (let [req  (mock/mock-http-servlet-request-string {:async-supported? false} "" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        body (b/async-body "Foobar")
+        ret  (b/write-body body ctx)
+        res  (str (:writer resp))]
+    (is (not (b/async-body? body ctx)))
+    (is (nil? ret))
+    (is (= "Foobar" res))))
 
 (defn run-tests []
   (clojure.test/run-tests 'dev.onionpancakes.serval.tests.core.test-body-io))

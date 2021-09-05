@@ -3,7 +3,7 @@
   (:import [java.util Collections]
            [jakarta.servlet ServletRequest ServletResponse
             ServletInputStream ServletOutputStream AsyncContext
-            ReadListener]
+            ReadListener WriteListener]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse
             Cookie]
            [java.io ByteArrayInputStream ByteArrayOutputStream
@@ -34,6 +34,8 @@
          (let [ret (.read is b)]
            (if (== ret -1) (reset! finished true))
            ret)))
+
+      ;; Async simulation thats synchronous.
       (isReady [] true)
       (isFinished [] @finished)
       (setReadListener [^ReadListener rl]
@@ -151,18 +153,31 @@
 ;; Response
 
 (defn mock-servlet-output-stream
-  [^java.io.OutputStream os]
-  (proxy [ServletOutputStream] []
-    (write
-      ([x]
-       (if (bytes? x)
-         (.write os ^bytes x)
-         (.write os ^int x)))
-      ([b off len]
-       (.write os b off len)))))
+  [^ServletRequest req ^java.io.OutputStream os]
+  (let [finished (atom false)]
+    (proxy [ServletOutputStream] []
+      (write
+        ([x]
+         (if (bytes? x)
+           (.write os ^bytes x)
+           (.write os ^int x)))
+        ([b off len]
+         (.write os b off len)))
 
-(defrecord MockHttpServletResponse [data output-stream writer]
+      ;; Ghetto async simulation thats actually synchronous.
+      (isReady [] true)
+      (setWriteListener [^WriteListener wl]
+        (try
+          (.onWritePossible wl)
+          (catch Exception e
+            (.onError wl e)))))))
+
+(defrecord MockHttpServletResponse [data req output-stream writer]
   HttpServletResponse
+  (getCharacterEncoding [this]
+    ;; Defaults to iso-8859-1
+    ;; https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/servletresponse#getCharacterEncoding()
+    (:character-encoding @data "ISO-8859-1"))
   (setStatus [this sc]
     (swap! data assoc :status sc))
   (addHeader [this name value]
@@ -178,7 +193,7 @@
       (cond
         wtr   (throw (IllegalStateException. "Writer already called."))
         out   out
-        :else (->> (mock-servlet-output-stream output-stream)
+        :else (->> (mock-servlet-output-stream req output-stream)
                    (swap! data assoc :output-stream)
                    (:output-stream)))))
   (getWriter [this]
@@ -191,11 +206,7 @@
                    (:writer))))))
 
 (defn mock-http-servlet-response
-  []
+  [data req]
   (let [out    (ByteArrayOutputStream.)
         writer (StringWriter.)]
-    (MockHttpServletResponse. (atom nil) out writer)))
-
-#_(defn mock-context
-  []
-  {:serval.service/response (mock-servlet-response)})
+    (MockHttpServletResponse. (atom data) req out writer)))
