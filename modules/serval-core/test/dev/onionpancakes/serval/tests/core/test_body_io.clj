@@ -41,12 +41,12 @@
     (is (= "" (str (:writer resp))))))
 
 (deftest test-async-read
-  ;; Bytes
+  ;; Read bytes
   (let [req (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
         res (.get (b/read-body-as-bytes-async! req))]
     (is (= "Foobar" (String. res "utf-8"))))
 
-  ;; String
+  ;; Read string
   (let [req (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
         res (.get (b/read-body-as-string-async! req))]
     (is (= "Foobar" res)))
@@ -56,13 +56,13 @@
         res (.get (b/read-body-as-string-async! req))]
     (is (not= "やばい" res)))
   
-  ;; Test encodings
+  ;; Works with encoding set.
   (let [req (mock/mock-http-servlet-request-string {:character-encoding "utf-16"}
                                                    "やばい" "utf-16")
         res (.get (b/read-body-as-string-async! req))]
     (is (= "やばい" res)))
-
-  ;; Async not supported
+a
+  ;; Should fail when async not supported.
   (let [req (mock/mock-http-servlet-request-string {:async-supported? false}
                                                    "Foobar" "utf-8")]
     (is (thrown? IllegalStateException (b/read-body-as-string-async! req)))))
