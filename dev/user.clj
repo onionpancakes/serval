@@ -10,6 +10,7 @@
             [dev.onionpancakes.serval.tests.core.test-core-handler :as tc]
             [dev.onionpancakes.serval.tests.core.test-http-handler :as th]
             [dev.onionpancakes.serval.tests.core.test-body-io :as tbio]
+            [dev.onionpancakes.serval.tests.core.test-http-io :as thttp]
             [reitit.core :as rt]
             [jsonista.core :as json]
             [promesa.core :as p]
