@@ -1,6 +1,7 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-io
   (:require [dev.onionpancakes.serval.io.http :as h]
             [dev.onionpancakes.serval.io.body :as b]
+            [dev.onionpancakes.serval.handler.http :as http]
             [dev.onionpancakes.serval.mock :as mock]
             [clojure.test :refer [deftest is are]])
   (:import [java.util.concurrent CompletionStage CompletableFuture]))
@@ -106,8 +107,52 @@
         res  (h/write-response example-response-cs ctx)]
     (is (h/async-response? example-response-async-body ctx))
     (is (instance? CompletionStage res))
-    (.get (.toCompletableFuture res))
+    (.get (.toCompletableFuture res)) ; Wait till resolved
     (is (= (:status @(:data resp)) 200))))
 
-(deftest test-service-fn
-  (is false))
+(defn plain-handler
+  [ctx]
+  (http/response ctx 200 "Foobar"))
+
+(def plain-sfn
+  (h/service-fn example-handler))
+
+(deftest test-plain-sfn
+  (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        res  (plain-sfn nil req resp)]
+    (is (not (.isAsyncStarted req)))
+    (is (not (instance? CompletionStage res)))))
+
+(defn completion-stage-handler
+  [ctx]
+  (CompletableFuture/completedStage (http/response ctx 200 "Foobar")))
+
+(def completion-stage-sfn
+  (h/service-fn completion-stage-handler))
+
+(deftest test-completion-stage-sfn
+  (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        res  (completion-stage-sfn nil req resp)]
+    (is (.isAsyncStarted req))
+    (is (instance? CompletionStage res))
+    (.. res toCompletableFuture get) ; Wait till completed
+    (is (:completed? @(:data (.getAsyncContext req))))))
+
+(defn error-cs-handler
+  [ctx]
+  (doto (CompletableFuture.)
+    (.completeExceptionally (ex-info "Uhoh" {}))))
+
+(def error-cs-sfn
+  (h/service-fn error-cs-handler))
+
+(deftest test-error-cs-sfn
+  (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        res  (error-cs-sfn nil req resp)]
+    (is (.isAsyncStarted req))
+    (is (instance? CompletionStage res))
+    (.. res toCompletableFuture get) ; Wait till completed
+    (is (:completed? @(:data (.getAsyncContext req))))))

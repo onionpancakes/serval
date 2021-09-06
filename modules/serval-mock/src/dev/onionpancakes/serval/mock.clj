@@ -178,6 +178,8 @@
     ;; Defaults to iso-8859-1
     ;; https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/servletresponse#getCharacterEncoding()
     (:character-encoding @data "ISO-8859-1"))
+  (sendError [this sc msg]
+    (swap! data assoc :send-error [sc msg]))
   (setStatus [this sc]
     (swap! data assoc :status sc))
   (addHeader [this name value]
