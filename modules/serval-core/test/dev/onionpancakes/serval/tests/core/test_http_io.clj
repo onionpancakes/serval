@@ -1,7 +1,9 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-io
   (:require [dev.onionpancakes.serval.io.http :as h]
+            [dev.onionpancakes.serval.io.body :as b]
             [dev.onionpancakes.serval.mock :as mock]
-            [clojure.test :refer [deftest is are]]))
+            [clojure.test :refer [deftest is are]])
+  (:import [java.util.concurrent CompletionStage CompletableFuture]))
 
 (def servlet-request-data
   {:attributes         {"attr1" "foobar-attr"}
@@ -61,8 +63,51 @@
     [:content-type]             "application/javascript"
     [:character-encoding]       "UTF-8"))
 
-(deftest test-write-response
-  (is false))
+(def example-response
+  {:serval.response/status  200
+   :serval.response/headers {"Foo" [0 (int 1) "Bar"]}
+   :serval.response/body    "Foobar"})
+
+(deftest test-example-response
+  (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        res  (h/write-response example-response ctx)]
+    (is (not (h/async-response? example-response ctx)))
+    (is (nil? res))
+    (is (= (:status @(:data resp)) 200))
+    (is (= (:headers @(:data resp)) {"Foo" [0 1 "Bar"]}))
+    (is (= (str (:writer resp)) "Foobar"))))
+
+(def example-response-async-body
+  {:serval.response/body (b/async-body "Foobar")})
+
+(deftest test-example-response-async-body
+  (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        res  (h/write-response example-response-async-body ctx)]
+    (is (h/async-response? example-response-async-body ctx))
+    (is (instance? CompletionStage res))
+    (.get (.toCompletableFuture res)) ; Wait till resolved
+    (is (= (String. (.toByteArray (:output-stream resp))) "Foobar"))))
+
+(def example-response-cs
+  (-> {:serval.response/status 200}
+      (CompletableFuture/completedStage)))
+
+(deftest test-example-response-cs
+  (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
+        resp (mock/mock-http-servlet-response {} req)
+        ctx  {:serval.service/request  req
+              :serval.service/response resp}
+        res  (h/write-response example-response-cs ctx)]
+    (is (h/async-response? example-response-async-body ctx))
+    (is (instance? CompletionStage res))
+    (.get (.toCompletableFuture res))
+    (is (= (:status @(:data resp)) 200))))
 
 (deftest test-service-fn
   (is false))
