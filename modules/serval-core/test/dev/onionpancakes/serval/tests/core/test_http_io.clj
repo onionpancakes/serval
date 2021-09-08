@@ -115,7 +115,7 @@
   (http/response ctx 200 "Foobar"))
 
 (def plain-sfn
-  (h/service-fn example-handler))
+  (h/service-fn plain-handler))
 
 (deftest test-plain-sfn
   (let [req  (mock/mock-http-servlet-request-string {} "Foobar" "utf-8")
