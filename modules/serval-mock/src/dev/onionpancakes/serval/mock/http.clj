@@ -5,9 +5,10 @@
             HttpServletRequest HttpServletResponse
             Cookie]
            [java.util Collections]
-           [java.io ByteArrayInputStream ByteArrayOutputStream
+           [java.io
+            ByteArrayInputStream ByteArrayOutputStream
             BufferedReader InputStreamReader
-            Writer StringWriter PrintWriter]))
+            Writer StringWriter PrintWriter OutputStreamWriter]))
 
 (defrecord MockHttpServletRequest [data body]
   HttpServletRequest
@@ -95,14 +96,47 @@
     (or (:reader @data)
         (let [enc (:character-encoding @data "UTF-8")]
           (as-> (ByteArrayInputStream. body) x
-            (InputStreamReader. x enc)
+            (InputStreamReader. x ^String enc)
             (BufferedReader. x)
             (swap! data assoc :reader x)
             (:reader x))))))
 
-(defrecord MockHttpServletResponse [data req]
+(defrecord MockHttpServletResponse [data req ^java.io.OutputStream output-stream]
   HttpServletResponse
-  )
+  (getCharacterEncoding [this]
+    ;; Defaults to iso-8859-1
+    ;; https://jakarta.ee/specifications/servlet/5.0/apidocs/jakarta/servlet/servletresponse#getCharacterEncoding()
+    (:character-encoding @data "ISO-8859-1"))
+  (sendError [this sc msg]
+    (swap! data assoc :send-error [sc msg]))
+  (setStatus [this sc]
+    (swap! data assoc :status sc))
+  (addHeader [this name value]
+    (swap! data update-in [:headers name] (fnil conj []) value))
+  (addIntHeader [this name value]
+    (swap! data update-in [:headers name] (fnil conj []) value))
+  (setContentType [this value]
+    (swap! data assoc :content-type value))
+  (setCharacterEncoding [this value]
+    (swap! data assoc :character-encoding value))
+  (getOutputStream [this]
+    (if (:writer @data)
+      (throw (IllegalStateException. "getWriter already called.")))
+    (or (:output-stream @data)
+        (->> (io/servlet-output-stream output-stream)
+             (swap! data assoc :output-stream)
+             (:output-stream))))
+  (getWriter [this]
+    (if (:output-stream @data)
+      (throw (IllegalStateException. "getOutputStream already called.")))
+    (let [dval @data
+          enc  (:character-encoding dval "ISO-8859-1")]
+      (or (:writer dval)
+          (as-> output-stream x
+            (OutputStreamWriter. x ^String enc)
+            (PrintWriter. x)
+            (swap! data assoc :writer x)
+            (:writer x))))))
 
 ;; API
 
@@ -111,9 +145,12 @@
    (http-servlet-request data body nil))
   ([data body opts]
    (if (string? body)
-     (MockHttpServletRequest. data (.getBytes body (:encoding opts "UTF-8")))
+     (MockHttpServletRequest. data (.getBytes ^String body ^String (:encoding opts "UTF-8")))
      (MockHttpServletRequest. data body))))
 
-#_(defn http-servlet-response
-  [data]
-  (MockHttpServletResponse. data nil))
+(defn http-servlet-response
+  ([data req]
+   (let [out (ByteArrayOutputStream.)]
+     (http-servlet-response data req out)))
+  ([data req output-stream]
+   (MockHttpServletResponse. data req output-stream)))
