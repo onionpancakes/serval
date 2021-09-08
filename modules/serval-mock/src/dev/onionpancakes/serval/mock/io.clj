@@ -57,41 +57,33 @@
         (catch Exception e
           (.onError cb e))))))
 
-(defrecord MockReadListener [^ServletInputStream parent
-                             ^java.io.OutputStream output-stream
-                             cf]
-  ReadListener
-  (onDataAvailable [this]
-    (loop []
-      (let [buffer (byte-array 1024)
-            nread  (.read parent buffer)]
-        (when-not (== nread -1)
-          (.write output-stream buffer 0 nread)
-          (if (.isReady parent) (recur))))))
-  (onAllDataRead [this]
-    (.complete cf))
-  (onError [this throwable]
-    (.completeExceptionally cf throwable)))
-
-(defrecord MockWriteListener [^ServletOutputStream parent
-                              ^java.io.InputStream input-stream
-                              cf]
-  WriteListener
-  (onWritePossible [this]
-    (loop []
-      (let [byte-read (.read input-stream)]
-        (when-not (== byte-read -1)
-          (.write parent byte-read)
-          (if (.isReady parent) (recur))))))
-  (onError [this throwable]))
-
 (defn read-listener
-  [parent output-stream cf]
-  (MockReadListener. parent output-stream cf))
+  [^ServletInputStream in ^java.io.OutputStream out ^CompletableFuture cf]
+  (reify ReadListener
+    (onDataAvailable [this]
+      (loop []
+        (let [buffer (byte-array 1024)
+              nread  (.read in buffer)]
+          (when-not (== nread -1)
+            (.write out buffer 0 nread)
+            (if (.isReady in) (recur))))))
+    (onAllDataRead [this]
+      (.complete cf nil))
+    (onError [this throwable]
+      (.completeExceptionally cf throwable))))
 
 (defn write-listener
-  [parent input-stream cf]
-  (MockWriteListener. parent input-stream cf))
+  [^ServletOutputStream out ^java.io.InputStream in ^CompletableFuture cf]
+  (reify WriteListener
+    (onWritePossible [this]
+      (loop []
+        (let [byte-read (.read in)]
+          (if-not (== byte-read -1)
+            (do
+              (.write out byte-read)
+              (if (.isReady out) (recur)))
+            (.complete cf nil)))))
+    (onError [this throwable])))
 
 (defn read-async!
   [in out]
