@@ -148,11 +148,11 @@
    (cond
      (string? body) (->> (.getBytes ^String body ^String (:encoding opts "UTF-8"))
                          (ByteArrayInputStream.)
-                         (MockHttpServletRequest. data))
+                         (MockHttpServletRequest. (atom data)))
      (bytes? body)  (->> (ByteArrayInputStream. body)
-                         (MockHttpServletRequest. data)))))
+                         (MockHttpServletRequest. (atom data))))))
 
 (defn http-servlet-response
   [data req]
   (let [out (ByteArrayOutputStream.)]
-    (http-servlet-response data req out)))
+    (MockHttpServletResponse. (atom data) req out)))

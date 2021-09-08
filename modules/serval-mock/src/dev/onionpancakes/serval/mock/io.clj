@@ -19,7 +19,8 @@
        (let [n (.read in bytes)]
          (if (== n -1)
            (swap! data assoc :finished? true))
-         n)))
+         n))
+      ([b off len] (.read in b off len)))
 
     ;; Synchronous impl.
     (isReady [] true)

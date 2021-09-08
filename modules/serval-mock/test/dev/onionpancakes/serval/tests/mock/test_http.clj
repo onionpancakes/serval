@@ -34,7 +34,7 @@
    })
 
 (def ^HttpServletRequest request
-  (http/http-servlet-request (atom request-data) "Foobar"))
+  (http/http-servlet-request request-data ""))
 
 (deftest test-request-data-methods
   (is (= (.getAttribute request "Foo") "Bar"))
@@ -68,3 +68,13 @@
   ;; Cookies can't be compared by value.
   ;; Need to compare to by identity.
   (is (= (vec (.getCookies request)) (:cookies request-data))))
+
+(def ^HttpServletRequest request-read-in
+  (http/http-servlet-request {} "Foobar"))
+
+(deftest test-request-read-input-stream
+  (let [in  (.getInputStream request-read-in)
+        out (java.io.ByteArrayOutputStream.)
+        _   (.transferTo in out)]
+    (is (String. (.toByteArray out)) "FooBar")
+    (is (thrown? IllegalStateException (.getReader request-in)))))
