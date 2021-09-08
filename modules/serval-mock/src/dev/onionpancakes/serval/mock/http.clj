@@ -10,7 +10,7 @@
             BufferedReader InputStreamReader
             Writer StringWriter PrintWriter OutputStreamWriter]))
 
-(defrecord MockHttpServletRequest [data body]
+(defrecord MockHttpServletRequest [data ^java.io.InputStream input-stream]
   HttpServletRequest
   (getAsyncContext [this]
     (or (:async-context @data)
@@ -83,23 +83,23 @@
   (getCookies [this]
     (into-array Cookie (:cookies @data)))
   (getInputStream [this]
-    (if (:reader @data)
-      (throw (IllegalStateException. "getReader already called.")))
-    (or (:input-stream @data)
-        (->> (ByteArrayInputStream. body)
-             (io/servlet-input-stream (atom {}) this)
-             (swap! data assoc :input-stream)
-             (:input-stream))))
+    (let [dval @data]
+      (if (:reader dval)
+        (throw (IllegalStateException. "getReader already called.")))
+      (or (:input-stream dval)
+          (->> (io/servlet-input-stream (atom {}) this input-stream)
+               (swap! data assoc :input-stream)
+               (:input-stream)))))
   (getReader [this]
-    (if (:input-stream @data)
-      (throw (IllegalStateException. "getInputStream already called.")))
-    (or (:reader @data)
-        (let [enc (:character-encoding @data "UTF-8")]
-          (as-> (ByteArrayInputStream. body) x
-            (InputStreamReader. x ^String enc)
-            (BufferedReader. x)
-            (swap! data assoc :reader x)
-            (:reader x))))))
+    (let [dval @data]
+      (if (:input-stream dval)
+        (throw (IllegalStateException. "getInputStream already called.")))
+      (or (:reader dval)
+          (->> ^String (:character-encoding dval "UTF-8")
+               (InputStreamReader. input-stream)
+               (BufferedReader.)
+               (swap! data assoc :reader)
+               (:reader))))))
 
 (defrecord MockHttpServletResponse [data req ^java.io.OutputStream output-stream]
   HttpServletResponse
@@ -120,23 +120,23 @@
   (setCharacterEncoding [this value]
     (swap! data assoc :character-encoding value))
   (getOutputStream [this]
-    (if (:writer @data)
-      (throw (IllegalStateException. "getWriter already called.")))
-    (or (:output-stream @data)
-        (->> (io/servlet-output-stream output-stream)
-             (swap! data assoc :output-stream)
-             (:output-stream))))
+    (let [dval @data]
+      (if (:writer dval)
+        (throw (IllegalStateException. "getWriter already called.")))
+      (or (:output-stream dval)
+          (->> (io/servlet-output-stream (atom nil) req output-stream)
+               (swap! data assoc :output-stream)
+               (:output-stream)))))
   (getWriter [this]
-    (if (:output-stream @data)
-      (throw (IllegalStateException. "getOutputStream already called.")))
-    (let [dval @data
-          enc  (:character-encoding dval "ISO-8859-1")]
+    (let [dval @data]
+      (if (:output-stream dval)
+        (throw (IllegalStateException. "getOutputStream already called.")))
       (or (:writer dval)
-          (as-> output-stream x
-            (OutputStreamWriter. x ^String enc)
-            (PrintWriter. x)
-            (swap! data assoc :writer x)
-            (:writer x))))))
+          (->> ^String (:character-encoding dval "ISO-8859-1")
+               (OutputStreamWriter. output-stream)
+               (PrintWriter.)
+               (swap! data assoc :writer)
+               (:writer))))))
 
 ;; API
 
@@ -144,13 +144,14 @@
   ([data body]
    (http-servlet-request data body nil))
   ([data body opts]
-   (if (string? body)
-     (MockHttpServletRequest. data (.getBytes ^String body ^String (:encoding opts "UTF-8")))
-     (MockHttpServletRequest. data body))))
+   (cond
+     (string? body) (->> (.getBytes ^String body ^String (:encoding opts "UTF-8"))
+                         (ByteArrayInputStream.)
+                         (MockHttpServletRequest. data))
+     (bytes? body)  (->> (ByteArrayInputStream. body)
+                         (MockHttpServletRequest. data)))))
 
 (defn http-servlet-response
-  ([data req]
-   (let [out (ByteArrayOutputStream.)]
-     (http-servlet-response data req out)))
-  ([data req output-stream]
-   (MockHttpServletResponse. data req output-stream)))
+  [data req]
+  (let [out (ByteArrayOutputStream.)]
+    (http-servlet-response data req out)))

@@ -36,7 +36,7 @@
           (.onError cb e))))))
 
 (defn servlet-output-stream
-  [data ^ServletRequest req ^java.io.InputStream out]
+  [data ^ServletRequest req ^java.io.OutputStream out]
   (proxy [ServletOutputStream] []
     (write
       ([b]
@@ -86,14 +86,14 @@
     (onError [this throwable])))
 
 (defn read-async!
-  [in out]
+  [^ServletInputStream in out]
   (let [cf (CompletableFuture.)
         rl (read-listener in out cf)]
     (.setReadListener in rl)
     cf))
 
 (defn write-async!
-  [out in]
+  [^ServletOutputStream out in]
   (let [cf (CompletableFuture.)
         wl (write-listener out in cf)]
     (.setWriteListener out wl)
