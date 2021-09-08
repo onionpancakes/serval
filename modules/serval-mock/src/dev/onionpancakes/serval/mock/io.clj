@@ -26,10 +26,12 @@
     (isReady [] true)
     (isFinished [] (:finished? @data))
     (setReadListener [^ReadListener cb]
+      (if (nil? cb)
+        (throw (NullPointerException.)))
+      ;; Operation must be in async mode.
+      ;; This will throw if not.
+      (.getAsyncContext req)
       (try
-        ;; Operation must be in async mode.
-        ;; This will throw if not.
-        (.getAsyncContext req)
         (.onDataAvailable cb)
         (if (:finished? @data)
           (.onAllDataRead cb))

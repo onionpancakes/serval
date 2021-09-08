@@ -1,9 +1,11 @@
 (ns dev.onionpancakes.serval.tests.mock.test-http
   (:require [dev.onionpancakes.serval.mock.http :as http]
-            [clojure.test :refer [deftest is are]])
+            [dev.onionpancakes.serval.mock.io :as io]
+            [clojure.test :refer [deftest is]])
   (:import [jakarta.servlet DispatcherType]
            [jakarta.servlet.http HttpServletRequest Cookie]
-           [java.util Locale]))
+           [java.util Locale]
+           [java.io ByteArrayOutputStream]))
 
 (def request-data
   {:attributes         {"Foo" "Bar"}
@@ -73,8 +75,38 @@
   (http/http-servlet-request {} "Foobar"))
 
 (deftest test-request-read-input-stream
-  (let [in  (.getInputStream request-read-in)
-        out (java.io.ByteArrayOutputStream.)
-        _   (.transferTo in out)]
-    (is (String. (.toByteArray out)) "FooBar")
+  (let [in  (.getInputStream request-read-in)]
+    (is (= (slurp in :encoding "utf-8") "Foobar"))
     (is (thrown? IllegalStateException (.getReader request-in)))))
+
+(def ^HttpServletRequest request-read-reader
+  (http/http-servlet-request {} "Foobar"))
+
+(deftest test-request-read-reader
+  (let [rdr (.getReader request-read-reader)]
+    (is (= (slurp rdr :encoding "utf-8") "Foobar"))
+    (is (thrown? IllegalStateException (.getInputStream request-read-reader)))))
+
+(def ^HttpServletRequest request-async
+  (http/http-servlet-request {} ""))
+
+(deftest test-request-async-context
+  (is (thrown? IllegalStateException (.getAsyncContext request-async)))
+  (is (.isAsyncSupported request-async))
+  (let [a (.startAsync request-async)]
+    (is (.isAsyncStarted request-async))
+    (.complete a)
+    (is (:completed? (deref (:data a))))
+    (is (not (.isAsyncStarted request-async)))))
+
+(def ^HttpServletRequest request-read-async
+  (http/http-servlet-request {} "Foobar"))
+
+(deftest test-request-read-async
+  (let [in  (.getInputStream request-read-async)
+        out (ByteArrayOutputStream.)]
+    (is (thrown? NullPointerException (.setReadListener in nil)))
+    (is (thrown? IllegalStateException (io/read-async! in out)))
+    (.startAsync request-read-async)
+    (io/read-async! in out)
+    (is (= (slurp (.toByteArray out) :encoding "utf-8") "Foobar"))))

@@ -16,7 +16,8 @@
     (or (:async-context @data)
         (throw (IllegalStateException. "Async not started."))))
   (isAsyncStarted [this]
-    (boolean (:async-context @data)))
+    (and (some? (:async-context @data))
+         (not (:completed? (deref (:data (:async-context @data)))))))
   (isAsyncSupported [this]
     (boolean (:async-supported? @data true)))
   (startAsync [this]
