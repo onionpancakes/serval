@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.tests.mock.test-http
+(ns dev.onionpancakes.serval.tests.mock.test-http-request
   (:require [dev.onionpancakes.serval.mock.http :as http]
             [dev.onionpancakes.serval.mock.io :as io]
             [clojure.test :refer [deftest is]])
@@ -77,7 +77,7 @@
 (deftest test-request-read-input-stream
   (let [in  (.getInputStream request-read-in)]
     (is (= (slurp in :encoding "utf-8") "Foobar"))
-    (is (thrown? IllegalStateException (.getReader request-in)))))
+    (is (thrown? IllegalStateException (.getReader request-read-in)))))
 
 (def ^HttpServletRequest request-read-reader
   (http/http-servlet-request {} "Foobar"))
