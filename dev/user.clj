@@ -11,6 +11,7 @@
             [dev.onionpancakes.serval.tests.core.test-http-handler :as th]
             [dev.onionpancakes.serval.tests.core.test-body-io :as tbio]
             [dev.onionpancakes.serval.tests.core.test-http-io :as thttp]
+            [dev.onionpancakes.serval.tests.mock.test-http :as mhttp]
             [reitit.core :as rt]
             [jsonista.core :as json]
             [promesa.core :as p]

@@ -8,4 +8,6 @@
  {:dev
   {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.0-alpha5"}
                  funcool/promesa        {:mvn/version "6.0.2"}}
-   :extra-paths ["dev" "./modules/serval-core/test"]}}}
+   :extra-paths ["dev"
+                 "./modules/serval-core/test"
+                 "./modules/serval-mock/test"]}}}

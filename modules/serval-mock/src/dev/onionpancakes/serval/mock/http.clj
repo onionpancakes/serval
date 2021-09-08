@@ -61,7 +61,8 @@
   (getQueryString [this]
     (:query-string @data))
   (getParameterMap [this]
-    (:parameter-map @data))
+    (into {} (map (juxt key (comp #(into-array String %) val)))
+          (:parameter-map @data)))
   (getProtocol [this]
     (:protocol @data))
   (getMethod [this]
@@ -79,7 +80,7 @@
   (getCharacterEncoding [this]
     (:character-encoding @data))
   (getLocales [this]
-    (:locales @data))
+    (Collections/enumeration (:locales @data)))
   (getCookies [this]
     (into-array Cookie (:cookies @data)))
   (getInputStream [this]
