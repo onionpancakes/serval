@@ -142,7 +142,7 @@
 
 ;; API
 
-(defn http-servlet-request
+(defn ^HttpServletRequest http-servlet-request
   ([data body]
    (http-servlet-request data body nil))
   ([data body opts]
@@ -153,7 +153,7 @@
      (bytes? body)  (->> (ByteArrayInputStream. body)
                          (MockHttpServletRequest. (atom data))))))
 
-(defn http-servlet-response
+(defn ^HttpServletResponse http-servlet-response
   [data req]
   (let [out (ByteArrayOutputStream.)]
     (MockHttpServletResponse. (atom data) req out)))

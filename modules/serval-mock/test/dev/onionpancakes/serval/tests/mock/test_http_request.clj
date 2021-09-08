@@ -32,81 +32,74 @@
    :content-type       "text/plain"
    :character-encoding "utf-8"
    :locales            [(Locale. "en")]
-   :cookies            [(Cookie. "Foo" "Bar")]
-   })
-
-(def ^HttpServletRequest request
-  (http/http-servlet-request request-data ""))
+   :cookies            [(Cookie. "Foo" "Bar")]})
 
 (deftest test-request-data-methods
-  (is (= (.getAttribute request "Foo") "Bar"))
-  (is (= (.getRemoteAddr request) "some remote addr"))
-  (is (= (.getRemoteHost request) "some remote host"))
-  (is (= (.getRemotePort request) 3000))
-  (is (= (.getLocalAddr request) "some local addr"))
-  (is (= (.getLocalName request) "some local name"))
-  (is (= (.getLocalPort request) 3001))
-  (is (= (.getDispatcherType request) DispatcherType/REQUEST))
-  (is (= (.getScheme request) "http"))
-  (is (= (.getServerName request) "some server name"))
-  (is (= (.getServerPort request) 3002))
-  (is (= (.getRequestURI request) "/somepath"))
-  (is (= (.getContextPath request) "/somecontextpath"))
-  (is (= (.getServletPath request) "/someservletpath"))
-  (is (= (.getPathInfo request) "/somepathinfo"))
-  (is (= (.getQueryString request) "?somequerystring=value"))
-  (is (= (into {} (map (juxt key (comp vec val)))
-               (.getParameterMap request)) {"somequerystring" ["value"]}))
-  (is (= (.getProtocol request) "HTTP/1.1"))
-  (is (= (.getMethod request) "GET"))
-  (is (= (enumeration-seq (.getHeaders request "Foo")) ["Bar"]))
-  (is (= (enumeration-seq (.getHeaderNames request)) ["Foo"]))
-  (is (= (.getContentLength request) 8))
-  (is (= (.getContentLengthLong request) 8))
-  (is (= (.getContentType request) "text/plain"))
-  (is (= (.getCharacterEncoding request) "utf-8"))
-  ;; getLocale not supported
-  (is (= (enumeration-seq (.getLocales request)) [(Locale. "en")]))
-  ;; Cookies can't be compared by value.
-  ;; Need to compare to by identity.
-  (is (= (vec (.getCookies request)) (:cookies request-data))))
-
-(def ^HttpServletRequest request-read-in
-  (http/http-servlet-request {} "Foobar"))
+  (let [req (http/http-servlet-request request-data "")]
+    (is (= (.getAttribute req "Foo") "Bar"))
+    (is (= (.getRemoteAddr req) "some remote addr"))
+    (is (= (.getRemoteHost req) "some remote host"))
+    (is (= (.getRemotePort req) 3000))
+    (is (= (.getLocalAddr req) "some local addr"))
+    (is (= (.getLocalName req) "some local name"))
+    (is (= (.getLocalPort req) 3001))
+    (is (= (.getDispatcherType req) DispatcherType/REQUEST))
+    (is (= (.getScheme request) "http"))
+    (is (= (.getServerName req) "some server name"))
+    (is (= (.getServerPort req) 3002))
+    (is (= (.getRequestURI req) "/somepath"))
+    (is (= (.getContextPath req) "/somecontextpath"))
+    (is (= (.getServletPath req) "/someservletpath"))
+    (is (= (.getPathInfo req) "/somepathinfo"))
+    (is (= (.getQueryString req) "?somequerystring=value"))
+    (is (= (into {} (map (juxt key (comp vec val)))
+                 (.getParameterMap req)) {"somequerystring" ["value"]}))
+    (is (= (.getProtocol req) "HTTP/1.1"))
+    (is (= (.getMethod req) "GET"))
+    (is (= (enumeration-seq (.getHeaders req "Foo")) ["Bar"]))
+    (is (= (enumeration-seq (.getHeaderNames req)) ["Foo"]))
+    (is (= (.getContentLength req) 8))
+    (is (= (.getContentLengthLong req) 8))
+    (is (= (.getContentType req) "text/plain"))
+    (is (= (.getCharacterEncoding req) "utf-8"))
+    ;; getLocale not supported
+    (is (= (enumeration-seq (.getLocales req)) [(Locale. "en")]))
+    ;; Cookies can't be compared by value.
+    ;; Need to compare to by identity.
+    (is (= (vec (.getCookies req)) (:cookies request-data)))))
 
 (deftest test-request-read-input-stream
-  (let [in  (.getInputStream request-read-in)]
+  (let [req (http/http-servlet-request {} "Foobar")
+        in  (.getInputStream req)]
     (is (= (slurp in :encoding "utf-8") "Foobar"))
-    (is (thrown? IllegalStateException (.getReader request-read-in)))))
-
-(def ^HttpServletRequest request-read-reader
-  (http/http-servlet-request {} "Foobar"))
+    (is (thrown? IllegalStateException (.getReader req)))))
 
 (deftest test-request-read-reader
-  (let [rdr (.getReader request-read-reader)]
+  (let [req (http/http-servlet-request {} "Foobar")
+        rdr (.getReader req)]
     (is (= (slurp rdr :encoding "utf-8") "Foobar"))
-    (is (thrown? IllegalStateException (.getInputStream request-read-reader)))))
-
-(def ^HttpServletRequest request-async
-  (http/http-servlet-request {} ""))
+    (is (thrown? IllegalStateException (.getInputStream req)))))
 
 (deftest test-request-async-context
-  (is (thrown? IllegalStateException (.getAsyncContext request-async)))
-  (is (.isAsyncSupported request-async))
-  (let [a (.startAsync request-async)]
-    (is (.isAsyncStarted request-async))
-    (.complete a)
-    (is (:completed? (deref (:data a))))
-    (is (not (.isAsyncStarted request-async)))))
-
-(def ^HttpServletRequest request-read-async
-  (http/http-servlet-request {} "Foobar"))
+  (let [req (http/http-servlet-request {} "")]
+    (is (thrown? IllegalStateException (.getAsyncContext req)))
+    (is (.isAsyncSupported req))
+    (let [a (.startAsync req)]
+      (is (.isAsyncStarted req))
+      (.complete a)
+      (is (:completed? (deref (:data a))))
+      (is (not (.isAsyncStarted req))))))
 
 (deftest test-request-read-async
-  (let [in  (.getInputStream request-read-async)
+  (let [req (http/http-servlet-request {} "Foobar")
+        in  (.getInputStream req)
         out (ByteArrayOutputStream.)]
     (is (thrown? NullPointerException (.setReadListener in nil)))
     (is (thrown? IllegalStateException (io/read-async! in out)))
-    (.startAsync request-read-async)
+    (.startAsync req)
     (io/read-async! in out)
     (is (= (slurp (.toByteArray out) :encoding "utf-8") "Foobar"))))
+
+(defn run-tests
+  []
+  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.mock.test-http-request))
