@@ -3,7 +3,7 @@
 (defrecord MockAsyncContext [data]
   jakarta.servlet.AsyncContext
   (complete [this]
-    (swap! data assoc :completed? true)
+    (swap! data assoc :async-complete? true)
     nil))
 
 (defn async-context [data]

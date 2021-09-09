@@ -1,9 +1,10 @@
 (ns dev.onionpancakes.serval.mock.http
   (:require [dev.onionpancakes.serval.mock.async :as async]
             [dev.onionpancakes.serval.mock.io :as io])
-  (:import [jakarta.servlet.http
-            HttpServletRequest HttpServletResponse
-            Cookie]
+  (:import [dev.onionpancakes.serval.mock.async MockAsyncContext]
+           [jakarta.servlet.http
+              HttpServletRequest HttpServletResponse
+              Cookie]
            [java.util Collections]
            [java.io
             ByteArrayInputStream ByteArrayOutputStream
@@ -16,14 +17,15 @@
     (or (:async-context @data)
         (throw (IllegalStateException. "Async not started."))))
   (isAsyncStarted [this]
-    (and (some? (:async-context @data))
-         (not (:completed? (deref (:data (:async-context @data)))))))
+    (let [dval @data]
+      (and (some? (:async-context dval))
+           (not (:async-complete? dval)))))
   (isAsyncSupported [this]
     (boolean (:async-supported? @data true)))
   (startAsync [this]
     (or (:async-context @data)
         (if (:async-supported? @data true)
-          (->> (async/async-context (atom {}))
+          (->> (MockAsyncContext. data) ; async context shares data atom.
                (swap! data assoc :async-context)
                (:async-context)))
         (throw (IllegalStateException. "Async not supported."))))

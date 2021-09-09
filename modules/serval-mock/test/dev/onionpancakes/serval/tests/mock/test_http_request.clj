@@ -34,7 +34,7 @@
    :locales            [(Locale. "en")]
    :cookies            [(Cookie. "Foo" "Bar")]})
 
-(deftest test-request-data-methods
+(deftest test-get-methods
   (let [req (http/http-servlet-request request-data "")]
     (is (= (.getAttribute req "Foo") "Bar"))
     (is (= (.getRemoteAddr req) "some remote addr"))
@@ -68,29 +68,29 @@
     ;; Need to compare to by identity.
     (is (= (vec (.getCookies req)) (:cookies request-data)))))
 
-(deftest test-request-read-input-stream
+(deftest test-input-stream
   (let [req (http/http-servlet-request {} "Foobar")
         in  (.getInputStream req)]
     (is (= (slurp in :encoding "utf-8") "Foobar"))
     (is (thrown? IllegalStateException (.getReader req)))))
 
-(deftest test-request-read-reader
+(deftest test-reader
   (let [req (http/http-servlet-request {} "Foobar")
         rdr (.getReader req)]
     (is (= (slurp rdr :encoding "utf-8") "Foobar"))
     (is (thrown? IllegalStateException (.getInputStream req)))))
 
-(deftest test-request-async-context
+(deftest test-async-context
   (let [req (http/http-servlet-request {} "")]
     (is (thrown? IllegalStateException (.getAsyncContext req)))
     (is (.isAsyncSupported req))
     (let [a (.startAsync req)]
       (is (.isAsyncStarted req))
       (.complete a)
-      (is (:completed? (deref (:data a))))
+      (is (:async-complete? (deref (:data a))))
       (is (not (.isAsyncStarted req))))))
 
-(deftest test-request-read-async
+(deftest test-read-async
   (let [req (http/http-servlet-request {} "Foobar")
         in  (.getInputStream req)
         out (ByteArrayOutputStream.)]
