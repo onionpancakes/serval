@@ -46,7 +46,7 @@
         _    (spit wtr "Foobar")
         res  (slurp (.toByteArray (:output-stream resp)))]
     (is (= res "Foobar"))
-    (is (thrown? IllegalStateException (.getInputStream resp)))))
+    (is (thrown? IllegalStateException (.getOutputStream resp)))))
 
 (deftest test-write-async
   (let [req  (http/http-servlet-request {} "")
@@ -65,3 +65,7 @@
         out  (.getOutputStream resp)
         src  (ByteArrayInputStream. (.getBytes "Foobar" "utf-8"))]
     (is (thrown? IllegalStateException (io/write-async! out src)))))
+
+
+(defn run-tests []
+  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.mock.test-http-response))
