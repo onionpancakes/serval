@@ -52,10 +52,10 @@
     ;; Synchronous impl.
     (isReady [] true)
     (setWriteListener [^WriteListener cb]
+      ;; Operation must be in async mode.
+      ;; This will throw if not.
+      (.getAsyncContext req)
       (try
-        ;; Operation must be in async mode.
-        ;; This will throw if not.
-        (.getAsyncContext req)
         (.onWritePossible cb)
         (catch Exception e
           (.onError cb e))))))
@@ -86,7 +86,8 @@
               (.write out byte-read)
               (if (.isReady out) (recur)))
             (.complete cf nil)))))
-    (onError [this throwable])))
+    (onError [this throwable]
+      (.completeExceptionally cf throwable))))
 
 (defn read-async!
   [^ServletInputStream in out]
