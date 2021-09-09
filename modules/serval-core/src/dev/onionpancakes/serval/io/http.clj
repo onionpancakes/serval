@@ -14,16 +14,17 @@
   (valAt [this k]
     (.valAt this k nil))
   (valAt [this k not-found]
-    (.getAttribute request k)))
+    (or (.getAttribute request k) not-found)))
 
 (deftype Headers [^HttpServletRequest request]
   clojure.lang.ILookup
   (valAt [this key]
     (.valAt this key nil))
   (valAt [this key not-found]
-    (->> (.getHeaders request key)
-         (enumeration-seq)
-         (vec))))
+    (or (some->> (.getHeaders request key)
+                 (enumeration-seq)
+                 (vec))
+        not-found)))
 
 (def parameter-map-xf
   (clojure.core/map (juxt key (comp vec val))))
@@ -33,13 +34,13 @@
   (into {} parameter-map-xf m))
 
 (defn servlet-request-lookup
-  [^HttpServletRequest request key not-found]
+  [^HttpServletRequest request key]
   (case key
     ;; Attributes
     :attributes      (Attributes. request)
-    :attribute-names (->> (.getAttributeNames request)
-                          (enumeration-seq)
-                          (vec))
+    :attribute-names (some->> (.getAttributeNames request)
+                              (enumeration-seq)
+                              (vec))
 
     :remote-addr (.getRemoteAddr request)
     :remote-host (.getRemoteHost request)
@@ -68,16 +69,19 @@
 
     ;; Headers
     :headers            (Headers. request)
-    :header-names       (->> (.getHeaderNames request)
-                             (enumeration-seq)
-                             (vec))
+    :header-names       (some->> (.getHeaderNames request)
+                                 (enumeration-seq)
+                                 (vec))
     :content-length     (.getContentLengthLong request)
     :content-type       (.getContentType request)
     :character-encoding (.getCharacterEncoding request)
-    :locales            (->> (.getLocales request)
-                             (enumeration-seq)
-                             (vec))
-    :cookies            (vec (.getCookies request))
+    :locales            (some->> (.getLocales request)
+                                 (enumeration-seq)
+                                 (vec))
+    
+    :cookies            (some->> (.getCookies request)
+                                 (seq)
+                                 (vec))
 
     ;; Body
     :reader       (.getReader request)
@@ -90,16 +94,16 @@
 
     ;; TODO: Trailers fields?
 
-    not-found))
+    nil))
 
 (defn servlet-request-proxy
   [^HttpServletRequest request]
   (proxy [HttpServletRequestWrapper clojure.lang.ILookup] [request]
     (valAt
       ([key]
-       (servlet-request-lookup this key nil))
+       (servlet-request-lookup this key))
       ([key not-found]
-       (servlet-request-lookup this key not-found)))))
+       (or (servlet-request-lookup this key) not-found)))))
 
 ;; Context
 

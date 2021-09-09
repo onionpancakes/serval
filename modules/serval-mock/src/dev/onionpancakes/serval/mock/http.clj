@@ -33,7 +33,7 @@
   (getAttribute [this name]
     (get-in @data [:attributes name]))
   (getAttributeNames [this]
-    (Collections/enumeration (keys (:attributes @data))))
+    (Collections/enumeration (or (keys (:attributes @data)) [])))
   (getRemoteAddr [this]
     (:remote-addr @data))
   (getRemoteHost [this]
@@ -72,9 +72,9 @@
   (getMethod [this]
     (:method @data))
   (getHeaders [this name]
-    (Collections/enumeration (get-in @data [:headers name])))
+    (Collections/enumeration (get-in @data [:headers name] [])))
   (getHeaderNames [this]
-    (Collections/enumeration (keys (:headers @data))))
+    (Collections/enumeration (or (keys (:headers @data)) [])))
   (getContentLength [this]
     (:content-length @data))
   (getContentLengthLong [this]
@@ -84,7 +84,7 @@
   (getCharacterEncoding [this]
     (:character-encoding @data))
   (getLocales [this]
-    (Collections/enumeration (:locales @data)))
+    (Collections/enumeration (:locales @data [])))
   (getCookies [this]
     (into-array Cookie (:cookies @data)))
   (getInputStream [this]

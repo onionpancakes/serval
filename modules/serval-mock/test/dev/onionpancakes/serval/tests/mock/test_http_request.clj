@@ -68,6 +68,13 @@
     ;; Need to compare to by identity.
     (is (= (vec (.getCookies req)) (:cookies request-data)))))
 
+(deftest test-get-methods-empty-enumerations
+  (let [req (http/http-servlet-request {} "")]
+    (is (nil? (enumeration-seq (.getAttributeNames req))))
+    (is (nil? (enumeration-seq (.getHeaders req "foo"))))
+    (is (nil? (enumeration-seq (.getHeaderNames req))))
+    (is (nil? (enumeration-seq (.getLocales req))))))
+
 (deftest test-input-stream
   (let [req (http/http-servlet-request {} "Foobar")
         in  (.getInputStream req)]
