@@ -19,16 +19,18 @@
   (isAsyncStarted [this]
     (let [dval @data]
       (and (some? (:async-context dval))
-           (not (:async-complete? dval)))))
+           (not (:async-complete? @(:data (:async-context dval)))))))
   (isAsyncSupported [this]
     (boolean (:async-supported? @data true)))
   (startAsync [this]
-    (or (:async-context @data)
-        (if (:async-supported? @data true)
-          (->> (MockAsyncContext. data) ; async context shares data atom.
-               (swap! data assoc :async-context)
-               (:async-context)))
-        (throw (IllegalStateException. "Async not supported."))))
+    (let [dval @data
+          actx (:async-context dval)]
+      (or (and actx (not (:async-complete? @(:data actx))) actx)
+          (if (:async-supported? @data true)
+            (->> (async/async-context (atom {}))
+                 (swap! data assoc :async-context)
+                 (:async-context)))
+          (throw (IllegalStateException. "Async not supported.")))))
   (getAttribute [this name]
     (get-in @data [:attributes name]))
   (getAttributeNames [this]
