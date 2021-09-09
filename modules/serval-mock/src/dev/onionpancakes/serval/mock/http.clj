@@ -3,8 +3,7 @@
             [dev.onionpancakes.serval.mock.io :as io])
   (:import [dev.onionpancakes.serval.mock.async MockAsyncContext]
            [jakarta.servlet.http
-              HttpServletRequest HttpServletResponse
-              Cookie]
+            HttpServletRequest HttpServletResponse Cookie]
            [java.util Collections]
            [java.io
             ByteArrayInputStream ByteArrayOutputStream
