@@ -87,7 +87,7 @@
     (let [a (.startAsync req)]
       (is (.isAsyncStarted req))
       (.complete a)
-      (is (:async-complete? (deref (:data a))))
+      (is (:async-complete? (deref (:data req))))
       (is (not (.isAsyncStarted req))))))
 
 (deftest test-read-async
