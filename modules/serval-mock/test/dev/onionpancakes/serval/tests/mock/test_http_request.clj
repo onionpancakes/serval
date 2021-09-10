@@ -44,7 +44,7 @@
     (is (= (.getLocalName req) "some local name"))
     (is (= (.getLocalPort req) 3001))
     (is (= (.getDispatcherType req) DispatcherType/REQUEST))
-    (is (= (.getScheme request) "http"))
+    (is (= (.getScheme req) "http"))
     (is (= (.getServerName req) "some server name"))
     (is (= (.getServerPort req) 3002))
     (is (= (.getRequestURI req) "/somepath"))
