@@ -31,7 +31,7 @@
           :serval.response/content-type       "text/plain"
           :serval.response/character-encoding "utf-8"})))
 
-(deftest test-set-headers
+#_(deftest test-set-headers
   (is (= (h/set-headers nil nil)
          {:serval.response/headers {}}))
   (is (= (h/set-headers {} {})

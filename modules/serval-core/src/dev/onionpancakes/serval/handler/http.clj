@@ -14,7 +14,7 @@
               :serval.response/content-type       content-type
               :serval.response/character-encoding character-encoding})))
 
-(defn set-headers
+#_(defn set-headers
   [ctx headers]
   (update ctx :serval.response/headers (fnil into {}) headers))
 
