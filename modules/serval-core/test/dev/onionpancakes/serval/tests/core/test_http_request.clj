@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-lookup
   (:require [dev.onionpancakes.serval.io.http :as http]
             [dev.onionpancakes.serval.mock.http :as mock]
-            [clojure.test :refer [deftest are is]])
+            [clojure.test :refer [deftest are]])
   (:import [java.util Locale]))
 
 (def mock-data

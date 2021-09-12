@@ -1,6 +1,6 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-handler
   (:require [dev.onionpancakes.serval.handler.http :as h]
-            [clojure.test :refer [deftest is are]]))
+            [clojure.test :refer [deftest is]]))
 
 (deftest test-response-handler
   (is (= (h/response {} 200 "Foo")

@@ -2,7 +2,7 @@
   (:require [dev.onionpancakes.serval.io.http :as http]
             [dev.onionpancakes.serval.io.body :as body]
             [dev.onionpancakes.serval.mock.http :as mock]
-            [clojure.test :refer [deftest are is]])
+            [clojure.test :refer [deftest is]])
   (:import [java.util.concurrent CompletionStage CompletableFuture]))
 
 (def response

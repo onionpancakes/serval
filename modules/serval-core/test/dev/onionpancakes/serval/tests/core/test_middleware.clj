@@ -1,6 +1,6 @@
 (ns dev.onionpancakes.serval.tests.core.test-middleware
   (:require [dev.onionpancakes.serval.core :as c]
-            [clojure.test :refer [deftest is are]]))
+            [clojure.test :refer [deftest are]]))
 
 (def echo
   (c/handler (c/map identity)))

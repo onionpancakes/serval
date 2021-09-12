@@ -1,8 +1,8 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-service-fn
   (:require [dev.onionpancakes.serval.io.http :as http]
             [dev.onionpancakes.serval.mock.http :as mock]
-            [clojure.test :refer [deftest are is]])
-  (:import [java.util.concurrent CompletionStage CompletableFuture]))
+            [clojure.test :refer [deftest is]])
+  (:import [java.util.concurrent CompletableFuture]))
 
 (defn handler-sync
   [ctx]
