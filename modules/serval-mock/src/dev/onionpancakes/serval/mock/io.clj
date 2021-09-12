@@ -3,7 +3,6 @@
             ServletInputStream ServletOutputStream
             ReadListener WriteListener
             ServletRequest]
-           [java.io ByteArrayInputStream ByteArrayOutputStream]
            [java.util.concurrent CompletableFuture]))
 
 (defn servlet-input-stream

@@ -1,14 +1,13 @@
 (ns dev.onionpancakes.serval.mock.http
   (:require [dev.onionpancakes.serval.mock.async :as async]
             [dev.onionpancakes.serval.mock.io :as io])
-  (:import [dev.onionpancakes.serval.mock.async MockAsyncContext]
-           [jakarta.servlet.http
+  (:import [jakarta.servlet.http
             HttpServletRequest HttpServletResponse Cookie]
            [java.util Collections]
            [java.io
             ByteArrayInputStream ByteArrayOutputStream
             BufferedReader InputStreamReader
-            Writer StringWriter PrintWriter OutputStreamWriter]))
+            PrintWriter OutputStreamWriter]))
 
 (defrecord MockHttpServletRequest [data ^java.io.InputStream input-stream]
   HttpServletRequest
