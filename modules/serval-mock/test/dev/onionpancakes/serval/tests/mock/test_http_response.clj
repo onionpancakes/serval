@@ -65,7 +65,3 @@
         out  (.getOutputStream resp)
         src  (ByteArrayInputStream. (.getBytes "Foobar" "utf-8"))]
     (is (thrown? IllegalStateException (io/write-async! out src)))))
-
-
-(defn run-tests []
-  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.mock.test-http-response))

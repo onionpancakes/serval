@@ -3,7 +3,7 @@
             [dev.onionpancakes.serval.mock.io :as io]
             [clojure.test :refer [deftest is]])
   (:import [jakarta.servlet DispatcherType]
-           [jakarta.servlet.http HttpServletRequest Cookie]
+           [jakarta.servlet.http Cookie]
            [java.util Locale]
            [java.io ByteArrayOutputStream]))
 
@@ -112,7 +112,3 @@
     (.startAsync req)
     (io/read-async! in out)
     (is (= (slurp (.toByteArray out) :encoding "utf-8") "Foobar"))))
-
-(defn run-tests
-  []
-  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.mock.test-http-request))
