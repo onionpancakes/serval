@@ -47,7 +47,3 @@
                         {"Foo" ["Baz"] "XYZ" [456]})
          {:foo                     :bar
           :serval.response/headers {"Foo" ["Baz"] "ABC" ["123"] "XYZ" [456]}})))
-
-(defn run-tests []
-  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.core.test-http-handler))
-

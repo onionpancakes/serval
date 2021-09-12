@@ -126,6 +126,3 @@
     (is (not (b/async-body? body ctx)))
     (is (nil? ret))
     (is (= "Foobar" res))))
-
-(defn run-tests []
-  (clojure.test/run-tests 'dev.onionpancakes.serval.tests.core.test-body-io))

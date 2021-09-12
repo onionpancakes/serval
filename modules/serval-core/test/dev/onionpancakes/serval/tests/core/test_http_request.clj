@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.tests.core.test-http-lookup
+(ns dev.onionpancakes.serval.tests.core.test-http-request
   (:require [dev.onionpancakes.serval.io.http :as http]
             [dev.onionpancakes.serval.mock.http :as mock]
             [clojure.test :refer [deftest are]])
