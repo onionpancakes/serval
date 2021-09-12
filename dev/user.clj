@@ -92,7 +92,7 @@
                         #_(throw (ex-info "foobar" {}))
                         input))))))
 
-(defn async-handler-post
+#_(defn async-handler-post
   [ctx]
   (let [req (:serval.service/request ctx)]
     (-> ^CompletableFuture (io.body/read-body-as-bytes-async! req)
@@ -100,13 +100,13 @@
                       (apply [_ input]
                         (http/response ctx 200 (io.body/async-body input) "application/json" "utf-8")))))))
 
-(defn async-handler-promise
+#_(defn async-handler-promise
   [ctx]
   (-> (:serval.service/request ctx)
       (io.body/read-body-as-bytes-async!)
       (p/then #(http/response ctx 200 (io.body/async-body %) "application/json"))))
 
-(def http-servlet2
+#_(def http-servlet2
   (c/http-servlet #'async-handler-promise))
 
 ;;

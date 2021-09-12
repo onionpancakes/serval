@@ -3,6 +3,7 @@
             [dev.onionpancakes.serval.mock.http :as mock]
             [clojure.test :refer [deftest is]])
   (:import [java.io ByteArrayInputStream]
+           [java.nio ByteBuffer]
            [java.util.concurrent CompletionStage]))
 
 (deftest test-not-async-types
@@ -48,10 +49,11 @@
     (is (= "" (str (:writer resp))))))
 
 (deftest test-async-read
-  ;; Read bytes
+
+  ;; Read buffer
   (let [req (mock/http-servlet-request {} "Foobar" {:encoding "utf-8"})
-        res (.get (b/read-body-as-bytes-async! req))]
-    (is (= "Foobar" (String. res "utf-8"))))
+        res ^ByteBuffer (.get (b/read-body-as-buffer-async! req))]
+    (is (= "Foobar" (String. (.array res) 0 (.limit res) "utf-8"))))
 
   ;; Read string
   (let [req (mock/http-servlet-request {} "Foobar" {:encoding "utf-8"})

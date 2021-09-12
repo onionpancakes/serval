@@ -2,6 +2,7 @@
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [java.util.function Function]
            [java.nio ByteBuffer]
+           [java.nio.charset Charset]
            [jakarta.servlet
             ServletRequest ServletResponse
             ServletInputStream ServletOutputStream
@@ -40,70 +41,58 @@
 
 ;; Async read support
 
-(deftype BytesReadChunk [bytes ^int length])
-
-(defn chunks-total-length
-  [^java.lang.Iterable chunks]
-  (let [iter (.iterator chunks)]
-    (loop [total-length 0]
-      (if (.hasNext iter)
-        (recur (->> (.-length ^BytesReadChunk (.next iter))
-                    (unchecked-add total-length)))
-        total-length))))
-
-(defn chunks-concat-bytes
-  [^java.lang.Iterable chunks]
-  (let [size   (chunks-total-length chunks)
-        barray (byte-array size)
-        buffer (ByteBuffer/wrap barray)
-        iter   (.iterator chunks)]
+(defn- into-buffer!
+  [^ByteBuffer to ^java.lang.Iterable from]
+  (let [iter (.iterator from)]
     (while (.hasNext iter)
-      (let [^BytesReadChunk chunk (.next iter)]
-        (.put buffer (.-bytes chunk) 0 (.-length chunk))))
-    barray))
+      (let [^ByteBuffer buf (.next iter)]
+        (.put to buf))))
+  to)
 
-(deftype BytesReadListener [chunk-size
-                            ^java.util.List chunks
-                            ^ServletInputStream is
-                            ^CompletableFuture cf]
+(deftype BufferReadListener [^long chunk-capacity
+                             ^java.util.List chunks
+                             ^ServletInputStream in
+                             ^CompletableFuture cf]
   ReadListener
   (onAllDataRead [this]
-    (.complete cf (chunks-concat-bytes chunks)))
+    (let [capacity (unchecked-multiply-int chunk-capacity (.size chunks))
+          buffer   (ByteBuffer/allocate capacity)
+          _        (into-buffer! buffer chunks)
+          _        (.flip buffer)]
+      (.complete cf buffer)))
   (onDataAvailable [this]
     (loop []
-      ;; Note: chunk-size is boxed. (byte-array) can't take primitives?
-      (let [buffer (byte-array chunk-size)
-            nread  (.read is buffer)]
+      (let [chunk (ByteBuffer/allocate chunk-capacity)
+            nread (.read in (.array chunk))]
         (when-not (== nread -1)
-          (.add chunks (BytesReadChunk. buffer nread))
-          (if (.isReady is) (recur))))))
+          (.limit chunk nread)
+          (.add chunks chunk)
+          (if (.isReady in) (recur))))))
   (onError [this throwable]
     (.completeExceptionally cf throwable)))
 
-(defn bytes-read-listener
-  [chunk-size is cf]
-  (BytesReadListener. chunk-size (java.util.ArrayList.) is cf))
+(defn buffer-read-listener
+  [chunk-capacity in cf]
+  (BufferReadListener. chunk-capacity (java.util.ArrayList.) in cf))
 
-(defn read-body-as-bytes-async!
-  ([request] (read-body-as-bytes-async! request nil))
-  ([^ServletRequest request {:keys [chunk-size]
-                             :or   {chunk-size 1024}}]
-   (let [cf (CompletableFuture.)
-         is (.getInputStream request)
-         rl (bytes-read-listener chunk-size is cf)]
-     (.startAsync request)
-     (.setReadListener is rl)
-     cf)))
+(defn ^CompletableFuture read-body-as-buffer-async!
+  [^ServletRequest request]
+  (let [cf (CompletableFuture.)
+        in (.getInputStream request)
+        rl (buffer-read-listener 1024 in cf)]
+    (.startAsync request)
+    (.setReadListener in rl)
+    cf))
 
-(defn read-body-as-string-async!
-  ([request] (read-body-as-string-async! request nil))
-  ([^ServletRequest request opts]
-   (-> ^CompletionStage (read-body-as-bytes-async! request opts)
-       (.thenApply (reify Function
-                     (apply [_ input]
-                       (if-let [encoding (.getCharacterEncoding request)]
-                         (String. ^bytes input encoding)
-                         (String. ^bytes input))))))))
+(defn  ^CompletableFuture read-body-as-string-async!
+  [^ServletRequest request]
+  (let [charset (if-let [enc (.getCharacterEncoding request)]
+                  (Charset/forName enc)
+                  (Charset/defaultCharset))]
+    (-> (read-body-as-buffer-async! request)
+        (.thenApply (reify Function
+                      (apply [_ buf]
+                        (.toString (.decode charset buf))))))))
 
 ;; Async write support
 
