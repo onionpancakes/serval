@@ -2,7 +2,8 @@
   (:require [dev.onionpancakes.serval.io.http :as http]
             [dev.onionpancakes.serval.mock.http :as mock]
             [clojure.test :refer [deftest is]])
-  (:import [java.util.concurrent CompletableFuture]))
+  (:import [java.util.concurrent CompletionStage CompletableFuture]
+           [jakarta.servlet ServletRequest]))
 
 (defn handler-sync
   [ctx]
@@ -19,7 +20,7 @@
 
 (defn handler-async
   [ctx]
-  (.startAsync (:serval.service/request ctx))
+  (.startAsync ^ServletRequest (:serval.service/request ctx))
   {:serval.response/status 200})
 
 (def service-async
@@ -29,7 +30,7 @@
   (let [req  (mock/http-servlet-request {} "")
         resp (mock/http-servlet-response {} req)
         ret  (service-async nil req resp)
-        _    (.get (.toCompletableFuture ret))]
+        _    (.get (.toCompletableFuture ^CompletionStage ret))]
     ;; Async context instance should exist and should be completed.
     (is (-> req :data deref :async-context :data deref :async-complete?))))
 
@@ -44,6 +45,6 @@
   (let [req  (mock/http-servlet-request {} "")
         resp (mock/http-servlet-response {} req)
         ret  (service-async-cf nil req resp)
-        _    (.get (.toCompletableFuture ret))]
+        _    (.get (.toCompletableFuture ^CompletionStage ret))]
     ;; Async context instance should exist and should be completed.
     (is (-> req :data deref :async-context :data deref :async-complete?))))

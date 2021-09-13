@@ -117,7 +117,7 @@
 
 (defprotocol Response
   (async-response? [this ctx])
-  (write-response [this ctx]))
+  (write-response ^CompletionStage [this ctx]))
 
 (defprotocol ResponseHeader
   (write-header [this response name]))
@@ -180,7 +180,7 @@
                       (async-response? hresp ctx) (.startAsync request))
           
           ;; TODO: Async listener / timeout
-          ^CompletionStage cstage (write-response hresp ctx)]
+          cstage (write-response hresp ctx)]
       (when async-ctx
         (-> (or cstage (CompletableFuture/completedStage nil))
             (.thenRun (fn [] (.complete async-ctx)))
