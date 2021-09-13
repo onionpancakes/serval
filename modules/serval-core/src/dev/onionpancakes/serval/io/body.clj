@@ -96,26 +96,23 @@
 
 ;; Async write support
 
-(deftype BytesWriteListener [^bytes bytes
-                             ^:unsynchronized-mutable ^int offset
-                             ^long length
-                             ^ServletOutputStream os
-                             ^CompletableFuture cf]
+(deftype BufferWriteListener [^ByteBuffer buffer
+                              ^ServletOutputStream out
+                              ^CompletableFuture cf]
   WriteListener
   (onWritePossible [this]
     (loop []
-      (if (< offset length)
+      (if (.hasRemaining buffer)
         (do
-          (.write os (aget bytes offset))
-          (set! offset (unchecked-inc-int offset))
-          (if (.isReady os) (recur)))
+          (.write out (.get buffer))
+          (if (.isReady out) (recur)))
         (.complete cf nil))))
   (onError [this throwable]
     (.completeExceptionally cf throwable)))
 
-(defn bytes-write-listener
-  [^bytes bytes os cf]
-  (BytesWriteListener. bytes 0 (alength bytes) os cf))
+(defn buffer-write-listener
+  [buffer out cf]
+  (BufferWriteListener. buffer out cf))
 
 (defprotocol AsyncWritable
   (write-listener [this ctx cf]))
@@ -124,12 +121,18 @@
 
   (Class/forName "[B")
   (write-listener [this {^ServletResponse resp :serval.service/response} cf]
-    (bytes-write-listener this (.getOutputStream resp) cf))
+    (-> (ByteBuffer/wrap this)
+        (buffer-write-listener (.getOutputStream resp) cf)))
 
   String
   (write-listener [this {^ServletResponse resp :serval.service/response} cf]
-    (-> (.getBytes this (.getCharacterEncoding resp))
-        (bytes-write-listener (.getOutputStream resp) cf))))
+    (let [charset (if-let [enc (.getCharacterEncoding resp)]
+                    (Charset/forName enc)
+                    ;; Note: getCharacterEncoding should never return null,
+                    ;; but just incase it does.
+                    (Charset/defaultCharset))]
+      (-> (.encode charset this)
+          (buffer-write-listener (.getOutputStream resp) cf)))))
 
 (defrecord AsyncBody [body]
   ResponseBody

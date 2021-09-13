@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.jsonista
   (:require [dev.onionpancakes.serval.io.body :as io.body]
             [jsonista.core :as j])
-  (:import [jakarta.servlet ServletResponse]))
+  (:import [jakarta.servlet ServletResponse]
+           [java.nio ByteBuffer]))
 
 (defn read-json
   ([ctx]
@@ -30,7 +31,8 @@
     (let [object-mapper         (:object-mapper options j/default-object-mapper)
           ^ServletResponse resp (:serval.service/response ctx)]
       (-> (j/write-value-as-bytes value object-mapper)
-          (io.body/bytes-write-listener (.getOutputStream resp) cf)))))
+          (ByteBuffer/wrap)
+          (io.body/buffer-write-listener (.getOutputStream resp) cf)))))
 
 (defn json
   ([value]
