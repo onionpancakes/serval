@@ -44,7 +44,7 @@
 
 (defn handle-json
   [ctx]
-  (http/response ctx 200 (js/json {:foo "bar"}) "application/json"))
+  (http/response ctx 200 (js/json-body {:foo "bar"}) "application/json"))
 
 (def post-xf
   (comp #_(c/map #(doto % (println)))

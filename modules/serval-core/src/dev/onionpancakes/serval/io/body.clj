@@ -134,11 +134,11 @@
       (-> (.encode charset this)
           (buffer-write-listener (.getOutputStream resp) cf)))))
 
-(defrecord AsyncBody [body]
+(defrecord AsyncBody [value]
   ResponseBody
   (async-body? [this {^ServletRequest req :serval.service/request :as ctx}]
     (or (.isAsyncSupported req)
-        (async-body? body ctx)))
+        (async-body? value ctx)))
   (write-body [this {^ServletRequest req   :serval.service/request
                      ^ServletResponse resp :serval.service/response
                      :as                   ctx}]
@@ -148,12 +148,12 @@
       ;; It is possible to test if underlying satisfies AsyncWritable,
       ;; and fall back to sync writes, but performance may suffer.
       (let [cf (CompletableFuture.)
-            wl (write-listener body ctx cf)]
+            wl (write-listener value ctx cf)]
         (.. resp getOutputStream (setWriteListener wl))
         cf)
       ;; Sync write if async not supported.
-      (write-body body ctx))))
+      (write-body value ctx))))
 
 (defn async-body
-  [body]
-  (AsyncBody. body))
+  [value]
+  (AsyncBody. value))

@@ -19,7 +19,7 @@
      (catch com.fasterxml.jackson.core.JsonParseException ex
        (assoc-in ctx error {:exception ex})))))
 
-(defrecord Json [value options]
+(defrecord JsonBody [value options]
   io.body/ResponseBody
   (io.body/async-body? [this _] false)
   (io.body/write-body [this {^ServletResponse resp :serval.service/response}]
@@ -34,8 +34,8 @@
           (ByteBuffer/wrap)
           (io.body/buffer-write-listener (.getOutputStream resp) cf)))))
 
-(defn json
+(defn json-body
   ([value]
-   (Json. value nil))
+   (JsonBody. value nil))
   ([value options]
-   (Json. value options)))
+   (JsonBody. value options)))
