@@ -5,10 +5,11 @@
   (:import [reitit.core Match]))
 
 (def router-spec
-  [["/"    {:GET {:name    :root
-                  :handler #(assoc % :handled "root")}}]
-   ["/foo" {:GET {:name    :foo
-                  :handler #(assoc % :handled "foo")}}]])
+  [["/"        {:GET {:name    :root
+                      :handler #(assoc % :handled "root")}}]
+   ["/foo"     {:GET {:name    :foo
+                      :handler #(assoc % :handled "foo")}}]
+   ["/default" {:GET {:name :default}}]])
 
 (def router
   (r/router router-spec))
@@ -22,8 +23,8 @@
 
   ;; Custom opts
   (let [ctx  {:serval.service/request {:other-path "/foo"}}
-        opts {:path-key  [:serval.service/request :other-path]
-              :match-key [:match-here]}
+        opts {:path-in  [:serval.service/request :other-path]
+              :match-in [:match-here]}
         ret  (sr/match-by-path ctx router opts)]
     (is (instance? Match (:match-here ret)))
     (is (= :foo (-> ret :match-here :data :GET :name)))))
@@ -39,8 +40,36 @@
   ;; Custom opts
   (let [ctx  {:serval.service/request {:method     :GET
                                        :other-path "/foo"}}
-        opts {:path-key  [:serval.service/request :other-path]
-              :match-key [:match-here]}
+        opts {:path-in  [:serval.service/request :other-path]
+              :match-in [:match-here]}
         ret  (sr/match-by-path ctx router opts)
         ret  (sr/handle-match-by-method ret opts)]
-    (is (= "foo" (:handled ret)))))
+    (is (= "foo" (:handled ret))))
+
+  ;; Default handler
+  (let [ctx {:serval.service/request {:method :GET
+                                      :path   "/default"}}
+        mret (sr/match-by-path ctx router)
+        hret (sr/handle-match-by-method mret)]
+    (is (= hret mret)))
+
+  ;; Default handler, non-existent route.
+  (let [ctx {:serval.service/request {:method :GET
+                                      :path   "/not-found"}}
+        mret (sr/match-by-path ctx router)
+        hret (sr/handle-match-by-method mret)]
+    (is (= hret mret)))
+
+  ;; Custom default handler.
+  (let [ctx {:serval.service/request {:method :GET
+                                      :path   "/default"}}
+        mret (sr/match-by-path ctx router)
+        hret (sr/handle-match-by-method mret {:default #(assoc % :handled "default")})]
+    (is (= "default" (:handled hret))))
+
+  ;; Custom default handler, non-existent route.
+  (let [ctx {:serval.service/request {:method :GET
+                                      :path   "/not-found"}}
+        mret (sr/match-by-path ctx router)
+        hret (sr/handle-match-by-method mret {:default #(assoc % :handled "default")})]
+    (is (= "default" (:handled hret)))))
