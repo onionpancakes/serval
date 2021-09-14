@@ -10,8 +10,7 @@
             [jsonista.core :as json]
             [promesa.core :as p]
             [clojure.pprint :refer [pprint]])
-  (:import [dev.onionpancakes.serval.io.body BytesReadChunk]
-           [org.eclipse.jetty.server Server]
+  (:import [org.eclipse.jetty.server Server]
            [java.util.concurrent CompletableFuture]))
 
 (set! *warn-on-reflection* true)
@@ -82,7 +81,7 @@
 (defn async-handler
   [ctx]
   (let [body  (io.body/async-body "Async string lol やばい")
-        body2 (io.body/async-body (js/json {:foo "bar"}))
+        body2 (io.body/async-body (js/json-body {:foo "bar"}))
         resp  {:serval.response/body               body2
                :serval.response/content-type       "application/json"
                :serval.response/character-encoding "utf-8"}]
