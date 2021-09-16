@@ -59,7 +59,11 @@
     :or   {max-file-size       -1
            max-request-size    -1
            file-size-threshold 0}}]
-  (assert location)
+  (try
+    (assert location)
+    (catch AssertionError e
+      (throw (ex-info "Multipart config missing location key." {}))))
+  
   (MultipartConfigElement. location max-file-size max-request-size
                            file-size-threshold))
 

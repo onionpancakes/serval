@@ -41,3 +41,17 @@
         facts  (.getConnectionFactories conn)]
     (is (instance? HttpConnectionFactory (first facts)))
     (is (instance? HTTP2CServerConnectionFactory (second facts)))))
+
+(deftest test-multipart-config
+  (let [conf  {:location            "/tmp"
+               :max-file-size       123
+               :max-request-size    123
+               :file-size-threshold 123}
+        mpart (sj/multipart-config conf)]
+    (is (= "/tmp" (.getLocation mpart)))
+    (is (= 123 (.getMaxFileSize mpart)))
+    (is (= 123 (.getMaxRequestSize mpart)))
+    (is (= 123 (.getFileSizeThreshold mpart))))
+
+  ;; Conf missing location throws.
+  (is (thrown? clojure.lang.ExceptionInfo (sj/multipart-config {}))))
