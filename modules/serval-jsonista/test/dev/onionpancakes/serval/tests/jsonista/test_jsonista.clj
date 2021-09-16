@@ -18,6 +18,12 @@
         ret (sj/read-json ctx)]
     (is (:serval.jsonista/error ret)))
 
+  ;; Empty
+  (let [rdr (StringReader. "")
+        ctx {:serval.service/request {:reader rdr}}
+        ret (sj/read-json ctx)]
+    (is (:serval.jsonista/error ret)))
+
   ;; Opts
   (let [rdr  (StringReader. "{\"foo\": \"bar\"}")
         ctx  {:json-from rdr}

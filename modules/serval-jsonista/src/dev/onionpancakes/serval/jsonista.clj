@@ -17,6 +17,8 @@
            value  (j/read-value source object-mapper)]
        (assoc-in ctx to value))
      (catch com.fasterxml.jackson.core.JsonParseException ex
+       (assoc-in ctx error {:exception ex}))
+     (catch com.fasterxml.jackson.databind.exc.MismatchedInputException ex
        (assoc-in ctx error {:exception ex})))))
 
 (defrecord JsonBody [value options]
