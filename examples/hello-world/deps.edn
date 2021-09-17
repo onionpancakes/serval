@@ -1,0 +1,2 @@
+{:deps  {dev.onionpancakes/serval {:local/root "../.."}}
+ :paths ["src"]}

@@ -117,8 +117,10 @@
 
 (defn handler-tree
   [config]
-  (cond-> (servlet-context-handler (:servlets config))
-    (:gzip config) (wrap-handler! (gzip-handler (:gzip config)))))
+  ;; TODO: Warn if :servlets is missing, but :gzip is specified?
+  (if (:servlets config)
+    (cond-> (servlet-context-handler (:servlets config))
+      (:gzip config) (wrap-handler! (gzip-handler (:gzip config))))))
 
 ;; Server
 
@@ -135,12 +137,14 @@
 
 (defn configure-server!
   [^Server server config]
-  (->> (:connectors config)
-       (map #(doto (ServerConnector. server)
-               (configure-connector! %)))
-       (into-array ServerConnector)
-       (.setConnectors server))
-  (.setHandler server (handler-tree config))
+  (if (:connectors config)
+    (->> (:connectors config)
+         (map #(doto (ServerConnector. server)
+                 (configure-connector! %)))
+         (into-array ServerConnector)
+         (.setConnectors server)))
+  (if-let [handler (handler-tree config)]
+    (.setHandler server handler))
   (.setRequestLog server (CustomRequestLog.)))
 
 (defn server
