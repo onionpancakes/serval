@@ -1,10 +1,13 @@
 (ns dev.oniopancakes.serval.tests.jetty.test-jetty
   (:require [dev.onionpancakes.serval.jetty :as sj]
             [clojure.test :refer [deftest is]])
-  (:import [org.eclipse.jetty.server
+  (:import [jakarta.servlet Servlet]
+           [org.eclipse.jetty.server
             Server ServerConnector
             HttpConnectionFactory]
-           [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]))
+           [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
+           [org.eclipse.jetty.servlet ServletContextHandler]
+           [org.eclipse.jetty.server.handler.gzip GzipHandler]))
 
 (deftest test-http-configuration
   (let [conf {:send-date-header?    false
@@ -55,3 +58,57 @@
 
   ;; Conf missing location throws.
   (is (thrown? clojure.lang.ExceptionInfo (sj/multipart-config {}))))
+
+(deftest test-servlet-context-handler
+  ;; Test via servlet registration.
+  (let [servlet  (reify Servlet
+                   (service [this _ _]))
+        servlet2 (reify Servlet
+                   (service [this _ _]))
+        conf     [["/*" servlet]
+                  ["/foo" servlet2]]
+        handler  (sj/servlet-context-handler conf)
+
+        ;; Mapping from typename string to paths set.
+        type2paths (->> (.. handler getServletContext)
+                        (.getServletRegistrations)
+                        (vals)
+                        (map (juxt (memfn getClassName)
+                                   (comp set (memfn getMappings))))
+                        (into {}))]
+    (is (= {(.getTypeName (type servlet))  #{"/*"}
+            (.getTypeName (type servlet2)) #{"/foo"}} type2paths))))
+
+(deftest test-gzip-handler
+  (let [conf {:excluded-methods    ["GET" "POST"]
+              :excluded-mime-types ["text/plain" "application/json"]
+              :excluded-paths      ["/foo" "/bar"]
+              :included-methods    ["HEAD" "PATCH"]
+              :included-mime-types ["text/html" "text/css"]
+              :included-paths      ["/buz" "/baz"]
+              :min-gzip-size       123}
+        gzip (sj/gzip-handler conf)]
+    (is (= #{"GET" "POST"} (set (.getExcludedMethods gzip))))
+    (is (= #{"text/plain" "application/json"} (set (.getExcludedMimeTypes gzip))))
+    (is (= #{"/foo" "/bar"} (set (.getExcludedPaths gzip))))
+    (is (= #{"HEAD" "PATCH"} (set (.getIncludedMethods gzip))))
+    (is (= #{"text/html" "text/css"} (set (.getIncludedMimeTypes gzip))))
+    (is (= #{"/buz" "/baz"} (set (.getIncludedPaths gzip))))
+    (is (= 123 (.getMinGzipSize gzip)))))
+
+(deftest test-handler-tree
+  (let [servlet (reify Servlet
+                  (service [this _ _]))
+        conf    {:servlets [["/*" servlet]]
+                 :gzip     true}
+        tree    (sj/handler-tree conf)]
+    (is (instance? GzipHandler tree))
+    (is (instance? ServletContextHandler (.getHandler tree)))))
+
+(deftest test-thread-pool
+  (let [pool (sj/thread-pool {:min-threads  1
+                              :max-threads  8
+                              :idle-timeout 1000})]
+    (is (= 1 (.getMinThreads pool)))
+    (is (= 8 (.getMaxThreads pool)))
+    (is (= 1000 (.getIdleTimeout pool)))))

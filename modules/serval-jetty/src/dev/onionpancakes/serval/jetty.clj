@@ -6,6 +6,7 @@
             CustomRequestLog]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
+           [org.eclipse.jetty.server.handler HandlerWrapper]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
 
@@ -82,13 +83,6 @@
       (.addServlet sch (servlet-holder serv opts) path))
     sch))
 
-(defn servlet-handler
-  [config]
-  (cond
-    (:servlets config) (servlet-context-handler (:servlets config))
-    (:servlet config)  (servlet-context-handler [["/*" (:servlet config)]])
-    :else              nil))
-
 (defn gzip-handler
   [config]
   (let [handler (GzipHandler.)]
@@ -116,6 +110,16 @@
       (.setMinGzipSize handler size))
     handler))
 
+(defn wrap-handler!
+  [handler ^HandlerWrapper wrapping]
+  (doto wrapping
+    (.setHandler handler)))
+
+(defn handler-tree
+  [config]
+  (cond-> (servlet-context-handler (:servlets config))
+    (:gzip config) (wrap-handler! (gzip-handler (:gzip config)))))
+
 ;; Server
 
 (defn thread-pool
@@ -129,11 +133,6 @@
       (.setIdleTimeout pool timeout))
     pool))
 
-(defn set-handler!
-  [this handler]
-  (doto this
-    (.setHandler handler)))
-
 (defn configure-server!
   [^Server server config]
   (->> (:connectors config)
@@ -141,10 +140,7 @@
                (configure-connector! %)))
        (into-array ServerConnector)
        (.setConnectors server))
-  (if-let [handler (servlet-handler config)]
-    (cond->> handler
-      (:gzip config) (set-handler! (gzip-handler (:gzip config)))
-      true           (set-handler! server)))
+  (.setHandler server (handler-tree config))
   (.setRequestLog server (CustomRequestLog.)))
 
 (defn server
