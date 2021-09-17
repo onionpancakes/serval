@@ -112,3 +112,19 @@
     (is (= 1 (.getMinThreads pool)))
     (is (= 8 (.getMaxThreads pool)))
     (is (= 1000 (.getIdleTimeout pool)))))
+
+(deftest test-server
+  (let [servlet (reify Servlet
+                  (service [this _ _]))
+        conf    {:thread-pool {:min-threads 1
+                               :max-threads 8}
+                 :servlets    [["/*" servlet]]
+                 :gzip        true}
+        server  (sj/server conf)
+        pool    (.getThreadPool server)
+        tree    (.getHandler server)
+        sctx    (.getHandler tree)]
+    (is (= 1 (.getMinThreads pool)))
+    (is (= 8 (.getMaxThreads pool)))
+    (is (instance? GzipHandler tree))
+    (is (instance? ServletContextHandler sctx))))
