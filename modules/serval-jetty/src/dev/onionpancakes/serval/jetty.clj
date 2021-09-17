@@ -137,14 +137,12 @@
 
 (defn configure-server!
   [^Server server config]
-  (if (:connectors config)
-    (->> (:connectors config)
-         (map #(doto (ServerConnector. server)
-                 (configure-connector! %)))
-         (into-array ServerConnector)
-         (.setConnectors server)))
-  (if-let [handler (handler-tree config)]
-    (.setHandler server handler))
+  (->> (:connectors config)
+       (map #(doto (ServerConnector. server)
+               (configure-connector! %)))
+       (into-array ServerConnector)
+       (.setConnectors server))
+  (.setHandler server (handler-tree config))
   (.setRequestLog server (CustomRequestLog.)))
 
 (defn server

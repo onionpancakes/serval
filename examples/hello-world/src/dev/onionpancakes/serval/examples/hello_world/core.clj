@@ -2,7 +2,7 @@
   (:require [dev.onionpancakes.serval.core :as sc]
             [dev.onionpancakes.serval.jetty :as sj]))
 
-(defn qhandler
+(defn handler
   [ctx]
   {:serval.response/status 200
    :serval.response/body   "Hello World!"})
@@ -10,10 +10,13 @@
 (def servlet
   (sc/http-servlet handler))
 
+(def conf
+  {:connectors [{:protocol :http
+                 :port     3000}]
+   :servlets   [["/*" servlet]]})
+
 (defonce server
-  (sj/server {:connectors [{:protocol :http
-                            :port     3000}]
-              :servlets   [["/*" servlet]]}))
+  (sj/server conf))
 
 (defn start []
   (doto server
@@ -21,8 +24,9 @@
     (.start)))
 
 (defn start-dev []
-  (let [servlet-dev (sc/http-servlet #'handler)]
+  (let [servlet-dev (sc/http-servlet #'handler)
+        conf-dev    (merge conf {:servlets [["/*" servlet-dev]]})]
     (doto server
       (.stop)
-      (sj/configure-server! {:servlets [["/*" servlet-dev]]})
+      (sj/configure-server! conf-dev)
       (.start))))
