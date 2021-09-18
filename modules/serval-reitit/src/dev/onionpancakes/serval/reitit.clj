@@ -21,3 +21,10 @@
          method  (get-in ctx [:serval.service/request :method])
          handler (get-in match [:data method :handler] default)]
      (handler ctx))))
+
+(defn route
+  ([ctx router]
+   (route ctx router nil))
+  ([ctx router opts]
+   (-> (match-by-path ctx router opts)
+       (handle-match-by-method opts))))
