@@ -5,9 +5,8 @@
 (defn post-response-handler
   [ctx]
   (let [req-body  (:serval.request/body ctx)
-        resp-body (srv.json/json-body
-                   {:message "Json received!"
-                    :value   req-body})]
+        resp-body (srv.json/json-body {:message "Json received!"
+                                       :value   req-body})]
     {:serval.response/status       200
      :serval.response/content-type "application/json"
      :serval.response/body         resp-body}))
@@ -16,12 +15,12 @@
   [ctx]
   (let [error-msg (-> (:serval.jsonista/error ctx)
                       (:exception)
-                      (.getMessage))]
+                      (.getMessage))
+        resp-body (srv.json/json-body {:message "Bad Json."
+                                       :error   error-msg})]
     {:serval.response/status       400
      :serval.response/content-type "application/json"
-     :serval.response/body         (srv.json/json-body
-                                    {:message "Bad Json."
-                                     :error   error-msg})}))
+     :serval.response/body         resp-body}))
 
 (def post-stack
   (comp (srv/map srv.json/read-json)
