@@ -1,2 +1,7 @@
-{:deps  {dev.onionpancakes/serval {:local/root "../.."}}
- :paths ["src"]}
+{:deps  {dev.onionpancakes/serval {:local/root "../.."}
+         org.slf4j/slf4j-simple   {:mvn/version "2.0.0-alpha5"}}
+ :paths ["src"]
+
+ :aliases
+ {:start
+  {:main-opts ["-m" "dev.onionpancakes.serval.examples.hello-world.server"]}}}

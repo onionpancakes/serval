@@ -47,3 +47,6 @@
     (.stop)
     (srv.jetty/configure-server! (config-dev))
     (.start)))
+
+(defn -main []
+  (start))
