@@ -18,7 +18,7 @@
    :serval.response/content-type "application/json"
    :serval.response/body         (json/json-body {:message "Hello World!"})})
 
-(defn post-handler
+(defn post-response-handler
   [ctx]
   (let [req-body  (:serval.request/body ctx)
         resp-body (json/json-body {:message "Json received!"
@@ -40,7 +40,10 @@
 (def post-stack
   (comp (sc/map json/read-json)
         (sc/terminate :serval.jsonista/error post-error-handler)
-        (sc/map post-handler)))
+        (sc/map post-response-handler)))
+
+(def post-handler
+  (sc/handler post-stack))
 
 (defn not-found-handler
   [ctx]
@@ -50,7 +53,7 @@
 (def router
   (r/router [["/" {:GET {:handler hello-handler}}]
              ["/json" {:GET {:handler json-handler}}]
-             ["/post" {:POST {:handler (sc/handler post-stack)}}]]))
+             ["/post" {:POST {:handler post-handler}}]]))
 
 (defn handler
   [ctx]
