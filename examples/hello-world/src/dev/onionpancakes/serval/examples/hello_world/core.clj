@@ -42,6 +42,11 @@
         (sc/terminate :serval.jsonista/error post-error-handler)
         (sc/map post-handler)))
 
+(defn not-found-handler
+  [ctx]
+  {:serval.response/status 404
+   :serval.response/body   "Not found."})
+
 (def router
   (r/router [["/" {:GET {:handler hello-handler}}]
              ["/json" {:GET {:handler json-handler}}]
@@ -49,7 +54,7 @@
 
 (defn handler
   [ctx]
-  (sr/route ctx router))
+  (sr/route ctx router {:default not-found-handler}))
 
 ;; Server
 
