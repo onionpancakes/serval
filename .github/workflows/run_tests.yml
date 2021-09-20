@@ -1,4 +1,4 @@
-name: test
+name: Run tests
 on: [push]
 jobs:
   run-tests:
@@ -12,6 +12,9 @@ jobs:
       - uses: DeLaGuardo/setup-clojure@3.5
         with:
           cli: 1.10.3.967
-      
+
+      - name: Install deps
+        run: clojure -P
+
       - name: Run tests
         run: clojure -X:run-tests
