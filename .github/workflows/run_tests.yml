@@ -14,7 +14,7 @@ jobs:
           cli: 1.10.3.967
 
       - name: Install deps
-        run: clojure -P
+        run: clojure -A:run-tests -P
 
       - name: Run tests
         run: clojure -X:run-tests
