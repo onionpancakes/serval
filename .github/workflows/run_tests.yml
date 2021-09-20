@@ -17,11 +17,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ~/.m2/repository
-            ~/.gitlibs/libs
+            ~/.m2
+            ~/.gitlibs
           key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn') }}
-          restore-keys: |
-            ${{ runner.os }}-deps-
 
       - name: Install deps
         run: clojure -A:run-tests -P
