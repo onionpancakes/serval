@@ -9,10 +9,19 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
-          cache: 'maven'
       - uses: DeLaGuardo/setup-clojure@3.5
         with:
           cli: 1.10.3.967
+
+      - name: Deps cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs/libs
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
 
       - name: Install deps
         run: clojure -A:run-tests -P
