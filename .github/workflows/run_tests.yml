@@ -9,6 +9,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
+          cache: 'maven'
       - uses: DeLaGuardo/setup-clojure@3.5
         with:
           cli: 1.10.3.967
