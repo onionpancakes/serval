@@ -1,11 +1,2 @@
 {:deps  {org.clojure/clojure {:mvn/version "1.10.3"}}
- :paths ["src"]
- 
- :aliases
-{:run-tests
- {:extra-deps  {dev.onionpancakes/serval-mock        {:local/root "../serval-mock"}
-                io.github.cognitect-labs/test-runner {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
-  :extra-paths ["test"]
-  :exec-fn     cognitect.test-runner.api/test
-  :exec-args   {:dirs     ["test"]
-                :patterns [".*onionpancakes.*"]}}}}
+ :paths ["src"]}
