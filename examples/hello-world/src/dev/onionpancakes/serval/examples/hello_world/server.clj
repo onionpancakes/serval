@@ -31,8 +31,8 @@
    :servlets   [["/*" servlet]]})
 
 (defn config-dev []
-  (-> {:servlets [["/*" (srv/http-servlet #'handler)]]}
-      (merge config)))
+  (->> {:servlets [["/*" (srv/http-servlet #'handler)]]}
+       (merge config)))
 
 (defonce server
   (srv.jetty/server config))
