@@ -4,6 +4,10 @@
 
 Servlet oriented web framework for Clojure.
 
+# Status
+
+Currently for my personal use only. Future breaking changes possible.
+
 # License
 
 Released under the MIT license.
