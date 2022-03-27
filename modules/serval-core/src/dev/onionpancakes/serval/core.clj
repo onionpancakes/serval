@@ -1,7 +1,14 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map])
-  (:require [dev.onionpancakes.serval.io.http :as io.http])
+  (:require [dev.onionpancakes.serval.io.body :as io.body]
+            [dev.onionpancakes.serval.io.http :as io.http])
   (:import [jakarta.servlet GenericServlet]))
+
+;; Async
+
+(defn async-body
+  [value]
+  (io.body/async-body value))
 
 ;; Servlet
 
@@ -15,7 +22,7 @@
   [handler]
   (servlet* (io.http/service-fn handler)))
 
-;; Middleware
+;; Processors
 
 (defn map
   [f & args]
