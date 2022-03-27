@@ -2,7 +2,6 @@
   (:require [dev.onionpancakes.serval.io.body :as io.body]
             [dev.onionpancakes.serval.jsonista :as sj]
             [dev.onionpancakes.serval.mock.http :as mock]
-            [jsonista.core :as j]
             [clojure.test :refer [deftest is]])
   (:import [java.io StringReader]))
 
@@ -29,7 +28,7 @@
         ctx  {:json-from rdr}
         opts {:from          [:json-from]
               :to            [:json-to]
-              :object-mapper j/keyword-keys-object-mapper}
+              :object-mapper :keyword-keys-object-mapper}
         ret  (sj/read-json ctx opts)]
     (is (= {:foo "bar"} (:json-to ret)))))
 
