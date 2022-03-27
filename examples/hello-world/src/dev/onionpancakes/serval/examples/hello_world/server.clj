@@ -2,7 +2,6 @@
   (:require [dev.onionpancakes.serval.core :as srv]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             [dev.onionpancakes.serval.reitit :as srv.reitit]
-            [reitit.core :as reitit]
             [dev.onionpancakes.serval.examples.hello-world.handlers.hello-world :as handlers.hw]
             [dev.onionpancakes.serval.examples.hello-world.handlers.json :as handlers.js]
             [dev.onionpancakes.serval.examples.hello-world.handlers.post :as handlers.post]
@@ -14,7 +13,7 @@
    ["/post" {:POST {:handler handlers.post/post-handler}}]])
 
 (def router
-  (reitit/router routes))
+  (srv.reitit/router routes))
 
 (defn handler
   [ctx]
