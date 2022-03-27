@@ -1,6 +1,5 @@
 (ns dev.onionpancakes.serval.tests.reitit.test-reitit
   (:require [dev.onionpancakes.serval.reitit :as sr]
-            [reitit.core :as r]
             [clojure.test :refer [deftest is]])
   (:import [reitit.core Match]))
 
@@ -12,7 +11,7 @@
    ["/default" {:GET {:name :default}}]])
 
 (def router
-  (r/router router-spec))
+  (sr/router router-spec))
 
 (deftest test-match-by-path
   ;; Default opts

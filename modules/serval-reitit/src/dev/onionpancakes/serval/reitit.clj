@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.reitit
+3(ns dev.onionpancakes.serval.reitit
   (:require [reitit.core :as r]))
 
 (defn match-by-path
@@ -28,3 +28,9 @@
   ([ctx router opts]
    (-> (match-by-path ctx router opts)
        (handle-match-by-method opts))))
+
+(defn router
+  ([raw-routes]
+   (r/router raw-routes))
+  ([raw-routes opts]
+   (r/router raw-routes opts)))
