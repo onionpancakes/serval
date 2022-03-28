@@ -1,5 +1,7 @@
 (ns dev.onionpancakes.serval.jetty2
-  (:import [org.eclipse.jetty.server
+  (:require [dev.onionpancakes.serval.core :as serval])
+  (:import [jakarta.servlet Servlet MultipartConfigElement]
+           [org.eclipse.jetty.server
             Server Handler ServerConnector
             ConnectionFactory HttpConnectionFactory HttpConfiguration
             CustomRequestLog]
@@ -8,6 +10,81 @@
            [org.eclipse.jetty.server.handler HandlerWrapper]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
+
+;; Servlets and handlers
+
+(defprotocol IServlet
+  (to-servlet [this]))
+
+(extend-protocol IServlet
+  clojure.lang.Fn
+  (to-servler [this]
+    (serval/http-servlet this))
+  Servlet
+  (to-servlet [this] this))
+
+(defn ^ServletHolder servlet-holder
+  [^Servlet servlet config]
+  (let [holder (ServletHolder. servlet)]
+    (if (contains? config :multipart-config)
+      (-> (.getRegistration holder)
+          (.setMultipartConfig (:multipart-config config))))
+    holder))
+
+(defn servlet-context-handler
+  [servlet-context-spec]
+  (let [sch (ServletContextHandler.)]
+    (doseq [[^String path servlet config] servlet-context-spec]
+      (.addServlet sch (servlet-holder servlet config) path))
+    sch))
+
+(defprotocol IHandler
+  (to-handler [this]))
+
+(extend-protocol IHandler
+  clojure.lang.PersistentVector
+  (to-handler [this]
+    (servlet-context-handler this))
+  clojure.lang.Fn
+  (to-handler [this]
+    (servlet-context-handler [["/*" this]]))
+  Handler
+  (to-handler [this] this))
+
+(defn gzip-handler
+  ([handler] (gzip-handler handler nil))
+  ([handler config]
+   (let [gzhandler (GzipHandler.)]
+     (.setHandler gzhandler (to-handler handler))
+     (if (contains? config :excluded-methods)
+       (->> (:excluded-methods config)
+            (map name)
+            (into-array String)
+            (.setExcludedMethods gzhandler)))
+     (if (contains? config :excluded-mime-types)
+       (->> (:excluded-mime-types config)
+            (into-array String)
+            (.setExcludedMimeTypes gzhandler)))
+     (if (contains? config :excluded-paths)
+       (->> (:excluded-paths config)
+            (into-array String)
+            (.setExcludedPaths gzhandler)))
+     (if (contains? config :included-methods)
+       (->> (:included-methods config)
+            (map name)
+            (into-array String)
+            (.setIncludedMethods gzhandler)))
+     (if (contains? config :included-mime-types)
+       (->> (:included-mime-types config)
+            (into-array String)
+            (.setIncludedMimeTypes gzhandler)))
+     (if (contains? config :included-paths)
+       (->> (:included-paths config)
+            (into-array String)
+            (.setIncludedPaths gzhandler)))
+     (if (contains? config :min-gzip-size)
+       (.setMinGzipSize gzhandler (:min-gzip-size config)))
+     gzhandler)))
 
 ;; Server connector
 
@@ -77,7 +154,7 @@
          (into-array ServerConnector)
          (.setConnectors server)))
   (if (contains? config :handler)
-    (.setHandler server (:handler config)))
+    (.setHandler server (to-handler (:handler config))))
   (if (contains? config :request-log)
     (.setRequestLog server (:request-log config))))
 
