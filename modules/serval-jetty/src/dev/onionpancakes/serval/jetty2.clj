@@ -48,6 +48,9 @@
   clojure.lang.AFunction
   (to-handler [this]
     (servlet-context-handler [["/*" this]]))
+  Servlet
+  (to-handler [this]
+    (servlet-context-handler [["/*" this]]))
   Handler
   (to-handler [this] this))
 
