@@ -1,4 +1,4 @@
-(ns dev.oniopancakes.serval.tests.jetty.test-jetty
+(ns dev.onionpancakes.serval.tests.jetty.test-jetty
   (:require [dev.onionpancakes.serval.jetty :as sj]
             [clojure.test :refer [deftest is]])
   (:import [jakarta.servlet Servlet]
