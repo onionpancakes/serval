@@ -54,7 +54,7 @@
   Handler
   (to-handler [this] this))
 
-(defn gzip-handler
+(defn ^GzipHandler gzip-handler
   ([handler] (gzip-handler handler nil))
   ([handler config]
    (let [gzhandler (GzipHandler.)]
@@ -142,7 +142,7 @@
 
 ;; Thread pool
 
-(defn queued-thread-pool
+(defn ^QueuedThreadPool queued-thread-pool
   [config]
   (let [pool (QueuedThreadPool.)]
     (if (contains? config :min-threads)
@@ -155,7 +155,7 @@
 
 ;; Server
 
-(defn configure-server!
+(defn ^Server configure-server!
   [^Server server config]
   (if (contains? config :connectors)
     (->> (:connectors config)
@@ -165,9 +165,10 @@
   (if (contains? config :handler)
     (.setHandler server (to-handler (:handler config))))
   (if (contains? config :request-log)
-    (.setRequestLog server (:request-log config))))
+    (.setRequestLog server (:request-log config)))
+  server)
 
-(defn server*
+(defn ^Server server*
   ([config]
    (doto (Server.)
      (configure-server! config)))
@@ -181,7 +182,7 @@
                   {:serval.response/body "Hello world!"})
    :request-log (CustomRequestLog.)})
 
-(defn server
+(defn ^Server server
   ([config]
    (server* (merge default-server-config config)))
   ([pool config]
