@@ -6,9 +6,8 @@
 
 ;; Async
 
-(defn async-body
-  [value]
-  (io.body/async-body value))
+(def async-body
+  io.body/async-body)
 
 ;; Servlet
 

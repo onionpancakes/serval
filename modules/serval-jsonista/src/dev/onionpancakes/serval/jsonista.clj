@@ -4,9 +4,11 @@
   (:import [jakarta.servlet ServletResponse]
            [java.nio ByteBuffer]))
 
-(def to-object-mapper
-  {:default-object-mapper      j/default-object-mapper
-   :keyword-keys-object-mapper j/keyword-keys-object-mapper})
+(def default-object-mapper
+  j/default-object-mapper)
+
+(def keyword-keys-object-mapper
+  j/keyword-keys-object-mapper)
 
 (defn read-json
   ([ctx]
@@ -15,11 +17,10 @@
          :or   {from          [:serval.service/request :reader]
                 to            [:serval.request/body]
                 error         [:serval.jsonista/error]
-                object-mapper :default-object-mapper}}]
+                object-mapper j/default-object-mapper}}]
    (try
-     (let [source     (get-in ctx from)
-           obj-mapper (to-object-mapper object-mapper object-mapper)
-           value      (j/read-value source obj-mapper)]
+     (let [source (get-in ctx from)
+           value  (j/read-value source object-mapper)]
        (assoc-in ctx to value))
      (catch com.fasterxml.jackson.core.JsonParseException ex
        (assoc-in ctx error {:exception ex}))
@@ -30,16 +31,13 @@
   io.body/ResponseBody
   (io.body/async-body? [this _] false)
   (io.body/write-body [this {^ServletResponse resp :serval.service/response}]
-    (let [obj-mapper-opt (:object-mapper options :default-object-mapper)
-          obj-mapper     (to-object-mapper obj-mapper-opt obj-mapper-opt)]
-      (j/write-value (.getWriter resp) value obj-mapper)))
+    (let [object-mapper (:object-mapper options j/default-object-mapper)]
+      (j/write-value (.getWriter resp) value object-mapper)))
 
   io.body/AsyncWritable
-  (io.body/write-listener [this ctx cf]
-    (let [obj-mapper-opt        (:object-mapper options :default-object-mapper)
-          obj-mapper            (to-object-mapper obj-mapper-opt obj-mapper-opt)
-          ^ServletResponse resp (:serval.service/response ctx)]
-      (-> (j/write-value-as-bytes value obj-mapper)
+  (io.body/write-listener [this {^ServletResponse resp :serval.service/response} cf]
+    (let [object-mapper (:object-mapper options j/default-object-mapper)]
+      (-> (j/write-value-as-bytes value object-mapper)
           (ByteBuffer/wrap)
           (io.body/buffer-write-listener (.getOutputStream resp) cf)))))
 

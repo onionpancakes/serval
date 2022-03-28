@@ -28,7 +28,7 @@
         ctx  {:json-from rdr}
         opts {:from          [:json-from]
               :to            [:json-to]
-              :object-mapper :keyword-keys-object-mapper}
+              :object-mapper sj/keyword-keys-object-mapper}
         ret  (sj/read-json ctx opts)]
     (is (= {:foo "bar"} (:json-to ret)))))
 
