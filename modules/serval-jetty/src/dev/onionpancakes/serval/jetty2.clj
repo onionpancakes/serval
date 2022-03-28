@@ -14,18 +14,18 @@
 ;; Servlets and handlers
 
 (defprotocol IServlet
-  (to-servlet [this]))
+  (to-servlet ^Servlet [this]))
 
 (extend-protocol IServlet
-  clojure.lang.Fn
-  (to-servler [this]
+  clojure.lang.AFunction
+  (to-servlet [this]
     (serval/http-servlet this))
   Servlet
   (to-servlet [this] this))
 
 (defn ^ServletHolder servlet-holder
-  [^Servlet servlet config]
-  (let [holder (ServletHolder. servlet)]
+  [servlet config]
+  (let [holder (ServletHolder. (to-servlet servlet))]
     (if (contains? config :multipart-config)
       (-> (.getRegistration holder)
           (.setMultipartConfig (:multipart-config config))))
@@ -45,7 +45,7 @@
   clojure.lang.PersistentVector
   (to-handler [this]
     (servlet-context-handler this))
-  clojure.lang.Fn
+  clojure.lang.AFunction
   (to-handler [this]
     (servlet-context-handler [["/*" this]]))
   Handler
@@ -118,6 +118,12 @@
         http2 (HTTP2CServerConnectionFactory. hconf)]
     [http1 http2]))
 
+(defmethod connection-factories nil
+  [config]
+  (let [hconf (http-configuration config)
+        http1 (HttpConnectionFactory. hconf)]
+    [http1]))
+
 (defn server-connector
   [server config]
   (let [conn (ServerConnector. server)]
@@ -165,3 +171,15 @@
   ([^ThreadPool pool config]
    (doto (Server. pool)
      (configure-server! config))))
+
+(def default-server-config
+  {:connectors  [{:protocol :http :port 3000}]
+   :handler     (fn [ctx]
+                  {:serval.response/body "Hello world!"})
+   :request-log (CustomRequestLog.)})
+
+(defn server
+  ([config]
+   (server* (merge default-server-config config)))
+  ([pool config]
+   (server* pool (merge default-server-config config))))
