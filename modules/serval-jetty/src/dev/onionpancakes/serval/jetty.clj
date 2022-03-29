@@ -1,4 +1,5 @@
 (ns dev.onionpancakes.serval.jetty
+  (:require [dev.onionpancakes.serval.core :as serval])
   (:import [jakarta.servlet Servlet MultipartConfigElement]
            [org.eclipse.jetty.server
             Server Handler ServerConnector
@@ -10,7 +11,91 @@
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
 
-;; Connectors
+;; Servlets and handlers
+
+(defprotocol IServlet
+  (to-servlet ^Servlet [this]))
+
+(extend-protocol IServlet
+  clojure.lang.AFunction
+  (to-servlet [this]
+    (serval/http-servlet this))
+  clojure.lang.Var
+  (to-servlet [this]
+    (serval/http-servlet this))
+  Servlet
+  (to-servlet [this] this))
+
+(defn ^ServletHolder servlet-holder
+  [servlet config]
+  (let [holder (ServletHolder. (to-servlet servlet))]
+    (if (contains? config :multipart-config)
+      (-> (.getRegistration holder)
+          (.setMultipartConfig (:multipart-config config))))
+    holder))
+
+(defn servlet-context-handler
+  [servlet-context-spec]
+  (let [sch (ServletContextHandler.)]
+    (doseq [[^String path servlet config] servlet-context-spec]
+      (.addServlet sch (servlet-holder servlet config) path))
+    sch))
+
+(defprotocol IHandler
+  (to-handler [this]))
+
+(extend-protocol IHandler
+  clojure.lang.PersistentVector
+  (to-handler [this]
+    (servlet-context-handler this))
+  clojure.lang.AFunction
+  (to-handler [this]
+    (servlet-context-handler [["/*" this]]))
+  clojure.lang.Var
+  (to-handler [this]
+    (servlet-context-handler [["/*" this]]))
+  Servlet
+  (to-handler [this]
+    (servlet-context-handler [["/*" this]]))
+  Handler
+  (to-handler [this] this))
+
+(defn ^GzipHandler gzip-handler
+  ([handler] (gzip-handler handler nil))
+  ([handler config]
+   (let [gzhandler (GzipHandler.)]
+     (.setHandler gzhandler (to-handler handler))
+     (if (contains? config :excluded-methods)
+       (->> (:excluded-methods config)
+            (map name)
+            (into-array String)
+            (.setExcludedMethods gzhandler)))
+     (if (contains? config :excluded-mime-types)
+       (->> (:excluded-mime-types config)
+            (into-array String)
+            (.setExcludedMimeTypes gzhandler)))
+     (if (contains? config :excluded-paths)
+       (->> (:excluded-paths config)
+            (into-array String)
+            (.setExcludedPaths gzhandler)))
+     (if (contains? config :included-methods)
+       (->> (:included-methods config)
+            (map name)
+            (into-array String)
+            (.setIncludedMethods gzhandler)))
+     (if (contains? config :included-mime-types)
+       (->> (:included-mime-types config)
+            (into-array String)
+            (.setIncludedMimeTypes gzhandler)))
+     (if (contains? config :included-paths)
+       (->> (:included-paths config)
+            (into-array String)
+            (.setIncludedPaths gzhandler)))
+     (if (contains? config :min-gzip-size)
+       (.setMinGzipSize gzhandler (:min-gzip-size config)))
+     gzhandler)))
+
+;; Server connector
 
 (defn http-configuration
   [config]
@@ -42,112 +127,69 @@
         http2 (HTTP2CServerConnectionFactory. hconf)]
     [http1 http2]))
 
-(defn configure-connector!
-  [^ServerConnector conn config]
-  (.setConnectionFactories conn (connection-factories config))
-  (if (contains? config :port)
-    (.setPort conn (:port config)))
-  (if (contains? config :host)
-    (.setHost conn (:host config)))
-  (if (contains? config :idle-timeout)
-    (.setIdleTimeout conn (:idle-timeout config))))
-
-;; Handler
-
-(defn multipart-config
-  [{:keys [location max-file-size max-request-size
-           file-size-threshold]
-    :or   {max-file-size       -1
-           max-request-size    -1
-           file-size-threshold 0}}]
-  (try
-    (assert location)
-    (catch AssertionError e
-      (throw (ex-info "Multipart config missing location key." {}))))
-  
-  (MultipartConfigElement. location max-file-size max-request-size
-                           file-size-threshold))
-
-(defn ^ServletHolder servlet-holder
-  [^Servlet servlet opts]
-  (let [holder (ServletHolder. servlet)]
-    (if-let [mconf (:multipart opts)]
-      (-> (.getRegistration holder)
-          (.setMultipartConfig (multipart-config mconf))))
-    holder))
-
-(defn servlet-context-handler
-  [path-to-servlets]
-  (let [^ServletContextHandler sch (ServletContextHandler.)]
-    (doseq [[^String path ^Servlet serv opts] path-to-servlets]
-      (.addServlet sch (servlet-holder serv opts) path))
-    sch))
-
-(defn gzip-handler
+(defmethod connection-factories nil
   [config]
-  (let [handler (GzipHandler.)]
-    (when-let [methods (:excluded-methods config)]
-      (->> (map name methods)
-           (into-array String)
-           (.setExcludedMethods handler)))
-    (when-let [mime-types (:excluded-mime-types config)]
-      (->> (into-array String mime-types)
-           (.setExcludedMimeTypes handler)))
-    (when-let [paths (:excluded-paths config)]
-      (->> (into-array String paths)
-           (.setExcludedPaths handler)))
-    (when-let [methods (:included-methods config)]
-      (->> (map name methods)
-           (into-array String)
-           (.setIncludedMethods handler)))
-    (when-let [mime-types (:included-mime-types config)]
-      (->> (into-array String mime-types)
-           (.setIncludedMimeTypes handler)))
-    (when-let [paths (:included-paths config)]
-      (->> (into-array String paths)
-           (.setIncludedPaths handler)))
-    (when-let [size (:min-gzip-size config)]
-      (.setMinGzipSize handler size))
-    handler))
+  (let [hconf (http-configuration config)
+        http1 (HttpConnectionFactory. hconf)]
+    [http1]))
 
-(defn wrap-handler!
-  [handler ^HandlerWrapper wrapping]
-  (doto wrapping
-    (.setHandler handler)))
+(defn server-connector
+  [server config]
+  (let [conn (ServerConnector. server)]
+    (if (contains? config :protocol)
+      (.setConnectionFactories conn (connection-factories config)))
+    (if (contains? config :port)
+      (.setPort conn (:port config)))
+    (if (contains? config :host)
+      (.setHost conn (:host config)))
+    (if (contains? config :idle-timeout)
+      (.setIdleTimeout conn (:idle-timeout config)))
+    conn))
 
-(defn handler-tree
+;; Thread pool
+
+(defn ^QueuedThreadPool queued-thread-pool
   [config]
-  ;; TODO: Warn if :servlets is missing, but :gzip is specified?
-  (if (:servlets config)
-    (cond-> (servlet-context-handler (:servlets config))
-      (:gzip config) (wrap-handler! (gzip-handler (:gzip config))))))
+  (let [pool (QueuedThreadPool.)]
+    (if (contains? config :min-threads)
+      (.setMinThreads pool (:min-threads config)))
+    (if (contains? config :max-threads)
+      (.setMaxThreads pool (:max-threads config)))
+    (if (contains? config :idle-timeout)
+      (.setIdleTimeout pool (:idle-timeout config)))
+    pool))
 
 ;; Server
 
-(defn thread-pool
-  [config]
-  (let [pool (QueuedThreadPool.)]
-    (when-let [min-threads (:min-threads config)]
-      (.setMinThreads pool min-threads))
-    (when-let [max-threads (:max-threads config)]
-      (.setMaxThreads pool max-threads))
-    (when-let [timeout (:idle-timeout config)]
-      (.setIdleTimeout pool timeout))
-    pool))
-
-(defn configure-server!
+(defn ^Server configure-server!
   [^Server server config]
-  (->> (:connectors config)
-       (map #(doto (ServerConnector. server)
-               (configure-connector! %)))
-       (into-array ServerConnector)
-       (.setConnectors server))
-  (.setHandler server (handler-tree config))
-  (.setRequestLog server (CustomRequestLog.)))
+  (if (contains? config :connectors)
+    (->> (:connectors config)
+         (map (partial server-connector server))
+         (into-array ServerConnector)
+         (.setConnectors server)))
+  (if (contains? config :handler)
+    (.setHandler server (to-handler (:handler config))))
+  (if (contains? config :request-log)
+    (.setRequestLog server (:request-log config)))
+  server)
 
-(defn server
-  [config]
-  (doto (if (:thread-pool config)
-          (Server. ^ThreadPool (thread-pool (:thread-pool config)))
-          (Server.))
-    (configure-server! config)))
+(defn ^Server server*
+  ([config]
+   (doto (Server.)
+     (configure-server! config)))
+  ([^ThreadPool pool config]
+   (doto (Server. pool)
+     (configure-server! config))))
+
+(def default-server-config
+  {:connectors  [{:protocol :http :port 3000}]
+   :handler     (fn [ctx]
+                  {:serval.response/body "Hello world!"})
+   :request-log (CustomRequestLog.)})
+
+(defn ^Server server
+  ([config]
+   (server* (merge default-server-config config)))
+  ([pool config]
+   (server* pool (merge default-server-config config))))

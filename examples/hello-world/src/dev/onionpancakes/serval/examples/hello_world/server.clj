@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.examples.hello-world.server
-  (:require [dev.onionpancakes.serval.jetty2 :as srv.jetty]
+  (:require [dev.onionpancakes.serval.jetty :as srv.jetty]
             [dev.onionpancakes.serval.examples.hello-world.handlers :refer [route-handler]]))
 
 ;; Server

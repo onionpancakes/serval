@@ -1,130 +1,132 @@
 (ns dev.onionpancakes.serval.tests.jetty.test-jetty
-  (:require [dev.onionpancakes.serval.jetty :as sj]
-            [clojure.test :refer [deftest is]])
-  (:import [jakarta.servlet Servlet]
-           [org.eclipse.jetty.server
-            Server ServerConnector
-            HttpConnectionFactory]
-           [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
-           [org.eclipse.jetty.servlet ServletContextHandler]
+  (:refer-clojure :exclude [send])
+  (:require [dev.onionpancakes.serval.jetty :as j]
+            [clojure.test :refer [is deftest use-fixtures]])
+  (:import [java.net.http HttpClient HttpRequest HttpResponse
+            HttpRequest$Builder
+            HttpRequest$BodyPublishers HttpResponse$BodyHandlers]
+           [java.net URI]
+           [java.util.zip GZIPInputStream]
+           [org.eclipse.jetty.server Server]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]))
 
-(deftest test-http-configuration
-  (let [conf {:send-date-header?    false
-              :send-server-version? false
-              :request-header-size  123
-              :response-header-size 123
-              :output-buffer-size   123}
-        hconf (sj/http-configuration conf)]
-    (is (= false (.getSendDateHeader hconf)))
-    (is (= false (.getSendServerVersion hconf)))
-    (is (= 123 (.getRequestHeaderSize hconf)))
-    (is (= 123 (.getResponseHeaderSize hconf)))
-    (is (= 123 (.getOutputBufferSize hconf)))))
+;; Http client
 
-(deftest test-configure-connector
-  ;; Http
-  (let [server (Server.)
-        conn   (ServerConnector. server)
-        conf   {:protocol     :http
-                :port         3000
-                :host         "0.1.2.3"
-                :idle-timeout 1234}
-        _      (sj/configure-connector! conn conf)]
-    (is (= 3000 (.getPort conn)))
-    (is (= "0.1.2.3" (.getHost conn)))
-    (is (= 1234 (.getIdleTimeout conn)))
-    (is (instance? HttpConnectionFactory (first (.getConnectionFactories conn)))))
+(def ^HttpClient client
+  (.build (HttpClient/newBuilder)))
 
-  ;; Http2 clear text
-  (let [server (Server.)
-        conn   (ServerConnector. server)
-        conf   {:protocol :http2c}
-        _      (sj/configure-connector! conn conf)
-        facts  (.getConnectionFactories conn)]
-    (is (instance? HttpConnectionFactory (first facts)))
-    (is (instance? HTTP2CServerConnectionFactory (second facts)))))
+(defn ^HttpRequest$Builder set-headers
+  [^HttpRequest$Builder builder headers]
+  (doseq [[header-key values] headers
+          :let                [header-name (name header-key)]
+          value               values]
+    (.setHeader builder header-name value))
+  builder)
 
-(deftest test-multipart-config
-  (let [conf  {:location            "/tmp"
-               :max-file-size       123
-               :max-request-size    123
-               :file-size-threshold 123}
-        mpart (sj/multipart-config conf)]
-    (is (= "/tmp" (.getLocation mpart)))
-    (is (= 123 (.getMaxFileSize mpart)))
-    (is (= 123 (.getMaxRequestSize mpart)))
-    (is (= 123 (.getFileSizeThreshold mpart))))
+(defn to-request
+  [req]
+  (-> (HttpRequest/newBuilder)
+      (.uri (URI. (:uri req)))
+      (.method "GET" (HttpRequest$BodyPublishers/noBody))
+      (set-headers (:headers req))
+      (.build)))
 
-  ;; Conf missing location throws.
-  (is (thrown? clojure.lang.ExceptionInfo (sj/multipart-config {}))))
+(defn ^HttpResponse send
+  ([req]
+   (.send client (to-request req) (HttpResponse$BodyHandlers/ofString)))
+  ([req bh]
+   (.send client (to-request req) bh)))
 
-(deftest test-servlet-context-handler
-  ;; Test via servlet registration.
-  (let [servlet  (reify Servlet
-                   (service [this _ _]))
-        servlet2 (reify Servlet
-                   (service [this _ _]))
-        conf     [["/*" servlet]
-                  ["/foo" servlet2]]
-        handler  (sj/servlet-context-handler conf)
+;; Server
 
-        ;; Mapping from typename string to paths set.
-        type2paths (->> (.. handler getServletContext)
-                        (.getServletRegistrations)
-                        (vals)
-                        (map (juxt (memfn getClassName)
-                                   (comp set (memfn getMappings))))
-                        (into {}))]
-    (is (= {(.getTypeName (type servlet))  #{"/*"}
-            (.getTypeName (type servlet2)) #{"/foo"}} type2paths))))
+(defmacro with-server
+  "Creates a server with config running in scope of expression."
+  [config & body]
+  `(let [server# (j/server ~config)]
+     (.start server#)
+     ~@body
+     (.stop server#)))
+
+;; Tests
+
+(deftest test-minimal
+  (with-server {:connectors [{:port 42000}]
+                :handler    (constantly {:serval.response/body "foo"})}
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (str (.version resp)) "HTTP_1_1"))
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))))
+
+(deftest test-http1
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}]
+                :handler    (constantly {:serval.response/body "foo"})}
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (str (.version resp)) "HTTP_1_1"))
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))))
+
+(deftest test-http2c
+  (with-server {:connectors [{:protocol :http2c
+                              :port     42000}]
+                :handler    (constantly {:serval.response/body "foo"})}
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (str (.version resp)) "HTTP_2"))
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))))
+
+(deftest test-multiple-connectors
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}
+                             {:protocol :http2c
+                              :port     42001}]
+                :handler    #(case (int (:server-port (:serval.service/request %)))
+                               42000 {:serval.response/body "foo"}
+                               42001 {:serval.response/body "bar"})}
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (str (.version resp)) "HTTP_1_1"))
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))
+    (let [resp (send {:uri "http://localhost:42001"})]
+      (is (= (str (.version resp)) "HTTP_2"))
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "bar")))))
 
 (deftest test-gzip-handler
-  (let [conf {:excluded-methods    ["GET" "POST"]
-              :excluded-mime-types ["text/plain" "application/json"]
-              :excluded-paths      ["/foo" "/bar"]
-              :included-methods    ["HEAD" "PATCH"]
-              :included-mime-types ["text/html" "text/css"]
-              :included-paths      ["/buz" "/baz"]
-              :min-gzip-size       123}
-        gzip (sj/gzip-handler conf)]
-    (is (= #{"GET" "POST"} (set (.getExcludedMethods gzip))))
-    (is (= #{"text/plain" "application/json"} (set (.getExcludedMimeTypes gzip))))
-    (is (= #{"/foo" "/bar"} (set (.getExcludedPaths gzip))))
-    (is (= #{"HEAD" "PATCH"} (set (.getIncludedMethods gzip))))
-    (is (= #{"text/html" "text/css"} (set (.getIncludedMimeTypes gzip))))
-    (is (= #{"/buz" "/baz"} (set (.getIncludedPaths gzip))))
-    (is (= 123 (.getMinGzipSize gzip)))))
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}]
+                :handler    (-> (constantly {:serval.response/body "foo"})
+                                (j/gzip-handler {:min-gzip-size 0}))}
+    (let [resp (send {:uri     "http://localhost:42000"
+                      :headers {:accept-encoding ["gzip"]}}
+                     (HttpResponse$BodyHandlers/ofInputStream))]
+      (is (= (.statusCode resp) 200))
+      (is (= (slurp (GZIPInputStream. (.body resp))) "foo")))))
 
-(deftest test-handler-tree
-  (let [servlet (reify Servlet
-                  (service [this _ _]))
-        conf    {:servlets [["/*" servlet]]
-                 :gzip     true}
-        tree    (sj/handler-tree conf)]
-    (is (instance? GzipHandler tree))
-    (is (instance? ServletContextHandler (.getHandler tree)))))
+(deftest test-servlet-context-spec
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}]
+                :handler    [["/foo" (constantly {:serval.response/body "foo"})]
+                             ["/bar" (constantly {:serval.response/body "bar"})]
+                             ["/*"   (constantly {:serval.response/body "default"})]]}
+    (let [resp (send {:uri "http://localhost:42000/foo"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))
+    (let [resp (send {:uri "http://localhost:42000/bar"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "bar")))
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "default")))))
 
-(deftest test-thread-pool
-  (let [pool (sj/thread-pool {:min-threads  1
-                              :max-threads  8
-                              :idle-timeout 1000})]
-    (is (= 1 (.getMinThreads pool)))
-    (is (= 8 (.getMaxThreads pool)))
-    (is (= 1000 (.getIdleTimeout pool)))))
+(defn var-handler
+  [ctx]
+  {:serval.response/body "foo"})
 
-(deftest test-server
-  (let [servlet (reify Servlet
-                  (service [this _ _]))
-        conf    {:thread-pool {:min-threads 1
-                               :max-threads 8}
-                 :servlets    [["/*" servlet]]
-                 :gzip        true}
-        server  (sj/server conf)
-        pool    (.getThreadPool server)
-        tree    (.getHandler server)
-        sctx    (.getHandler tree)]
-    (is (= 1 (.getMinThreads pool)))
-    (is (= 8 (.getMaxThreads pool)))
-    (is (instance? GzipHandler tree))
-    (is (instance? ServletContextHandler sctx))))
+(deftest test-var-handler
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}]
+                :handler    #'var-handler}
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))))
