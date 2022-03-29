@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.tests.core.test-middleware
+(ns dev.onionpancakes.serval.tests.core.test-processor
   (:require [dev.onionpancakes.serval.core :as c]
             [clojure.test :refer [deftest are]]))
 
