@@ -6,7 +6,6 @@
             HttpRequest$Builder
             HttpRequest$BodyPublishers HttpResponse$BodyHandlers]
            [java.net URI]
-           [java.io ByteArrayInputStream]
            [java.util.zip GZIPInputStream]
            [org.eclipse.jetty.server Server]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]))
@@ -93,11 +92,6 @@
       (is (= (.statusCode resp) 200))
       (is (= (.body resp) "bar")))))
 
-(defn decompress
-  "Decompress bytes into a String."
-  [^bytes b]
-  (slurp (GZIPInputStream. (ByteArrayInputStream. b))))
-
 (deftest test-gzip-handler
   (with-server {:connectors [{:protocol :http
                               :port     42000}]
@@ -105,6 +99,6 @@
                                 (j/gzip-handler {:min-gzip-size 0}))}
     (let [resp (send {:uri     "http://localhost:42000"
                       :headers {:accept-encoding ["gzip"]}}
-                     (HttpResponse$BodyHandlers/ofByteArray))]
+                     (HttpResponse$BodyHandlers/ofInputStream))]
       (is (= (.statusCode resp) 200))
-      (is (= (decompress (.body resp)) "foo")))))
+      (is (= (slurp (GZIPInputStream. (.body resp))) "foo")))))
