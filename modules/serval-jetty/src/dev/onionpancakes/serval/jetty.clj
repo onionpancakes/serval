@@ -1,13 +1,12 @@
 (ns dev.onionpancakes.serval.jetty
   (:require [dev.onionpancakes.serval.core :as serval])
-  (:import [jakarta.servlet Servlet MultipartConfigElement]
+  (:import [jakarta.servlet Servlet]
            [org.eclipse.jetty.server
             Server Handler ServerConnector
-            ConnectionFactory HttpConnectionFactory HttpConfiguration
+            HttpConnectionFactory HttpConfiguration
             CustomRequestLog]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
-           [org.eclipse.jetty.server.handler HandlerWrapper]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
 

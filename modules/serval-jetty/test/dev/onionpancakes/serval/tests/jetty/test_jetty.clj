@@ -1,14 +1,12 @@
 (ns dev.onionpancakes.serval.tests.jetty.test-jetty
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.jetty :as j]
-            [clojure.test :refer [is deftest use-fixtures]])
+            [clojure.test :refer [is deftest]])
   (:import [java.net.http HttpClient HttpRequest HttpResponse
             HttpRequest$Builder
             HttpRequest$BodyPublishers HttpResponse$BodyHandlers]
            [java.net URI]
-           [java.util.zip GZIPInputStream]
-           [org.eclipse.jetty.server Server]
-           [org.eclipse.jetty.server.handler.gzip GzipHandler]))
+           [java.util.zip GZIPInputStream]))
 
 ;; Http client
 
