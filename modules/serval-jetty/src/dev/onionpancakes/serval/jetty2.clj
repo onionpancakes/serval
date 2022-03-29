@@ -20,6 +20,9 @@
   clojure.lang.AFunction
   (to-servlet [this]
     (serval/http-servlet this))
+  clojure.lang.Var
+  (to-servlet [this]
+    (serval/http-servlet this))
   Servlet
   (to-servlet [this] this))
 
@@ -46,6 +49,9 @@
   (to-handler [this]
     (servlet-context-handler this))
   clojure.lang.AFunction
+  (to-handler [this]
+    (servlet-context-handler [["/*" this]]))
+  clojure.lang.Var
   (to-handler [this]
     (servlet-context-handler [["/*" this]]))
   Servlet

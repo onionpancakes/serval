@@ -118,3 +118,15 @@
     (let [resp (send {:uri "http://localhost:42000"})]
       (is (= (.statusCode resp) 200))
       (is (= (.body resp) "default")))))
+
+(defn var-handler
+  [ctx]
+  {:serval.response/body "foo"})
+
+(deftest test-var-handler
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}]
+                :handler    #'var-handler}
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))))
