@@ -102,3 +102,19 @@
                      (HttpResponse$BodyHandlers/ofInputStream))]
       (is (= (.statusCode resp) 200))
       (is (= (slurp (GZIPInputStream. (.body resp))) "foo")))))
+
+(deftest test-servlet-context-spec
+  (with-server {:connectors [{:protocol :http
+                              :port     42000}]
+                :handler    [["/foo" (constantly {:serval.response/body "foo"})]
+                             ["/bar" (constantly {:serval.response/body "bar"})]
+                             ["/*"   (constantly {:serval.response/body "default"})]]}
+    (let [resp (send {:uri "http://localhost:42000/foo"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "foo")))
+    (let [resp (send {:uri "http://localhost:42000/bar"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "bar")))
+    (let [resp (send {:uri "http://localhost:42000"})]
+      (is (= (.statusCode resp) 200))
+      (is (= (.body resp) "default")))))
