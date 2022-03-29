@@ -3,5 +3,8 @@
  :paths ["src"]
 
  :aliases
- {:start
+ {:dev
+  {:extra-paths ["dev"]}
+
+  :start
   {:main-opts ["-m" "dev.onionpancakes.serval.examples.hello-world.server"]}}}
