@@ -24,7 +24,7 @@
   {:serval.response/status       200
    :serval.response/content-type "application/json"
    :serval.response/body         (-> {:message "Json received!"
-                                      :value   (:serval.request/body ctx)}
+                                      :value   (:serval.jsonista/value ctx)}
                                      (srv.json/json-body))})
 
 (defn echo-json-error-handler

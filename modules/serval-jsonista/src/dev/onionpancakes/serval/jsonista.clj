@@ -15,7 +15,7 @@
    (read-json ctx nil))
   ([ctx {:keys [to from error object-mapper]
          :or   {from          [:serval.service/request :reader]
-                to            [:serval.request/body]
+                to            [:serval.jsonista/value]
                 error         [:serval.jsonista/error]
                 object-mapper j/default-object-mapper}}]
    (try

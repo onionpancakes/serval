@@ -9,7 +9,7 @@
   (let [rdr (StringReader. "{\"foo\": \"bar\"}")
         ctx {:serval.service/request {:reader rdr}}
         ret (sj/read-json ctx)]
-    (is (= {"foo" "bar"} (:serval.request/body ret))))
+    (is (= {"foo" "bar"} (:serval.jsonista/value ret))))
 
   ;; Error
   (let [rdr (StringReader. "{\"foo\": }")
