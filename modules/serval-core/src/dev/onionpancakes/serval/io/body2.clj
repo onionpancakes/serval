@@ -80,8 +80,7 @@
         (.close this)))
     nil)
   nil
-  (service-body [this _ _ ^ServletResponse response ]
-    (.close (.getOutputStream response)))
+  (service-body [this _ _ ^ServletResponse response])
 
   ;; Async
   CompletionStage
