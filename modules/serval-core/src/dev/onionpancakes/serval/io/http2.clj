@@ -124,7 +124,7 @@
           (io.body/service-body servlet request response)))
 
 (defprotocol HttpResponse
-  (service-response [this servlet request response]))
+  (service-response ^CompletionStage [this servlet request response]))
 
 (extend-protocol HttpResponse
   java.util.Map
@@ -137,4 +137,25 @@
                            (or (service-response this servlet request response)
                                (CompletableFuture/completedStage nil)))))))
 
-
+(defn service-fn
+  [handler]
+  (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
+    (let [ctx       {:serval.service/servlet  servlet
+                     :serval.service/request  (servlet-request-proxy request)
+                     :serval.service/response response}
+          cstage    (-> (handler ctx)
+                        (service-response servlet request response))
+          ^jakarta.servlet.AsyncContext
+          async-ctx (cond
+                      (.isAsyncStarted request)          (.getAsyncContext request)
+                      (instance? CompletionStage cstage) (.startAsync request))
+          ;; TODO: async listener and timeouts?
+          ]
+      (when async-ctx
+        (-> (or cstage (CompletableFuture/completedStage nil))
+            (.thenRun (fn [] (.complete async-ctx)))
+            (.exceptionally (reify Function
+                              (apply [_ input]
+                                ;; TODO: custom error handling for sync and async?
+                                (.sendError response 500 "Internal server error.")
+                                (.complete async-ctx)))))))))
