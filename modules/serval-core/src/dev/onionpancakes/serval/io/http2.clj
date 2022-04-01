@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.io.http2
-  (:require [dev.onionpancakes.serval.io.body2 :as body])
+  (:require [dev.onionpancakes.serval.io.body2 :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [java.util.function Function]
            [jakarta.servlet.http
@@ -102,3 +102,32 @@
        (servlet-request-lookup this key nil))
       ([key not-found]
        (servlet-request-lookup this key not-found)))))
+
+;; Response
+
+(defn service-response-map
+  [m servlet request ^HttpServletResponse response]
+  (some->> (:serval.response/content-type m)
+           (.setContentType response))
+  (some->> (:serval.response/character-encoding m)
+           (.setCharacterEncoding response))
+  (doseq [cookie (:serval.response/cookies m)]
+    (.addCookie response cookie))
+  ;; Status / Headers / Body
+  (some->> (:serval.response/status m)
+           (.setStatus response))
+  (doseq [[hname values] (:serval.response/headers m)
+          value          values]
+    (.addHeader response hname (str value)))
+  (some-> (:serval.response/body m)
+          (io.body/service-body servlet request response)))
+
+(defprotocol HttpResponse
+  (service-response [this servlet request response]))
+
+(extend-protocol HttpResponse
+  java.util.Map
+  (service-response [this servlet request response]
+    (service-response-map this servlet request response)))
+
+
