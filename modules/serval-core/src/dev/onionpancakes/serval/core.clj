@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map])
   (:require [dev.onionpancakes.serval.io.body :as io.body]
-            [dev.onionpancakes.serval.io.http :as io.http])
+            [dev.onionpancakes.serval.io.http :as io.http]
+            [dev.onionpancakes.serval.io.http2 :as io.http2])
   (:import [jakarta.servlet GenericServlet]))
 
 ;; Async
@@ -20,6 +21,10 @@
 (defn http-servlet
   [handler]
   (servlet* (io.http/service-fn handler)))
+
+(defn http-servlet2
+  [handler]
+  (servlet* (io.http2/service-fn handler)))
 
 ;; Processors
 

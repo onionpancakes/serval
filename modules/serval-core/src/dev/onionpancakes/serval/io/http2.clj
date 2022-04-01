@@ -133,8 +133,8 @@
   CompletionStage
   (service-response [this servlet request response]
     (.thenCompose this (reify Function
-                         (apply [this input]
-                           (or (service-response this servlet request response)
+                         (apply [_ input]
+                           (or (service-response input servlet request response)
                                (CompletableFuture/completedStage nil)))))))
 
 (defn service-fn
@@ -157,5 +157,5 @@
             (.exceptionally (reify Function
                               (apply [_ input]
                                 ;; TODO: custom error handling for sync and async?
-                                (.sendError response 500 "Internal server error.")
+                                (.sendError response 500 (.getMessage input))
                                 (.complete async-ctx)))))))))
