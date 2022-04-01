@@ -119,6 +119,7 @@
   (doseq [[hname values] (:serval.response/headers m)
           value          values]
     (.addHeader response hname (str value)))
+  ;; Notice: service-body may return a CompletionStage
   (some-> (:serval.response/body m)
           (io.body/service-body servlet request response)))
 
@@ -128,6 +129,12 @@
 (extend-protocol HttpResponse
   java.util.Map
   (service-response [this servlet request response]
-    (service-response-map this servlet request response)))
+    (service-response-map this servlet request response))
+  CompletionStage
+  (service-response [this servlet request response]
+    (.thenCompose this (reify Function
+                         (apply [this input]
+                           (or (service-response this servlet request response)
+                               (CompletableFuture/completedStage nil)))))))
 
 
