@@ -27,10 +27,11 @@
                                       (do (.remove buffers) (recur))
                                       true)))))
 
-(deftype FlowSubscriberWriteListener [^:unsynchronized-mutable ^Flow$Subscription subscription
+(deftype FlowSubscriberWriteListener [ ^ServletOutputStream out
                                       ^java.util.Queue buffers
-                                      ^ServletOutputStream out
-                                      ^CompletableFuture cf]
+                                      ^CompletableFuture cf
+                                      ^:unsynchronized-mutable ^Flow$Subscription subscription]
+
   Flow$Subscriber
   (onSubscribe [_ sub]
     (if subscription
@@ -57,6 +58,14 @@
     (if subscription
       (.cancel subscription))
     (.completeExceptionally cf throwable)))
+
+(defn flow-subscriber-write-listener
+  [out data cf complete?]
+  (let [buffers (java.util.LinkedList.)
+        _       (.addAll buffers data)
+        _       (if complete?
+                  (.add buffers ::complete))]
+    (FlowSubscriberWriteListener. out buffers cf nil)))
 
 ;; Response body protocol
 
