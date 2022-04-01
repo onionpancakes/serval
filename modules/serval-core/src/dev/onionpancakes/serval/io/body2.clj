@@ -99,6 +99,10 @@
                           ;; Value should not be another CompletionStage.
                           (service-body value servlet request response)))))
   Flow$Publisher
-  (service-body [this _ _ _]
-    ;; TODO
-    nil))
+  (service-body [this _ _ ^ServletResponse response]
+    (let [out (.getOutputStream response)
+          cf  (CompletableFuture.)
+          wl  (flow-subscriber-write-listener out [] cf false)]
+      (.setWriteListener out wl)
+      (.subscribe this wl)
+      cf)))
