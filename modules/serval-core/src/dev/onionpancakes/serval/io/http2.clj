@@ -158,5 +158,5 @@
             (.exceptionally (reify Function
                               (apply [_ input]
                                 ;; TODO: custom error handling for sync and async?
-                                (.sendError response 500 (.getMessage input))
+                                (.sendError response 500 (.getMessage ^Throwable input))
                                 (.complete async-ctx)))))))))
