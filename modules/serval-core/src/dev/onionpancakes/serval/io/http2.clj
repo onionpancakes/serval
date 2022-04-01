@@ -118,6 +118,7 @@
            (.setStatus response))
   (doseq [[hname values] (:serval.response/headers m)
           value          values]
+    ;; TODO: Add spec guard for header names, must be strings.
     (.addHeader response hname (str value)))
   ;; Notice: service-body may return a CompletionStage
   (some-> (:serval.response/body m)
