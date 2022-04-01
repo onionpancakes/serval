@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.io.body2
   (:import [jakarta.servlet
+            ServletRequest
             ServletResponse ServletOutputStream
             WriteListener]
            [java.nio ByteBuffer]
@@ -27,7 +28,7 @@
                                       (do (.remove buffers) (recur))
                                       true)))))
 
-(deftype FlowSubscriberWriteListener [ ^ServletOutputStream out
+(deftype FlowSubscriberWriteListener [^ServletOutputStream out
                                       ^java.util.Queue buffers
                                       ^CompletableFuture cf
                                       ^:unsynchronized-mutable ^Flow$Subscription subscription]
@@ -36,12 +37,15 @@
   (onSubscribe [_ sub]
     (if subscription
       (.cancel subscription))
-    (set! subscription sub))
+    (set! subscription sub)
+    (.request subscription 1))
   (onNext [this bufs]
     (locking this
       (.addAll buffers bufs)
       (if (.isReady out)
-        (if-not (flush-buffers! out buffers)
+        (if (flush-buffers! out buffers)
+          (if (nil? (.peek buffers))
+            (.request subscription 1))
           (.complete cf nil)))))
   (onComplete [this]
     (locking this
@@ -52,7 +56,10 @@
   WriteListener
   (onWritePossible [this]
     (locking this
-      (if-not (flush-buffers! out buffers)
+      (if (flush-buffers! out buffers)
+        (if (nil? (.peek buffers))
+          (if subscription
+            (.request subscription 1)))
         (.complete cf nil))))
   (onError [_ throwable]
     (if subscription
@@ -99,7 +106,9 @@
                           ;; Value should not be another CompletionStage.
                           (service-body value servlet request response)))))
   Flow$Publisher
-  (service-body [this _ _ ^ServletResponse response]
+  (service-body [this _ ^ServletRequest request ^ServletResponse response]
+    (if-not (.isAsyncStarted request)
+      (.startAsync request))
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
           wl  (flow-subscriber-write-listener out [] cf false)]
