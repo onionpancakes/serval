@@ -15,6 +15,9 @@
                  "./modules/serval-reitit/test"
                  "./modules/serval-mock/test"]}
 
+  :core-async
+  {:extra-deps {org.clojure/core.async {:mvn/version "1.5.648"}}}
+
   :run-tests
   {:extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
    :extra-paths ["./modules/serval-core/test"
