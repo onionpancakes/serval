@@ -4,7 +4,7 @@
             Flow$Publisher Flow$Subscriber Flow$Subscription]))
 
 (defprotocol ReadChannel
-  (take! [this]))
+  (take! ^CompletionStage [this]))
 
 (deftype FlowSubscriberChannel [^:unsynchronized-mutable
                                 ^Flow$Subscription subscription
