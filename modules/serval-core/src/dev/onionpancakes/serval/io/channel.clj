@@ -42,7 +42,8 @@
       (if-let [val (.poll buffer)]
         (CompletableFuture/completedFuture val)
         (if (>= (.size pending) pending-max-size)
-          (throw (ex-info "Exceeded max pending queue size."))
+          (throw (ex-info "Exceeded max pending queue size."
+                          {:pending-max-size pending-max-size}))
           (if closed?
             (CompletableFuture/completedFuture nil)
             (let [cf (CompletableFuture.)]
