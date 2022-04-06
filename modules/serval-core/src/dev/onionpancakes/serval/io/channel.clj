@@ -39,12 +39,12 @@
   ReadChannel
   (take! [this]
     (locking this
-      (if closed?
-        (CompletableFuture/completedFuture nil)
-        (if-let [val (.poll buffer)]
-          (CompletableFuture/completedFuture val)
-          (if (>= (.size pending) pending-max-size)
-            (throw (ex-info "Exceeded max pending queue size."))
+      (if-let [val (.poll buffer)]
+        (CompletableFuture/completedFuture val)
+        (if (>= (.size pending) pending-max-size)
+          (throw (ex-info "Exceeded max pending queue size."))
+          (if closed?
+            (CompletableFuture/completedFuture nil)
             (let [cf (CompletableFuture.)]
               (.add pending cf)
               cf)))))))
