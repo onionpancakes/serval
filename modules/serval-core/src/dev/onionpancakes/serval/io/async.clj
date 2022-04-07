@@ -8,6 +8,26 @@
            [java.util LinkedList]
            [java.util.concurrent CompletableFuture]))
 
+;; Async writables
+
+(defprotocol AsyncWritable
+  (to-buffer-queue [this]))
+
+(extend-protocol AsyncWritable
+  (Class/forName "[B")
+  (to-buffer-queue [this]
+    (doto (LinkedList.)
+      (.add (ByteBuffer/wrap this))))
+  String
+  (to-buffer-queue [this]
+    (doto (LinkedList.)
+      (.add (ByteBuffer/wrap (.getBytes this)))))
+  java.util.List
+  (to-buffer-queue [this]
+    (LinkedList. this)))
+
+;; Write listener
+
 (defn flush-buffer!
   [^ServletOutputStream out ^ByteBuffer buffer]
   (loop []
@@ -48,25 +68,7 @@
                                (async/put! cur %)))]
     (ChannelWriteListener. out cur ch cf)))
 
-;;
-
-(defprotocol AsyncWritable
-  (to-buffer-queue [this]))
-
-(extend-protocol AsyncWritable
-  (Class/forName "[B")
-  (to-buffer-queue [this]
-    (doto (LinkedList.)
-      (.add (ByteBuffer/wrap this))))
-  String
-  (to-buffer-queue [this]
-    (doto (LinkedList.)
-      (.add (ByteBuffer/wrap (.getBytes this)))))
-  java.util.List
-  (to-buffer-queue [this]
-    (LinkedList. this)))
-
-;;
+;; Protocol impl
 
 (def to-buffer-queue-xf
   (map to-buffer-queue))

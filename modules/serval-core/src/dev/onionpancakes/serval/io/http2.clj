@@ -138,14 +138,19 @@
                            (or (service-response input servlet request response)
                                (CompletableFuture/completedStage nil)))))))
 
+;; Service
+
+(defn context
+  [servlet request response]
+  {:serval.service/servlet  servlet
+   :serval.service/request  (servlet-request-proxy request)
+   :serval.service/response response})
+
 (defn service-fn
   [handler]
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
-    (let [ctx       {:serval.service/servlet  servlet
-                     :serval.service/request  (servlet-request-proxy request)
-                     :serval.service/response response}
-          cstage    (-> (handler ctx)
-                        (service-response servlet request response))
+    (let [ctx       (context servlet request response)
+          cstage    (service-response (handler ctx) servlet request response)
           ^jakarta.servlet.AsyncContext
           async-ctx (cond
                       (.isAsyncStarted request)          (.getAsyncContext request)
