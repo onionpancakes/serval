@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.io.async
-  (:require [clojure.core.async :as async :refer [go-loop <! >! alts!]]
+  (:require [clojure.core.async :as async :refer [go-loop <! >!]]
             [dev.onionpancakes.serval.io.body2 :as io.body])
   (:import [jakarta.servlet
             ServletRequest ServletResponse
