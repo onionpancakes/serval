@@ -88,7 +88,7 @@
   (map to-buffer-queue))
 
 (extend-protocol io.body/ResponseBody
-  clojure.core.async.impl.protocols.ReadPort
+  clojure.core.async.impl.channels.ManyToManyChannel
   (service-body [this _ ^ServletRequest request ^ServletResponse response]
     (if-not (.isAsyncStarted request)
       (.startAsync request))
