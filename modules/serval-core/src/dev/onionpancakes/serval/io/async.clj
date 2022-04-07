@@ -46,6 +46,14 @@
         false)
       true)))
 
+;; The 'current' is a 1 size channel that holds the current buffer queue
+;; being written out.
+;; Buffer queues are taken from 'current' then 'input', and flushed to
+;; the ServletOutputStream.
+;; When this current flush reaches its limit (i.e. isReady() returns false),
+;; the current partially flushed buffer queue is place back onto 'current'
+;; to await the next 'onWritePossible' call.
+
 (deftype ChannelWriteListener [out current input ^CompletableFuture complete]
   WriteListener
   (onWritePossible [this]
@@ -63,6 +71,8 @@
 (defn channel-write-listener
   [out ch cf]
   (let [cur (async/chan 1)
+        ;; Because ChannelWriteListener takes from 'current' first,
+        ;; we need to initialize it with one value from ch.
         _   (async/take! ch #(if (nil? %)
                                (async/close! cur)
                                (async/put! cur %)))]
