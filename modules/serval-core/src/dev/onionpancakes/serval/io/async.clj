@@ -56,7 +56,7 @@
 
 (deftype ChannelWriteListener [out current input ^CompletableFuture complete]
   WriteListener
-  (onWritePossible [this]
+  (onWritePossible [_]
     (go-loop [buffers (<! current)]
       (if (nil? buffers)
         (do
