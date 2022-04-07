@@ -7,6 +7,9 @@
 
 ;; Async
 
+(defn enable-core-async! []
+  (require 'dev.onionpancakes.serval.io.async))
+
 (def async-body
   io.body/async-body)
 
