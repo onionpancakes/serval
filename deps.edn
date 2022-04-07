@@ -16,7 +16,7 @@
                  "./modules/serval-reitit/test"
                  "./modules/serval-mock/test"]}
 
-  :core-async
+  :async
   {:extra-deps {org.clojure/core.async {:mvn/version "1.5.648"}}}
 
   :run-tests
