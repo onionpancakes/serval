@@ -22,6 +22,10 @@
   (to-buffer-queue [this]
     (doto (LinkedList.)
       (.add (ByteBuffer/wrap (.getBytes this)))))
+  ByteBuffer
+  (to-buffer-queue [this]
+    (doto (LinkedList.)
+      (.add this)))
   java.util.List
   (to-buffer-queue [this]
     (LinkedList. this)))
