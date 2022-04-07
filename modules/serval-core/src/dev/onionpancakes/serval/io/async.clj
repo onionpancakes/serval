@@ -90,7 +90,12 @@
       (.startAsync request))
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          ch  (async/chan 32 to-buffer-queue-xf)
+          ex  (fn [t]
+                ;; Close this channel on error.
+                ;; Otherwise, it will feed into a completed async response.
+                (async/close! this)
+                (.completeExceptionally cf t) nil)
+          ch  (async/chan 32 to-buffer-queue-xf ex)
           wl  (channel-write-listener out ch cf)]
       (.setWriteListener out wl)
       (async/pipe this ch)
