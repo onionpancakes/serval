@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.io.http2
   (:require [dev.onionpancakes.serval.io.body2 :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function Function]
+           [java.util.function Function BiConsumer]
            [jakarta.servlet.http
             HttpServletRequest
             HttpServletResponse
@@ -149,15 +149,16 @@
 (defn complete-async
   [^CompletionStage cstage ^HttpServletRequest request ^HttpServletResponse response]
   (when-let [atx (cond
-                   (.isAsyncStarted request)          (.getAsyncContext request)
-                   (instance? CompletionStage cstage) (.startAsync request))]
-    (-> (or cstage (CompletableFuture/completedStage nil))
-        (.thenRun (fn [] (.complete atx)))
-        (.exceptionally (reify Function
-                          (apply [_ throwable]
-                            (->> (.getMessage ^Throwable throwable)
-                                 (.sendError response 500))
-                            (.complete atx)))))))
+                   (.isAsyncStarted request) (.getAsyncContext request)
+                   (some? cstage)            (.startAsync request))]
+    (if cstage
+      (.whenComplete cstage (reify BiConsumer
+                              (accept [_ _ throwable]
+                                (if throwable
+                                  (->> (.getMessage ^Throwable throwable)
+                                       (.sendError response 500)))
+                                (.complete atx))))
+      (.complete atx))))
 
 (defn service-fn
   [handler]
