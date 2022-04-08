@@ -3,7 +3,7 @@
   (:require [dev.onionpancakes.serval.io.body :as io.body]
             [dev.onionpancakes.serval.io.http :as io.http]
             [dev.onionpancakes.serval.io.http2 :as io.http2])
-  (:import [jakarta.servlet GenericServlet]))
+  (:import [jakarta.servlet Servlet GenericServlet]))
 
 ;; Async
 
@@ -12,7 +12,7 @@
 
 ;; Servlet
 
-(defn servlet*
+(defn ^Servlet servlet*
   [service-fn]
   (proxy [GenericServlet] []
     (service [request response]
@@ -22,7 +22,7 @@
   [handler]
   (servlet* (io.http/service-fn handler)))
 
-(defn http-servlet2
+(defn ^Servlet http-servlet2
   [handler]
   (servlet* (io.http2/service-fn handler)))
 
