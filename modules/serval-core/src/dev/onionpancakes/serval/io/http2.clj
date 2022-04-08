@@ -146,22 +146,23 @@
    :serval.service/request  (servlet-request-proxy request)
    :serval.service/response response})
 
+(defn complete-async
+  [^CompletionStage cstage ^HttpServletRequest request ^HttpServletResponse response]
+  (when-let [atx (cond
+                   (.isAsyncStarted request)          (.getAsyncContext request)
+                   (instance? CompletionStage cstage) (.startAsync request))]
+    (-> (or cstage (CompletableFuture/completedStage nil))
+        (.thenRun (fn [] (.complete atx)))
+        (.exceptionally (reify Function
+                          (apply [_ throwable]
+                            (->> (.getMessage ^Throwable throwable)
+                                 (.sendError response 500))
+                            (.complete atx)))))))
+
 (defn service-fn
   [handler]
-  (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
-    (let [ctx       (context servlet request response)
-          cstage    (service-response (handler ctx) servlet request response)
-          ^jakarta.servlet.AsyncContext
-          async-ctx (cond
-                      (.isAsyncStarted request)          (.getAsyncContext request)
-                      (instance? CompletionStage cstage) (.startAsync request))
-          ;; TODO: async listener and timeouts?
-          ]
-      (when async-ctx
-        (-> (or cstage (CompletableFuture/completedStage nil))
-            (.thenRun (fn [] (.complete async-ctx)))
-            (.exceptionally (reify Function
-                              (apply [_ input]
-                                ;; TODO: custom error handling for sync and async?
-                                (.sendError response 500 (.getMessage ^Throwable input))
-                                (.complete async-ctx)))))))))
+  (fn [servlet request response]
+    (-> (context servlet request response)
+        (handler)
+        (service-response servlet request response)
+        (complete-async request response))))
