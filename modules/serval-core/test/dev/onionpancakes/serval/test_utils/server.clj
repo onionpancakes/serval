@@ -5,16 +5,33 @@
             HttpConnectionFactory HttpConfiguration]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
 
+(defn set-handler!
+  [server f]
+  (let [holder  (ServletHolder. (srv/http-servlet2 f))
+        handler (ServletContextHandler.)
+        _       (.addServlet handler holder "/*")]
+    (doto server
+      (.setHandler handler))))
+
+(defn reset-handler!
+  [server]
+  (doto server
+    (.setHandler nil)))
+
+;; Test server
+
 (def port 42000)
 
-(defn ^:dynamic handler
-  [ctx]
-  {:serval.response/status 200})
-
-(defonce server-handler
-  (doto (ServletContextHandler.)
-    (.addServlet (ServletHolder. (srv/http-servlet2 #'handler)) "/*")))
-
 (defonce server
-  (doto (Server. ^int port)
-    (.setHandler server-handler)))
+  (Server. ^int port))
+
+(defmacro with-handler
+  [f & body]
+  `(do
+     (.stop server)
+     (set-handler! server ~f)
+     (.start server)
+     ~@body
+     (.stop server)
+     (.join server)
+     (reset-handler! server)))

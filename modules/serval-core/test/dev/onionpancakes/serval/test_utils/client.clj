@@ -8,7 +8,7 @@
             HttpResponse$BodyHandlers]))
 
 (def default-uri-string
-  (URI. (str "localhost:" server/port)))
+  (str "http://localhost:" server/port))
 
 (defprotocol BodyPublisher
   (to-body-publisher [this]))
@@ -36,7 +36,7 @@
   (-> (HttpRequest/newBuilder)
       (.uri (URI. (:uri req default-uri-string)))
       (.method (:method req "GET") (to-body-publisher (:body req)))
-      (set-request-builder-headers)
+      (set-request-builder-headers (:headers req))
       (.build)))
 
 (defn build-response-map
