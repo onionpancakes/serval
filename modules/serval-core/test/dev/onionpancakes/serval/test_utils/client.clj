@@ -54,7 +54,8 @@
       (build)))
 
 (defn send
-  [req]
-  (let [bh (HttpResponse$BodyHandlers/ofString)]
-    (-> (.send client (build-request req) bh)
-        (build-response-map))))
+  ([] (send nil))
+  ([req]
+   (let [bh (HttpResponse$BodyHandlers/ofString)]
+     (-> (.send client (build-request req) bh)
+         (build-response-map)))))

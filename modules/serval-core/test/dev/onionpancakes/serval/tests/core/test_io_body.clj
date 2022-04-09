@@ -9,6 +9,6 @@
 (deftest test-service-body
   (with-handler (fn [ctx]
                   {:serval.response/body "foo"})
-    (is (= (:body (send nil)) "foo"))))
+    (is (= (:body (send)) "foo"))))
 
 
