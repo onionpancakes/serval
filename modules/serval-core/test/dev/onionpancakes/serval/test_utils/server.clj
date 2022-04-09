@@ -6,8 +6,8 @@
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
 
 (defn set-handler!
-  [server f]
-  (let [holder  (ServletHolder. (srv/http-servlet2 f))
+  [server servlet]
+  (let [holder  (ServletHolder. servlet)
         handler (ServletContextHandler.)
         _       (.addServlet handler holder "/*")]
     (doto server
@@ -29,9 +29,13 @@
   [f & body]
   `(do
      (.stop server)
-     (set-handler! server ~f)
+     (set-handler! server (srv/http-servlet2 ~f))
      (.start server)
      ~@body
      (.stop server)
      (.join server)
      (reset-handler! server)))
+
+(defmacro with-response
+  [resp & body]
+  `(with-handler (constantly ~resp) ~@body))
