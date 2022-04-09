@@ -1,12 +1,13 @@
 (ns dev.onionpancakes.serval.test-utils.server
   (:require [dev.onionpancakes.serval.core :as srv])
-  (:import [org.eclipse.jetty.server
+  (:import [jakarta.servlet Servlet]
+           [org.eclipse.jetty.server
             Server Handler ServerConnector
             HttpConnectionFactory HttpConfiguration]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
 
 (defn set-handler!
-  [server servlet]
+  [^Server server ^Servlet servlet]
   (let [holder  (ServletHolder. servlet)
         handler (ServletContextHandler.)
         _       (.addServlet handler holder "/*")]
@@ -14,7 +15,7 @@
       (.setHandler handler))))
 
 (defn reset-handler!
-  [server]
+  [^Server server]
   (doto server
     (.setHandler nil)))
 
@@ -22,7 +23,7 @@
 
 (def port 42000)
 
-(defonce server
+(defonce ^Servlet server
   (Server. ^int port))
 
 (defmacro with-handler
