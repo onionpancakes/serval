@@ -40,7 +40,8 @@
 
 (defn build-response-map
   [^HttpResponse resp]
-  {:status  (.statusCode resp)
+  {:version (.version resp)
+   :status  (.statusCode resp)
    :headers (->> (.headers resp)
                  (.map)
                  (into {} (map (juxt key (comp vec val)))))
@@ -52,9 +53,17 @@
   (.. (HttpClient/newBuilder)
       (build)))
 
+(defn to-body-handler
+  [k]
+  (case k
+    :byte-array   (HttpResponse$BodyHandlers/ofByteArray)
+    :string       (HttpResponse$BodyHandlers/ofString)
+    :input-stream (HttpResponse$BodyHandlers/ofInputStream)))
+
 (defn send
   ([] (send nil))
   ([req]
-   (let [bh (HttpResponse$BodyHandlers/ofString)]
-     (-> (.send client (build-request req) bh)
-         (build-response-map)))))
+   (send req :string))
+  ([req body-handler]
+   (-> (.send client (build-request req) (to-body-handler body-handler))
+       (build-response-map))))

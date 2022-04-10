@@ -57,7 +57,9 @@
   (to-handler [this]
     (servlet-context-handler [["/*" this]]))
   Handler
-  (to-handler [this] this))
+  (to-handler [this] this)
+  nil
+  (to-handler [_] nil))
 
 (defn ^GzipHandler gzip-handler
   ([handler] (gzip-handler handler nil))
