@@ -1,7 +1,6 @@
 (ns dev.onionpancakes.serval.test-utils.client
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.test-utils.server :as server
-             ])
+  (:require [dev.onionpancakes.serval.test-utils.server :as server])
   (:import [java.net URI]
            [java.net.http HttpClient HttpRequest HttpResponse
             HttpRequest$Builder HttpRequest$BodyPublishers
