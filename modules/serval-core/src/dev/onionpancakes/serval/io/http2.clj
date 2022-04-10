@@ -12,7 +12,7 @@
 (deftype Attributes [^HttpServletRequest request]
   clojure.lang.ILookup
   (valAt [this k]
-    (.valAt this key nil))
+    (.valAt this k nil))
   (valAt [this k not-found]
     ;; Can't use 'or' function because ret might be false.
     (if-some [val (.getAttribute request k)]
@@ -31,8 +31,8 @@
       not-found)))
 
 (defn servlet-request-lookup
-  [^HttpServletRequest request key not-found]
-  (case key
+  [^HttpServletRequest request k not-found]
+  (case k
     ;; Attributes
     :attributes      (Attributes. request)
     :attribute-names (some->> (.getAttributeNames request)
@@ -98,10 +98,10 @@
   [^HttpServletRequest request]
   (proxy [HttpServletRequestWrapper clojure.lang.ILookup] [request]
     (valAt
-      ([key]
-       (servlet-request-lookup this key nil))
-      ([key not-found]
-       (servlet-request-lookup this key not-found)))))
+      ([k]
+       (servlet-request-lookup this k nil))
+      ([k not-found]
+       (servlet-request-lookup this k not-found)))))
 
 ;; Response
 
