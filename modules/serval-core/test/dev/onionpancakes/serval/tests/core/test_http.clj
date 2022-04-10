@@ -45,3 +45,20 @@
 
 ;; TODO: test cookies?
 
+(deftest test-complete-async
+  ;; Normal async.
+  (with-handler (fn [ctx]
+                  (.startAsync (:serval.service/request ctx))
+                  {:serval.response/status 200
+                   :serval.response/body   "foo"})
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo"))))
+  ;; Throw an error while in async mode.
+  (with-handler (fn [ctx]
+                  (.startAsync (:serval.service/request ctx))
+                  (throw (ex-info "Uhoh"))
+                  {:serval.response/status 200
+                   :serval.response/body   "foo"})
+    (let [resp (send)]
+      (is (= (:status resp) 500)))))
