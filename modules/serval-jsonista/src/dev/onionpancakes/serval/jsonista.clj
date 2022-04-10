@@ -1,8 +1,7 @@
 (ns dev.onionpancakes.serval.jsonista
   (:require [dev.onionpancakes.serval.io.body :as io.body]
             [jsonista.core :as j])
-  (:import [jakarta.servlet ServletResponse]
-           [java.nio ByteBuffer]))
+  (:import [jakarta.servlet ServletResponse]))
 
 (def default-object-mapper
   j/default-object-mapper)
@@ -29,17 +28,9 @@
 
 (defrecord JsonBody [value options]
   io.body/ResponseBody
-  (io.body/async-body? [this _] false)
-  (io.body/write-body [this {^ServletResponse resp :serval.service/response}]
+  (io.body/service-body [_ _ _ response]
     (let [object-mapper (:object-mapper options j/default-object-mapper)]
-      (j/write-value (.getWriter resp) value object-mapper)))
-
-  io.body/AsyncWritable
-  (io.body/write-listener [this {^ServletResponse resp :serval.service/response} cf]
-    (let [object-mapper (:object-mapper options j/default-object-mapper)]
-      (-> (j/write-value-as-bytes value object-mapper)
-          (ByteBuffer/wrap)
-          (io.body/buffer-write-listener (.getOutputStream resp) cf)))))
+      (j/write-value (.getWriter response) value object-mapper))))
 
 (defn json-body
   ([value]

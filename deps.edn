@@ -2,8 +2,7 @@
         dev.onionpancakes/serval-core     {:local/root "./modules/serval-core"}
         dev.onionpancakes/serval-jetty    {:local/root "./modules/serval-jetty"}
         dev.onionpancakes/serval-reitit   {:local/root "./modules/serval-reitit"}
-        dev.onionpancakes/serval-jsonista {:local/root "./modules/serval-jsonista"}
-        dev.onionpancakes/serval-mock     {:local/root "./modules/serval-mock"}}
+        dev.onionpancakes/serval-jsonista {:local/root "./modules/serval-jsonista"}}
 
  :aliases
  {:dev
@@ -13,8 +12,7 @@
                  "./modules/serval-core/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jsonista/test"
-                 "./modules/serval-reitit/test"
-                 "./modules/serval-mock/test"]}
+                 "./modules/serval-reitit/test"]}
 
   :async
   {:extra-deps {org.clojure/core.async {:mvn/version "1.5.648"}}}
@@ -24,12 +22,10 @@
    :extra-paths ["./modules/serval-core/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jsonista/test"
-                 "./modules/serval-reitit/test"
-                 "./modules/serval-mock/test"]
+                 "./modules/serval-reitit/test"]
    :exec-fn     cognitect.test-runner.api/test
    :exec-args   {:dirs     ["./modules/serval-core/test"
                             "./modules/serval-jetty/test"
                             "./modules/serval-jsonista/test"
-                            "./modules/serval-reitit/test"
-                            "./modules/serval-mock/test"]
+                            "./modules/serval-reitit/test"]
                  :patterns ["dev\\.onionpancakes\\.serval\\.tests\\..*"]}}}}

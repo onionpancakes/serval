@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-request-lookup
-  (:require [dev.onionpancakes.serval.io.http2
+  (:require [dev.onionpancakes.serval.io.http
              :refer [servlet-request-proxy]]
             [clojure.test :refer [deftest is are]])
   (:import [java.util Collections]

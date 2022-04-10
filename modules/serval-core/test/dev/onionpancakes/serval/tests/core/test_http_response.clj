@@ -1,61 +1,64 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-response
-  (:require [dev.onionpancakes.serval.io.http :as http]
-            [dev.onionpancakes.serval.io.body :as body]
-            [dev.onionpancakes.serval.mock.http :as mock]
-            [clojure.test :refer [deftest is]])
-  (:import [java.util.concurrent CompletionStage CompletableFuture]))
+  (:refer-clojure :exclude [send])
+  (:require [dev.onionpancakes.serval.test-utils.server
+             :refer [with-handler with-response]]
+            [dev.onionpancakes.serval.test-utils.client
+             :refer [send]]
+            [clojure.test :refer [deftest is are]])
+  (:import [java.io ByteArrayInputStream]
+           [java.util.concurrent CompletableFuture]))
 
-(def response
-  {:serval.response/status  200
-   :serval.response/headers {"Foo" [0 (int 1) "Bar"]}
-   :serval.response/body    "Foobar"})
+(deftest test-status
+  (are [status] (with-response {:serval.response/status status}
+                  (= (:status (send)) status))
+    200
+    300
+    400
+    500))
 
-(deftest test-response
-  (let [req  (mock/http-servlet-request {} "")
-        resp (mock/http-servlet-response {} req)
-        ctx  {:serval.service/request  req
-              :serval.service/response resp}
-        ret  (http/write-response response ctx)
-        ;; Hmmm... Flushing should not be a detail of concern?
-        _    (.flush (:writer @(:data resp)))]
-    (is (= (:status @(:data resp) 200)))
-    (is (= (:headers @(:data resp)) {"Foo" [0 1 "Bar"]}))
-    ;; OutputStream here requires flush to see data.
-    (is (= (slurp (.toByteArray (:output-stream resp))) "Foobar"))))
+(deftest test-headers
+  (with-response {:serval.response/headers {"foo" ["foo"]
+                                            "bar" ["bar1" "bar2"]}}
+    (let [{:strs [foo bar]} (:headers (send))]
+      (is (= foo ["foo"]))
+      (is (= bar ["bar1" "bar2"])))))
 
-(def response-async-body
-  {:serval.response/status 200
-   :serval.response/body   (body/async-body "Foobar")})
+(deftest test-body
+  (are [body expected] (with-response {:serval.response/body body}
+                         (= (:body (send)) expected))
+    (.getBytes "foo")                         "foo"
+    "foo"                                     "foo"
+    (ByteArrayInputStream. (.getBytes "foo")) "foo"
+    nil                                       ""
+    (CompletableFuture/completedFuture "foo") "foo"))
 
-(deftest test-response-async-body
-  (let [req  (mock/http-servlet-request {} "")
-        resp (mock/http-servlet-response {} req)
-        ctx  {:serval.service/request  req
-              :serval.service/response resp}
-        _    (.startAsync req)
-        ret  (http/write-response response-async-body ctx)]
-    (is (http/async-response? response-async-body ctx))
-    (is (instance? CompletionStage ret))
-    (.get (.toCompletableFuture ret)) ; Wait till resolved
-    (is (= (:status @(:data resp) 200)))
-    (is (= (slurp (.toByteArray (:output-stream resp))) "Foobar"))))
+(deftest test-body-encoding
+  (are [body enc expected] (with-response {:serval.response/body body
+                                           :serval.response/content-type "text/plain"
+                                           :serval.response/character-encoding enc}
+                             (= (:body (send)) expected))
+    "foo" nil      "foo"
+    "foo" "utf-8"  "foo"
+    "foo" "utf-16" "foo"
 
-(def response-cf
-  (-> {:serval.response/status 200
-       :serval.response/body   "Foobar"}
-      (CompletableFuture/completedStage)))
+    (.getBytes "foo" "utf-16") "utf-16" "foo"))
 
-(deftest test-response-cf
-  (let [req  (mock/http-servlet-request {} "")
-        resp (mock/http-servlet-response {} req)
-        ctx  {:serval.service/request  req
-              :serval.service/response resp}
-        _    (.startAsync req)
-        ret  (http/write-response response-cf ctx)
-        ;; Flush
-        _    (.flush (:writer @(:data resp)))]
-    (is (http/async-response? response-async-body ctx))
-    (is (instance? CompletionStage ret))
-    (.get (.toCompletableFuture ret))
-    (is (= (:status @(:data resp) 200)))
-    (is (= (slurp (.toByteArray (:output-stream resp))) "Foobar"))))
+;; TODO: test cookies?
+
+(deftest test-complete-async
+  ;; Normal async.
+  (with-handler (fn [ctx]
+                  (.startAsync (:serval.service/request ctx))
+                  {:serval.response/status 200
+                   :serval.response/body   "foo"})
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo"))))
+  ;; Throw an error while in async mode.
+  (with-handler (fn [ctx]
+                  (.startAsync (:serval.service/request ctx))
+                  (throw (ex-info "Uhoh" {}))
+                  {:serval.response/status 200
+                   :serval.response/body   "foo"})
+    (let [resp (send)]
+      (is (= (:status resp) 500)))))

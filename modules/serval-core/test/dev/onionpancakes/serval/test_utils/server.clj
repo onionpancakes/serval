@@ -1,9 +1,7 @@
 (ns dev.onionpancakes.serval.test-utils.server
   (:require [dev.onionpancakes.serval.core :as srv])
   (:import [jakarta.servlet Servlet]
-           [org.eclipse.jetty.server
-            Server Handler ServerConnector
-            HttpConnectionFactory HttpConfiguration]
+           [org.eclipse.jetty.server Server]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
 
 (defn set-handler!
@@ -30,7 +28,7 @@
   [f & body]
   `(try
      (.stop server)
-     (set-handler! server (srv/http-servlet2 ~f))
+     (set-handler! server (srv/http-servlet ~f))
      (.start server)
      ~@body
      (finally

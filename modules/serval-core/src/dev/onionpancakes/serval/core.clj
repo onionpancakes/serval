@@ -1,30 +1,19 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map])
-  (:require [dev.onionpancakes.serval.io.body :as io.body]
-            [dev.onionpancakes.serval.io.http :as io.http]
-            [dev.onionpancakes.serval.io.http2 :as io.http2])
+  (:require [dev.onionpancakes.serval.io.http :as io.http])
   (:import [jakarta.servlet Servlet GenericServlet]))
-
-;; Async
-
-(def async-body
-  io.body/async-body)
 
 ;; Servlet
 
-(defn ^Servlet servlet*
+(defn ^Servlet generic-servlet
   [service-fn]
   (proxy [GenericServlet] []
     (service [request response]
       (service-fn this request response))))
 
-(defn http-servlet
+(defn ^Servlet http-servlet
   [handler]
-  (servlet* (io.http/service-fn handler)))
-
-(defn ^Servlet http-servlet2
-  [handler]
-  (servlet* (io.http2/service-fn handler)))
+  (generic-servlet (io.http/service-fn handler)))
 
 ;; Processors
 
