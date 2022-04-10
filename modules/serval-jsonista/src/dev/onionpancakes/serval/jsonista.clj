@@ -9,6 +9,14 @@
 (def keyword-keys-object-mapper
   j/keyword-keys-object-mapper)
 
+(def read-default-object-mapper
+  default-object-mapper)
+
+(def write-default-object-mapper
+  default-object-mapper)
+
+;; Read
+
 (defn read-json
   ([ctx]
    (read-json ctx nil))
@@ -16,7 +24,7 @@
          :or   {from          [:serval.service/request :reader]
                 to            [:serval.jsonista/value]
                 error         [:serval.jsonista/error]
-                object-mapper j/default-object-mapper}}]
+                object-mapper read-default-object-mapper}}]
    (try
      (let [source (get-in ctx from)
            value  (j/read-value source object-mapper)]
@@ -26,10 +34,12 @@
      (catch com.fasterxml.jackson.databind.exc.MismatchedInputException ex
        (assoc-in ctx error {:exception ex})))))
 
+;; Write
+
 (defrecord JsonBody [value options]
   io.body/ResponseBody
   (io.body/service-body [_ _ _ response]
-    (let [object-mapper (:object-mapper options j/default-object-mapper)]
+    (let [object-mapper (:object-mapper options write-default-object-mapper)]
       (j/write-value (.getWriter ^ServletResponse response) value object-mapper))))
 
 (defn json-body
@@ -37,3 +47,10 @@
    (JsonBody. value nil))
   ([value options]
    (JsonBody. value options)))
+
+(defn extend-map-as-json-response-body!
+  []
+  (extend-protocol io.body/ResponseBody
+    java.util.Map
+    (io.body/service-body [this _ _ ^ServletResponse response]
+      (j/write-value (.getWriter response) this write-default-object-mapper))))
