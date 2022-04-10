@@ -30,7 +30,7 @@
   io.body/ResponseBody
   (io.body/service-body [_ _ _ response]
     (let [object-mapper (:object-mapper options j/default-object-mapper)]
-      (j/write-value (.getWriter response) value object-mapper))))
+      (j/write-value (.getWriter ^ServletResponse response) value object-mapper))))
 
 (defn json-body
   ([value]

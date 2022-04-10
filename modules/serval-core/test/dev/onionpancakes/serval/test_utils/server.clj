@@ -21,7 +21,7 @@
 
 (def port 42000)
 
-(defonce ^Servlet server
+(defonce ^Server server
   (Server. ^int port))
 
 (defmacro with-handler
