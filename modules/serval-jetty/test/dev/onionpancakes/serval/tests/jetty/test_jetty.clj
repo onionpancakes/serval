@@ -19,7 +19,7 @@
      (finally
        (.stop server/server)
        (.join server/server)
-       (srv.jetty/configure-server! server/server {:connectors []
+       (srv.jetty/configure-server! server/server {:connectors [{:port server/port}]
                                                    :handler    nil}))))
 
 ;; Tests
