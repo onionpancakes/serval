@@ -8,6 +8,8 @@
             [clojure.core.async :refer [go chan close! >!]])
   (:import [java.nio ByteBuffer]))
 
+(require '[dev.onionpancakes.serval.io.core-async])
+
 (deftest test-async-writables
   (with-response {:serval.response/body (go "foo")}
     (is (:body (send)) "foo"))
