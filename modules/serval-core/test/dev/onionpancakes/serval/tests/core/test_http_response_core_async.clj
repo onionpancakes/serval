@@ -1,6 +1,8 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-response-core-async
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.test-utils.server
+  (:require [dev.onionpancakes.serval.io.core-async
+             :refer [extend-channel-as-response-body!]]
+            [dev.onionpancakes.serval.test-utils.server
              :refer [with-response]]
             [dev.onionpancakes.serval.test-utils.client
              :refer [send]]
@@ -8,18 +10,18 @@
             [clojure.core.async :refer [go chan close! >!]])
   (:import [java.nio ByteBuffer]))
 
-(require '[dev.onionpancakes.serval.io.core-async])
+(extend-channel-as-response-body!)
 
 (deftest test-async-writables
   (with-response {:serval.response/body (go "foo")}
-    (is (:body (send)) "foo"))
+    (is (= (:body (send)) "foo")))
   (with-response {:serval.response/body (go (.getBytes "foo"))}
-    (is (:body (send)) "foo"))
+    (is (= (:body (send)) "foo")))
   (with-response {:serval.response/body (go (ByteBuffer/wrap (.getBytes "foo")))}
-    (is (:body (send)) "foo"))
+    (is (= (:body (send)) "foo")))
   (with-response {:serval.response/body (go [(ByteBuffer/wrap (.getBytes "foo"))
                                              (ByteBuffer/wrap (.getBytes "bar"))])}
-    (is (:body (send)) "foobar")))
+    (is (= (:body (send)) "foobar"))))
 
 (defn test-chan []
   (let [ch (chan)]
@@ -31,4 +33,4 @@
 
 (deftest test-channel-response-body
   (with-response {:serval.response/body (test-chan)}
-    (is (:body (send)) "foobarbaz")))
+    (is (= (:body (send)) "foobarbaz"))))

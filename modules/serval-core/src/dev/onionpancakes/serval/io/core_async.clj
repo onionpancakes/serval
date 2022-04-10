@@ -87,20 +87,26 @@
 (def to-buffer-queue-xf
   (map to-buffer-queue))
 
-(extend-protocol io.body/ResponseBody
-  clojure.core.async.impl.channels.ManyToManyChannel
-  (service-body [this _ ^ServletRequest request ^ServletResponse response]
-    (if-not (.isAsyncStarted request)
-      (.startAsync request))
-    (let [out (.getOutputStream response)
-          cf  (CompletableFuture.)
-          ex  (fn [t]
-                ;; Close this channel on error.
-                ;; Otherwise, it will feed into a completed async response.
-                (async/close! this)
-                (.completeExceptionally cf t) nil)
-          ch  (async/chan 32 to-buffer-queue-xf ex)
-          wl  (channel-write-listener out ch cf)]
-      (.setWriteListener out wl)
-      (async/pipe this ch)
-      cf)))
+(defn service-channel-body
+  [this _ ^ServletRequest request ^ServletResponse response]
+  (if-not (.isAsyncStarted request)
+    (.startAsync request))
+  (let [out (.getOutputStream response)
+        cf  (CompletableFuture.)
+        ex  (fn [t]
+              ;; Close this channel on error.
+              ;; Otherwise, it will feed into a completed async response.
+              (async/close! this)
+              (.completeExceptionally cf t) nil)
+        ch  (async/chan 32 to-buffer-queue-xf ex)
+        wl  (channel-write-listener out ch cf)]
+    (.setWriteListener out wl)
+    (async/pipe this ch)
+    cf))
+
+(defn extend-channel-as-response-body!
+  []
+  (extend-protocol io.body/ResponseBody
+    clojure.core.async.impl.channels.ManyToManyChannel
+    (service-body [this servlet request response]
+      (service-channel-body this servlet request response))))
