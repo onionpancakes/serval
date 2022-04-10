@@ -4,7 +4,7 @@
              :refer [with-response]]
             [dev.onionpancakes.serval.test-utils.client
              :refer [send]]
-            [clojure.test :refer [deftest is are]]
+            [clojure.test :refer [deftest is]]
             [clojure.core.async :refer [go chan close! >!]])
   (:import [java.nio ByteBuffer]))
 
