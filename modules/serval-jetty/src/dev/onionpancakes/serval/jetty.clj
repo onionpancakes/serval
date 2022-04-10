@@ -194,3 +194,18 @@
    (server* (merge default-server-config config)))
   ([pool config]
    (server* pool (merge default-server-config config))))
+
+(defn ^Server start
+  [^Server server]
+  (doto server
+    (.start)))
+
+(defn ^Server stop
+  [^Server server]
+  (doto server
+    (.stop)))
+
+(defn ^Server join
+  [^Server server]
+  (doto server
+    (.join)))

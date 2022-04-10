@@ -11,17 +11,17 @@
 
 (defn start []
   (doto server
-    (.stop)
-    (.start)))
+    (srv.jetty/stop)
+    (srv.jetty/start)))
 
 (defn start-dev []
   (doto server
-    (.stop)
+    (srv.jetty/stop)
     (srv.jetty/configure-server! {:handler #'route-handler})
-    (.start)))
+    (srv.jetty/start)))
 
 (defn stop []
-  (.stop server))
+  (srv.jetty/stop server))
 
 (defn -main []
   (start))
