@@ -1,6 +1,6 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-request-lookup
   (:require [dev.onionpancakes.serval.io.http
-             :refer [servlet-request-proxy]]
+             :refer [servlet-request-lookup-proxy]]
             [clojure.test :refer [deftest is are]])
   (:import [java.util Collections]
            [jakarta.servlet.http HttpServletRequest]))
@@ -16,7 +16,7 @@
       (Collections/enumeration ["foo" "false"]))))
 
 (def lookup-proxy
-  (servlet-request-proxy mock-http-servlet-request))
+  (servlet-request-lookup-proxy mock-http-servlet-request))
 
 (deftest test-request-lookup
   (are [path expected] (= (get-in lookup-proxy path) expected)

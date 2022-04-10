@@ -30,7 +30,7 @@
       val
       not-found)))
 
-(defn servlet-request-lookup
+(defn lookup-servlet-request
   [^HttpServletRequest request k not-found]
   (case k
     ;; Attributes
@@ -94,14 +94,14 @@
 
     not-found))
 
-(defn servlet-request-proxy
+(defn servlet-request-lookup-proxy
   [^HttpServletRequest request]
   (proxy [HttpServletRequestWrapper clojure.lang.ILookup] [request]
     (valAt
       ([k]
-       (servlet-request-lookup this k nil))
+       (lookup-servlet-request this k nil))
       ([k not-found]
-       (servlet-request-lookup this k not-found)))))
+       (lookup-servlet-request this k not-found)))))
 
 ;; Response
 
@@ -146,7 +146,7 @@
 (defn context
   [servlet request response]
   {:serval.service/servlet  servlet
-   :serval.service/request  (servlet-request-proxy request)
+   :serval.service/request  (servlet-request-lookup-proxy request)
    :serval.service/response response})
 
 (defn complete-async
