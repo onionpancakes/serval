@@ -107,6 +107,9 @@
 
 (defn service-response-map
   [m servlet request ^HttpServletResponse response]
+  ;; Note: If content-type is not set,
+  ;; character-encoding does not show up in headers.
+  ;; TODO: warn if this is the case?
   (some->> (:serval.response/content-type m)
            (.setContentType response))
   (some->> (:serval.response/character-encoding m)

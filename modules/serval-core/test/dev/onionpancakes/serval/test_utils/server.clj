@@ -28,14 +28,15 @@
 
 (defmacro with-handler
   [f & body]
-  `(do
+  `(try
      (.stop server)
      (set-handler! server (srv/http-servlet2 ~f))
      (.start server)
      ~@body
-     (.stop server)
-     (.join server)
-     (reset-handler! server)))
+     (finally
+       (.stop server)
+       (.join server)
+       (reset-handler! server))))
 
 (defmacro with-response
   [resp & body]

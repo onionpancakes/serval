@@ -4,20 +4,44 @@
              :refer [with-handler with-response]]
             [dev.onionpancakes.serval.test-utils.client
              :refer [send]]
-            [clojure.test :refer [deftest is]])
+            [clojure.test :refer [deftest is are]])
   (:import [java.io ByteArrayInputStream]
            [java.util.concurrent CompletableFuture]))
 
+(deftest test-status
+  (are [status] (with-response {:serval.response/status status}
+                  (= (:status (send)) status))
+    200
+    300
+    400
+    500))
+
+(deftest test-headers
+  (with-response {:serval.response/headers {"foo" ["foo"]
+                                            "bar" ["bar1" "bar2"]}}
+    (let [{:strs [foo bar]} (:headers (send))]
+      (is (= foo ["foo"]))
+      (is (= bar ["bar1" "bar2"])))))
+
 (deftest test-body
-  (with-response {:serval.response/body (.getBytes "foo")}
-    (is (= (:body (send)) "foo")))
-  (with-response {:serval.response/body "foo"}
-    (is (= (:body (send)) "foo")))
-  (with-response (let [body (ByteArrayInputStream. (.getBytes "foo"))]
-                   {:serval.response/body body})
-    (is (= (:body (send)) "foo")))
-  (with-response {}
-    (is (= (:body (send)) "")))
-  (with-response (let [body (CompletableFuture/completedFuture "foo")]
-                   {:serval.response/body body})
-    (is (= (:body (send)) "foo"))))
+  (are [body expected] (with-response {:serval.response/body body}
+                         (= (:body (send)) expected))
+    (.getBytes "foo")                         "foo"
+    "foo"                                     "foo"
+    (ByteArrayInputStream. (.getBytes "foo")) "foo"
+    nil                                       ""
+    (CompletableFuture/completedFuture "foo") "foo"))
+
+(deftest test-body-encoding
+  (are [body enc expected] (with-response {:serval.response/body body
+                                           :serval.response/content-type "text/plain"
+                                           :serval.response/character-encoding enc}
+                             (= (:body (send)) expected))
+    "foo" nil      "foo"
+    "foo" "utf-8"  "foo"
+    "foo" "utf-16" "foo"
+
+    (.getBytes "foo" "utf-16") "utf-16" "foo"))
+
+;; TODO: test cookies?
+
