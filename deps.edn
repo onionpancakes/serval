@@ -6,13 +6,15 @@
 
  :aliases
  {:dev
-  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.0-alpha5"}
-                 funcool/promesa        {:mvn/version "6.0.2"}}
+  {:extra-deps  {org.slf4j/slf4j-simple            {:mvn/version "2.0.0-alpha5"}
+                 funcool/promesa                   {:mvn/version "6.0.2"}
+                 dev.onionpancakes/serval-undertow {:local/root "./modules/serval-undertow"}}
    :extra-paths ["dev"
                  "./modules/serval-core/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jsonista/test"
-                 "./modules/serval-reitit/test"]}
+                 "./modules/serval-reitit/test"
+                 "./modules/serval-undertow/test"]}
 
   :async
   {:extra-deps {org.clojure/core.async {:mvn/version "1.5.648"}}}
@@ -23,10 +25,12 @@
    :extra-paths ["./modules/serval-core/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jsonista/test"
-                 "./modules/serval-reitit/test"]
+                 "./modules/serval-reitit/test"
+                 "./modules/serval-undertow/test"]
    :exec-fn     cognitect.test-runner.api/test
    :exec-args   {:dirs     ["./modules/serval-core/test"
                             "./modules/serval-jetty/test"
                             "./modules/serval-jsonista/test"
-                            "./modules/serval-reitit/test"]
+                            "./modules/serval-reitit/test"
+                            "./modules/serval-undertow/test"]
                  :patterns ["dev\\.onionpancakes\\.serval\\.tests\\..*"]}}}}
