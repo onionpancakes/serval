@@ -1,6 +1,7 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map])
-  (:require [dev.onionpancakes.serval.io.http :as io.http])
+  (:require [dev.onionpancakes.serval.io.http :as io.http]
+            [dev.onionpancakes.serval.io.async :as io.async])
   (:import [jakarta.servlet Servlet GenericServlet]))
 
 ;; Servlet
@@ -40,3 +41,8 @@
   [& xfs]
   (->> (into '() handler-xf xfs)
        (apply comp)))
+
+;; Async
+
+(def async-body
+  io.async/async-body)
