@@ -28,6 +28,10 @@
     (LinkedList. this)))
 
 (defn flush-buffer!
+  "Write bytes from ByteBuffer to ServletOutputStream until
+  either ByteBuffer is depleted or outputstream is unable to
+  to accept more data. Returns true if outputstream remains
+  ready or false if not."
   [^ServletOutputStream out ^ByteBuffer buffer]
   (loop []
     (if (.hasRemaining buffer)
@@ -37,9 +41,10 @@
       true)))
 
 (defn flush-buffer-queue!
-  "Write bytes from a queue of ByteBuffers to a ServletOutputStream,
-  so long as out remains ready.
-  Returns true if flush should continue, else false."
+  "Write bytes from a queue of ByteBuffers to a ServletOutputStream
+  until either the queue is depleted or outputstream is unable to
+  accept more data. Returns true if outputstream remains ready or
+  false if not."
   [out ^java.util.Queue buffers]
   (loop []
     (if-some [buf (.peek buffers)]
