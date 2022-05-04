@@ -1,8 +1,9 @@
-{:deps {org.clojure/clojure               {:mvn/version "1.11.0"}
-        dev.onionpancakes/serval-core     {:local/root "./modules/serval-core"}
-        dev.onionpancakes/serval-jetty    {:local/root "./modules/serval-jetty"}
-        dev.onionpancakes/serval-reitit   {:local/root "./modules/serval-reitit"}
-        dev.onionpancakes/serval-jsonista {:local/root "./modules/serval-jsonista"}}
+{:deps {org.clojure/clojure                 {:mvn/version "1.11.0"}
+        dev.onionpancakes/serval-core       {:local/root "./modules/serval-core"}
+        dev.onionpancakes/serval-core-async {:local/root "./modules/serval-core-async"}
+        dev.onionpancakes/serval-jetty      {:local/root "./modules/serval-jetty"}
+        dev.onionpancakes/serval-reitit     {:local/root "./modules/serval-reitit"}
+        dev.onionpancakes/serval-jsonista   {:local/root "./modules/serval-jsonista"}}
 
  :aliases
  {:dev
