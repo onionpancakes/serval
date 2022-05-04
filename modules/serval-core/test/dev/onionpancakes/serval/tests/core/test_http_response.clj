@@ -4,7 +4,8 @@
              :refer [with-handler with-response]]
             [dev.onionpancakes.serval.test-utils.client
              :refer [send]]
-            [clojure.test :refer [deftest is are]])
+            [clojure.test :refer [deftest is are]]
+            [dev.onionpancakes.serval.core :as srv])
   (:import [java.io ByteArrayInputStream]
            [java.util.concurrent CompletableFuture]))
 
@@ -30,7 +31,8 @@
     "foo"                                     "foo"
     (ByteArrayInputStream. (.getBytes "foo")) "foo"
     nil                                       ""
-    (CompletableFuture/completedFuture "foo") "foo"))
+    (CompletableFuture/completedFuture "foo") "foo"
+    (srv/async-body "foo")                    "foo"))
 
 (deftest test-body-encoding
   (are [body enc expected] (with-response {:serval.response/body body

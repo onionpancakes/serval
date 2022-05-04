@@ -51,7 +51,7 @@
 (deftype QueueWriteListener [out queue ^CompletableFuture complete]
   WriteListener
   (onWritePossible [_]
-    (if-not (flush-buffer-queue! out queue)
+    (if (flush-buffer-queue! out queue)
       (.complete complete nil)))
   (onError [_ throwable]
     (.completeExceptionally complete throwable)))
@@ -62,11 +62,11 @@
 
 (defn service-buffer-queue
   [queue _ ^ServletRequest request ^ServletResponse response]
-  (if-not (.isAsyncStarted request)
-    (.startAsync request))
   (let [out (.getOutputStream response)
         cf  (CompletableFuture.)
         wl  (queue-write-listener out queue cf)
+        _   (if-not (.isAsyncStarted request)
+              (.startAsync request))
         _   (.setWriteListener out wl)]
     cf))
 
