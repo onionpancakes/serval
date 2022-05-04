@@ -72,7 +72,7 @@
 
 (deftype AsyncBody [queue]
   io.body/ResponseBody
-  (service-body [this servlet request response]
+  (service-body [_ servlet request response]
     (service-buffer-queue queue servlet request response)))
 
 (defn async-body [value]

@@ -2,11 +2,7 @@
   (:require [clojure.core.async :as async :refer [go-loop <! >!]]
             [dev.onionpancakes.serval.io.body :as io.body]
             [dev.onionpancakes.serval.io.async :as io.async])
-  (:import [jakarta.servlet
-            ServletRequest ServletResponse
-            ServletOutputStream WriteListener]
-           [java.nio ByteBuffer]
-           [java.util LinkedList]
+  (:import [jakarta.servlet ServletRequest ServletResponse WriteListener]
            [java.util.concurrent CompletableFuture]))
 
 ;; The 'current' is a 1 size channel that holds the current buffer queue
@@ -65,7 +61,7 @@
 
 (deftype ChannelBody [ch]
   io.body/ResponseBody
-  (service-body [this servlet request response]
+  (service-body [_ servlet request response]
     (service-channel-body ch servlet request response)))
 
 (defn channel-body
