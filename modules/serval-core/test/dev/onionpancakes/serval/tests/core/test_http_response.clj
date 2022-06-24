@@ -6,7 +6,8 @@
              :refer [send]]
             [clojure.test :refer [deftest is are]]
             [dev.onionpancakes.serval.core :as srv])
-  (:import [java.io ByteArrayInputStream]
+  (:import [java.io ByteArrayInputStream File]
+           [java.nio.file Path]
            [java.util.concurrent CompletableFuture]))
 
 (deftest test-status
@@ -24,12 +25,17 @@
       (is (= foo ["foo"]))
       (is (= bar ["bar1" "bar2"])))))
 
+(def ^java.net.URL example-foo
+  (clojure.java.io/resource "dev/onionpancakes/serval/test_utils/example_foo.txt"))
+
 (deftest test-body
   (are [body expected] (with-response {:serval.response/body body}
                          (= (:body (send)) expected))
     (.getBytes "foo")                         "foo"
     "foo"                                     "foo"
     (ByteArrayInputStream. (.getBytes "foo")) "foo"
+    (Path/of (.toURI example-foo))            "foo"
+    (File. (.toURI example-foo))              "foo"
     nil                                       ""
     (CompletableFuture/completedFuture "foo") "foo"
     (srv/async-body "foo")                    "foo"))
@@ -45,7 +51,7 @@
 
     (.getBytes "foo" "utf-16") "utf-16" "foo"))
 
-;; TODO: test cookies?
+;; Todo: test cookies?
 
 (deftest test-complete-async
   ;; Normal async.

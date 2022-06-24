@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.io.body
   (:import [jakarta.servlet ServletResponse]
+           [java.nio.file Files]
            [java.util.concurrent CompletionStage]))
 
 ;; Response body protocol
@@ -22,6 +23,14 @@
       (.transferTo this (.getOutputStream response))
       (finally
         (.close this)))
+    nil)
+  java.nio.file.Path
+  (service-body [this _ _ ^ServletResponse response]
+    (Files/copy this (.getOutputStream response))
+    nil)
+  java.io.File
+  (service-body [this _ _ ^ServletResponse response]
+    (Files/copy (.toPath this) (.getOutputStream response))
     nil)
   nil
   (service-body [_ _ _ _] nil)
