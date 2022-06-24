@@ -22,8 +22,10 @@
                 default  identity}}]
    (let [match   (get-in ctx match-in)
          method  (get-in ctx [:serval.service/request :method])
-         handler (get-in match [:data method :handler] default)]
-     (handler ctx))))
+         handler (get-in match [:data method :handler])]
+     (if (some? handler)
+       (handler ctx)
+       (default ctx)))))
 
 (defn route
   ([ctx router]

@@ -8,6 +8,8 @@
                       :handler #(assoc % :handled "root")}}]
    ["/foo"     {:GET {:name    :foo
                       :handler #(assoc % :handled "foo")}}]
+   ["/nil"     {:GET {:name    :nil
+                      :handler nil}}]
    ["/default" {:GET {:name :default}}]])
 
 (def router
@@ -55,6 +57,13 @@
   ;; Default handler, non-existent route.
   (let [ctx {:serval.service/request {:method :GET
                                       :path   "/not-found"}}
+        mret (sr/match-by-path ctx router)
+        hret (sr/handle-match-by-method mret)]
+    (is (= hret mret)))
+
+  ;; Default handler when nil
+  (let [ctx {:serval.service/request {:method :GET
+                                      :path   "/nil"}}
         mret (sr/match-by-path ctx router)
         hret (sr/handle-match-by-method mret)]
     (is (= hret mret)))
