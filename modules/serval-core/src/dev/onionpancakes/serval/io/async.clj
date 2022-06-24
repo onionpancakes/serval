@@ -7,6 +7,8 @@
            [java.util LinkedList]
            [java.util.concurrent CompletableFuture]))
 
+;; Consider: rework to handle other non bytebuffer cases.
+
 (defprotocol AsyncWritable
   (to-buffer-queue [this]))
 
@@ -23,6 +25,10 @@
   (to-buffer-queue [this]
     (doto (LinkedList.)
       (.add this)))
+
+  ;; TODO: ISeq?
+
+  ;; List of ByteBuffers only.
   java.util.List
   (to-buffer-queue [this]
     (LinkedList. this)))
@@ -74,6 +80,9 @@
               (.startAsync request))
         _   (.setWriteListener out wl)]
     cf))
+
+;; Consider: should the conversion from AsyncWritable to queue
+;; be eager or lazy?
 
 (deftype AsyncBody [queue]
   io.body/ResponseBody

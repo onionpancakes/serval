@@ -6,8 +6,11 @@
              :refer [send]]
             [clojure.test :refer [deftest is are]]
             [dev.onionpancakes.serval.core :as srv])
-  (:import [java.io ByteArrayInputStream File]
+  (:import [jakarta.servlet ServletRequest]
+           [java.io ByteArrayInputStream File]
+           [java.nio ByteBuffer]
            [java.nio.file Path]
+           [java.util ArrayList Collection]
            [java.util.concurrent CompletableFuture]))
 
 (deftest test-status
@@ -40,7 +43,13 @@
     `("foo" ~(.getBytes "bar"))               "foobar"
     nil                                       ""
     (CompletableFuture/completedFuture "foo") "foo"
-    (srv/async-body "foo")                    "foo"))
+
+    ;; Async
+    (srv/async-body (.getBytes "foo"))                   "foo"
+    (srv/async-body "foo")                               "foo"
+    (srv/async-body (ByteBuffer/wrap (.getBytes "foo"))) "foo"
+    (let [coll [(ByteBuffer/wrap (.getBytes "foo"))]]
+      (srv/async-body (ArrayList. ^Collection coll)))    "foo"))
 
 (deftest test-body-encoding
   (are [body enc expected] (with-response {:serval.response/body body
@@ -58,7 +67,7 @@
 (deftest test-complete-async
   ;; Normal async.
   (with-handler (fn [ctx]
-                  (.startAsync (:serval.service/request ctx))
+                  (.startAsync ^ServletRequest (:serval.service/request ctx))
                   {:serval.response/status 200
                    :serval.response/body   "foo"})
     (let [resp (send)]
@@ -66,7 +75,7 @@
       (is (= (:body resp) "foo"))))
   ;; Throw an error while in async mode.
   (with-handler (fn [ctx]
-                  (.startAsync (:serval.service/request ctx))
+                  (.startAsync ^ServletRequest (:serval.service/request ctx))
                   (throw (ex-info "Uhoh" {}))
                   {:serval.response/status 200
                    :serval.response/body   "foo"})
