@@ -36,6 +36,8 @@
     (ByteArrayInputStream. (.getBytes "foo")) "foo"
     (Path/of (.toURI example-foo))            "foo"
     (File. (.toURI example-foo))              "foo"
+    `("foo" "bar")                            "foobar"
+    `("foo" ~(.getBytes "bar"))               "foobar"
     nil                                       ""
     (CompletableFuture/completedFuture "foo") "foo"
     (srv/async-body "foo")                    "foo"))

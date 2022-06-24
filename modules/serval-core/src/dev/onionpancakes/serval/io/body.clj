@@ -15,7 +15,7 @@
     nil)
   String
   (service-body [this _ _ ^ServletResponse response]
-    (.. response getWriter (write this))
+    (.. response getOutputStream (print this))
     nil)
   java.io.InputStream
   (service-body [this _ _ ^ServletResponse response]
@@ -34,6 +34,13 @@
     nil)
   nil
   (service-body [_ _ _ _] nil)
+
+  ;; Seq
+  clojure.lang.ISeq
+  (service-body [this servlet request response]
+    (doseq [i this]
+      (service-body i servlet request response))
+    nil)
 
   ;; Async
   CompletionStage
