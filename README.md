@@ -38,8 +38,8 @@ To specify specific modules, use `:deps/root`.
 Require the namespaces.
 
 ```clojure
-(require `[dev.onionpancakes.serval.core :as srv])
-(require `[dev.onionpancakes.serval.jetty :as srv.jetty])
+(require '[dev.onionpancakes.serval.core :as srv])
+(require '[dev.onionpancakes.serval.jetty :as srv.jetty])
 ```
 
 Write a handler.
