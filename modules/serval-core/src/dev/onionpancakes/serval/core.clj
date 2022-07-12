@@ -47,10 +47,10 @@
   "Returns a process step function, applying
   handler f with input and the supplied args if
   pred of the input returns logical true. If pred
-  returns logical false, the transformed result is
+  returns logical true, the transformed result is
   not passed to the next process step, effectively
   terminating the input as this process step. If
-  pred returns logical true, the result is passed
+  pred returns logical false, the result is passed
   untouched to the next process step."
   [pred f & args]
   (fn [handler]
