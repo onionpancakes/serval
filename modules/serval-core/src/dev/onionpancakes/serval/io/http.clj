@@ -110,22 +110,23 @@
   ;; Note: If content-type is not set,
   ;; character-encoding does not show up in headers.
   ;; TODO: warn if this is the case?
-  (some->> (:serval.response/content-type m)
-           (.setContentType response))
-  (some->> (:serval.response/character-encoding m)
-           (.setCharacterEncoding response))
-  (doseq [cookie (:serval.response/cookies m)]
-    (.addCookie response cookie))
-  ;; Status / Headers / Body
-  (some->> (:serval.response/status m)
-           (.setStatus response))
-  (doseq [[hname values] (:serval.response/headers m)
-          value          values]
-    ;; TODO: Add spec guard for header names, must be strings.
-    (.addHeader response hname (str value)))
-  ;; Notice: service-body may return a CompletionStage
-  (some-> (:serval.response/body m)
-          (io.body/service-body servlet request response)))
+  (when-some [value (:serval.response/content-type m)]
+    (.setContentType response value))
+  (when-some [value (:serval.response/character-encoding m)]
+    (.setCharacterEncoding response value))
+  (when-some [cookies (:serval.response/cookies m)]
+    (doseq [cookie cookies]
+      (.addCookie response cookie)))
+  (when-some [value (:serval.response/status m)]
+    (.setStatus response value))
+  (when-some [entries (:serval.response/headers m)]
+    (doseq [[hname values] entries
+            value          values]
+      ;; TODO: Add spec guard for header names, must be strings.
+      (.addHeader response hname (str value))))
+  ;; Return what service-body returns, either nil or CompletionStage.
+  (-> (:serval.response/body m)
+      (io.body/service-body servlet request response)))
 
 (defprotocol HttpResponse
   (service-response ^CompletionStage [this servlet request response]))
@@ -151,18 +152,17 @@
 
 (defn complete-async
   [^CompletionStage cstage ^HttpServletRequest request ^HttpServletResponse response]
-  (when-let [atx (cond
-                   (.isAsyncStarted request) (.getAsyncContext request)
-                   (some? cstage)            (.startAsync request))]
+  (when-some [atx (cond
+                    (.isAsyncStarted request) (.getAsyncContext request)
+                    (some? cstage)            (.startAsync request))]
     ;; TODO: handle if async is not supported?
-    (if cstage
-      (.whenComplete cstage (reify BiConsumer
-                              (accept [_ _ throwable]
-                                (if throwable
-                                  (->> (.getMessage ^Throwable throwable)
-                                       (.sendError response 500)))
-                                (.complete atx))))
-      (.complete atx))))
+    (-> (or cstage (CompletableFuture/completedStage nil))
+        (.whenComplete (reify BiConsumer
+                         (accept [_ _ throwable]
+                           (if throwable
+                             (->> (.getMessage ^Throwable throwable)
+                                  (.sendError response 500)))
+                           (.complete atx)))))))
 
 (defn service-fn
   [handler]
