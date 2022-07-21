@@ -45,24 +45,29 @@
     (when (write-buffer! out buf)
       (.clear buf)
       (.read ch buf @pos nil (reify CompletionHandler
-                              (completed [_ r _]
-                                (if (zero? r)
-                                  (.complete cf nil)
-                                  (do
-                                    (vswap! pos + r)
-                                    (.onWritePossible this))))
-                              (failed [_ throwable _]
-                                (.completeExceptionally cf throwable))))))
+                               (completed [_ r _]
+                                 (if (== r -1)
+                                   (.complete cf nil)
+                                   (do
+                                     (.flip buf)
+                                     (vswap! pos + r)
+                                     (.onWritePossible this))))
+                               (failed [_ throwable _]
+                                 (.completeExceptionally cf throwable))))))
   (onError [_ throwable]
     (.completeExceptionally cf throwable)))
 
+(def default-buffer-size 4092)
+
 (defn file-write-listener
-  [out path cf buffer-size]
-  (let [buf (doto (ByteBuffer/allocate buffer-size)
-              (.limit 0)) ;; Make buffer empty.
-        pos (volatile! 0)
-        ch  (open-file-channel path)]
-    (AsyncFileChannelWriteListener. out buf pos ch cf)))
+  ([out path cf]
+   (file-write-listener out path cf default-buffer-size))
+  ([out path cf buffer-size]
+   (let [buf (doto (ByteBuffer/allocate buffer-size)
+               (.limit 0)) ;; Make buffer empty.
+         pos (volatile! 0)
+         ch  (open-file-channel path)]
+     (AsyncFileChannelWriteListener. out buf pos ch cf))))
 
 ;; Async Body
 
@@ -74,7 +79,7 @@
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          wl  (file-write-listener out this cf 8192)
+          wl  (file-write-listener out this cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]
@@ -83,7 +88,7 @@
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          wl  (file-write-listener out (.toPath this) cf 8192)
+          wl  (file-write-listener out (.toPath this) cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]

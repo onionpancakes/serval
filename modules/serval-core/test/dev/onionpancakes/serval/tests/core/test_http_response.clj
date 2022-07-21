@@ -45,10 +45,13 @@
     (CompletableFuture/completedFuture "foo") "foo"
 
     ;; Async
-    (srv/async-body (.getBytes "foo"))                   "foo"
-    (srv/async-body "foo")                               "foo"
-    (srv/async-body (ByteBuffer/wrap (.getBytes "foo"))) "foo"
-    (let [coll [(ByteBuffer/wrap (.getBytes "foo"))]]
+    (srv/async-body (Path/of (.toURI example-foo))) "foo"
+    (srv/async-body (File. (.toURI example-foo))) "foo"
+    
+    #_#_(srv/async-body (.getBytes "foo"))                   "foo"
+    #_#_(srv/async-body "foo")                               "foo"
+    #_#_(srv/async-body (ByteBuffer/wrap (.getBytes "foo"))) "foo"
+    #_#_(let [coll [(ByteBuffer/wrap (.getBytes "foo"))]]
       (srv/async-body (ArrayList. ^Collection coll)))    "foo"))
 
 (deftest test-body-encoding
