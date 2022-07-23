@@ -17,7 +17,7 @@
   either ByteBuffer is depleted or outputstream is unable to
   to accept more data. Returns true if outputstream remains
   ready or false if not."
-  [^ServletOutputStream out ^ByteBuffer buf]
+  [^ByteBuffer buf ^ServletOutputStream out]
   (loop []
     (if (.hasRemaining buf)
       (do
@@ -25,49 +25,69 @@
         (if (.isReady out) (recur) false))
       true)))
 
-;; File
+(defprotocol AsyncWritable
+  (write! [this out]))
 
-(def file-ch-read-opts
-  (->> [StandardOpenOption/READ]
-       (into-array StandardOpenOption)))
+(extend-protocol AsyncWritable
+  ByteBuffer
+  (write! [this out]
+    (write-buffer! this out)))
 
-(defn open-file-channel
-  [path]
-  (AsynchronousFileChannel/open path file-ch-read-opts))
+(defprotocol AsyncWritableValue
+  (writable [this]))
+
+(extend-protocol AsyncWritableValue
+  (Class/forName "[B")
+  (writable [this]
+    (ByteBuffer/wrap this)))
+
+;; File write listener
 
 (deftype AsyncFileChannelWriteListener [^ServletOutputStream out
                                         ^ByteBuffer buf
-                                        pos
+                                        ^:volatile-mutable ^long pos
                                         ^AsynchronousFileChannel ch
                                         ^CompletableFuture cf]
+  ;; Impl both WriteListener and CompletionHandler
+  ;; on the same type, so both can have access to a private
+  ;; volatile-mutable unboxed long pos variable.
+  ;; (Premature) optimization lol?
+  ;;
+  ;; Volatile mutable, not unsynchronized mutable, due to
+  ;; AsynchronousFileChannel may run its callback on different
+  ;; threads.
   WriteListener
   (onWritePossible [this]
-    (when (write-buffer! out buf)
+    (when (write-buffer! buf out)
       (.clear buf)
-      (.read ch buf @pos nil (reify CompletionHandler
-                               (completed [_ r _]
-                                 (if (== r -1)
-                                   (.complete cf nil)
-                                   (do
-                                     (.flip buf)
-                                     (vswap! pos + r)
-                                     (.onWritePossible this))))
-                               (failed [_ throwable _]
-                                 (.completeExceptionally cf throwable))))))
+      (.read ch buf pos nil this)))
   (onError [_ throwable]
+    (.completeExceptionally cf throwable))
+  CompletionHandler
+  (completed [this n _]
+    (if (== (.longValue ^Integer n) -1)
+      (.complete cf nil)
+      (do
+        (.flip buf)
+        (set! pos (+ pos (.longValue ^Integer n)))
+        (.onWritePossible this))))
+  (failed [_ throwable _]
     (.completeExceptionally cf throwable)))
 
 (def default-buffer-size 4092)
 
-(defn file-write-listener
+(def default-file-channel-opts
+  (->> [StandardOpenOption/READ]
+       (into-array StandardOpenOption)))
+
+(defn async-file-channel-write-listener
   ([out path cf]
    (file-write-listener out path cf default-buffer-size))
   ([out path cf buffer-size]
    (let [buf (doto (ByteBuffer/allocate buffer-size)
                (.limit 0)) ;; Make buffer empty.
-         pos (volatile! 0)
-         ch  (open-file-channel path)]
-     (AsyncFileChannelWriteListener. out buf pos ch cf))))
+         ch  (AsynchronousFileChannel/open path default-file-channel-opts)]
+     (AsyncFileChannelWriteListener. out buf 0 ch cf))))
 
 ;; Async Body
 
@@ -79,7 +99,7 @@
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          wl  (file-write-listener out this cf)
+          wl  (async-file-channel-write-listener out this cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]
@@ -88,7 +108,7 @@
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          wl  (file-write-listener out (.toPath this) cf)
+          wl  (async-file-channel-write-listener out (.toPath this) cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]
