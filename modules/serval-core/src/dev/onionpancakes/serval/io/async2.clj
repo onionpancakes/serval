@@ -43,15 +43,14 @@
 
 ;; File write listener
 
-(deftype AsyncFileChannelWriteListener [^ServletOutputStream out
+(deftype AsyncFileChannelWriteListener [^AsynchronousFileChannel ch
                                         ^ByteBuffer buf
                                         ^:volatile-mutable ^long pos
-                                        ^AsynchronousFileChannel ch
+                                        ^ServletOutputStream out
                                         ^CompletableFuture cf]
   ;; Impl both WriteListener and CompletionHandler
   ;; on the same type, so both can have access to a private
   ;; volatile-mutable unboxed long pos variable.
-  ;; (Premature) optimization lol?
   ;;
   ;; Volatile mutable, not unsynchronized mutable, due to
   ;; AsynchronousFileChannel may run its callback on different
@@ -70,7 +69,9 @@
       (do
         (.flip buf)
         (set! pos (+ pos (.longValue ^Integer n)))
-        (.onWritePossible this))))
+        (when (write-buffer! buf out)
+          (.clear buf)
+          (.read ch buf pos nil this)))))
   (failed [_ throwable _]
     (.completeExceptionally cf throwable)))
 
@@ -81,13 +82,12 @@
        (into-array StandardOpenOption)))
 
 (defn async-file-channel-write-listener
-  ([out path cf]
-   (file-write-listener out path cf default-buffer-size))
-  ([out path cf buffer-size]
-   (let [buf (doto (ByteBuffer/allocate buffer-size)
-               (.limit 0)) ;; Make buffer empty.
-         ch  (AsynchronousFileChannel/open path default-file-channel-opts)]
-     (AsyncFileChannelWriteListener. out buf 0 ch cf))))
+  ([path out cf]
+   (async-file-channel-write-listener path out cf default-buffer-size))
+  ([path out cf buffer-size]
+   (let [buf (.limit (ByteBuffer/allocate buffer-size) 0)]
+     (-> (AsynchronousFileChannel/open path default-file-channel-opts)
+         (AsyncFileChannelWriteListener. buf 0 out cf)))))
 
 ;; Async Body
 
@@ -99,7 +99,7 @@
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          wl  (async-file-channel-write-listener out this cf)
+          wl  (async-file-channel-write-listener this out cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]
@@ -108,7 +108,7 @@
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
-          wl  (async-file-channel-write-listener out (.toPath this) cf)
+          wl  (async-file-channel-write-listener (.toPath this) out cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]
