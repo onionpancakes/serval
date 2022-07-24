@@ -5,58 +5,46 @@
   (:import [jakarta.servlet ServletRequest ServletResponse WriteListener]
            [java.util.concurrent CompletableFuture]))
 
-;; The 'current' is a 1 size channel that holds the current buffer queue
-;; being written out.
-;; Buffer queues are taken from 'current' then 'input', and flushed to
-;; the ServletOutputStream.
-;; When this current flush reaches its limit (i.e. isReady() returns false),
-;; the current partially flushed buffer queue is place back onto 'current'
-;; to await the next 'onWritePossible' call.
+;; 'cur' is a 1 size channel that holds the current writable.
 
-(deftype ChannelWriteListener [out current input ^CompletableFuture complete]
+(deftype ChannelWriteListener [ch cur out ^CompletableFuture cf]
   WriteListener
   (onWritePossible [_]
-    (go-loop [buf (<! current)]
-      (if (nil? buf)
-        (do
-          (async/close! current)
-          (.complete complete nil))
+    (go-loop [buf (<! cur)]
+      (if (some? buf)
         (if (io.async/write! buf out)
-          (recur (<! input))
-          (>! current buf)))))
+          (if-some [v (<! ch)]
+            (recur (io.async/writable v))
+            (recur nil))
+          (>! cur buf))
+        (do
+          (async/close! cur)
+          (.complete cf nil)))))
   (onError [_ throwable]
-    (.completeExceptionally complete throwable)))
+    (.completeExceptionally cf throwable)))
 
 (defn channel-write-listener
-  [out ch cf]
+  [ch out cf]
   (let [cur (async/chan 1)
-        ;; Because ChannelWriteListener takes from 'current' first,
+        ;; Because ChannelWriteListener takes from 'cur' first,
         ;; we need to initialize it with one value from ch.
-        _   (async/take! ch #(if (nil? %)
-                               (async/close! cur)
-                               (async/put! cur %)))]
-    (ChannelWriteListener. out cur ch cf)))
+        cb  (fn [x]
+              (if (some? x)
+                (async/put! cur (io.async/writable x))
+                (async/close! cur)))
+        _   (async/take! ch cb)]
+    (ChannelWriteListener. ch cur out cf)))
 
 ;; Protocol impl
-
-(def to-buffer-queue-xf
-  (map io.async/writable))
 
 (defn service-channel-body
   [ch _ ^ServletRequest request ^ServletResponse response]
   (let [out (.getOutputStream response)
         cf  (CompletableFuture.)
-        ex  (fn [t]
-              ;; Close this channel on error.
-              ;; Otherwise, it will feed into a completed async response.
-              (async/close! ch)
-              (.completeExceptionally cf t) nil)
-        qch (async/chan 32 to-buffer-queue-xf ex)
-        wl  (channel-write-listener out qch cf)
+        wl  (channel-write-listener ch out cf)
         _   (if-not (.isAsyncStarted request)
               (.startAsync request))
-        _   (.setWriteListener out wl)
-        _   (async/pipe ch qch)]
+        _   (.setWriteListener out wl)]
     cf))
 
 (deftype ChannelBody [ch]
