@@ -26,7 +26,9 @@
       true)))
 
 (defprotocol AsyncWritable
-  (write! [this out]))
+  (write! [this out] "Write bytes from this to ServetOutputStream.
+                      Returns true if outputstream remains ready or
+                      false if not."))
 
 (extend-protocol AsyncWritable
   ByteBuffer
@@ -34,12 +36,32 @@
     (write-buffer! this out)))
 
 (defprotocol AsyncWritableValue
-  (writable [this]))
+  (writable [this] "Returns a AsyncWritable from value."))
 
 (extend-protocol AsyncWritableValue
   (Class/forName "[B")
   (writable [this]
-    (ByteBuffer/wrap this)))
+    (ByteBuffer/wrap this))
+  String
+  (writable [this]
+    (ByteBuffer/wrap (.getBytes this))))
+
+;; Value write listener
+
+(deftype AsyncWritableWriteListener [data
+                                     ^ServletOutputStream out
+                                     ^CompletableFuture cf]
+  WriteListener
+  (onWritePossible [this]
+    (if (write! data out)
+      (.complete cf nil)))
+  (onError [_ throwable]
+    (.completeExceptionally cf throwable)))
+
+(defn async-writable-write-listener
+  [value out cf]
+  (-> (writable value)
+      (AsyncWritableWriteListener. out cf)))
 
 ;; File write listener
 
@@ -109,6 +131,15 @@
     (let [out (.getOutputStream response)
           cf  (CompletableFuture.)
           wl  (async-file-channel-write-listener (.toPath this) out cf)
+          _   (if-not (.isAsyncStarted request)
+                (.startAsync request))
+          _   (.setWriteListener out wl)]
+      cf))
+  Object
+  (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
+    (let [out (.getOutputStream response)
+          cf  (CompletableFuture.)
+          wl  (async-writable-write-listener this out cf)
           _   (if-not (.isAsyncStarted request)
                 (.startAsync request))
           _   (.setWriteListener out wl)]
