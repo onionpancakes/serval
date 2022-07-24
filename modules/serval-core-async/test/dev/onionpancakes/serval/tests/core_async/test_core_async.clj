@@ -17,12 +17,7 @@
   (with-response {:serval.response/body (go "foo")}
     (is (= (:body (send)) "foo")))
   (with-response {:serval.response/body (go (.getBytes "foo"))}
-    (is (= (:body (send)) "foo")))
-  (with-response {:serval.response/body (go (ByteBuffer/wrap (.getBytes "foo")))}
-    (is (= (:body (send)) "foo")))
-  (with-response {:serval.response/body (go [(ByteBuffer/wrap (.getBytes "foo"))
-                                             (ByteBuffer/wrap (.getBytes "bar"))])}
-    (is (= (:body (send)) "foobar"))))
+    (is (= (:body (send)) "foo"))))
 
 (defn test-chan []
   (let [ch (chan)]

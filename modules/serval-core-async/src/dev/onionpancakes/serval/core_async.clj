@@ -16,14 +16,14 @@
 (deftype ChannelWriteListener [out current input ^CompletableFuture complete]
   WriteListener
   (onWritePossible [_]
-    (go-loop [buffers (<! current)]
-      (if (nil? buffers)
+    (go-loop [buf (<! current)]
+      (if (nil? buf)
         (do
           (async/close! current)
           (.complete complete nil))
-        (if (io.async/flush-buffer-queue! out buffers)
+        (if (io.async/write! buf out)
           (recur (<! input))
-          (>! current buffers)))))
+          (>! current buf)))))
   (onError [_ throwable]
     (.completeExceptionally complete throwable)))
 
@@ -40,7 +40,7 @@
 ;; Protocol impl
 
 (def to-buffer-queue-xf
-  (map io.async/to-buffer-queue))
+  (map io.async/writable))
 
 (defn service-channel-body
   [ch _ ^ServletRequest request ^ServletResponse response]
