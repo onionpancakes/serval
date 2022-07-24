@@ -8,9 +8,7 @@
             [dev.onionpancakes.serval.core :as srv])
   (:import [jakarta.servlet ServletRequest]
            [java.io ByteArrayInputStream File]
-           [java.nio ByteBuffer]
            [java.nio.file Path]
-           [java.util ArrayList Collection]
            [java.util.concurrent CompletableFuture]))
 
 (deftest test-status

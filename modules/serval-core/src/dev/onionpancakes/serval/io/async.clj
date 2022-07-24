@@ -5,7 +5,6 @@
             ServletResponse ServletOutputStream WriteListener]
            [java.nio ByteBuffer]
            [java.nio.channels
-            AsynchronousByteChannel
             AsynchronousFileChannel
             CompletionHandler]
            [java.nio.file

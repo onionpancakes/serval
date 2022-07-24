@@ -8,8 +8,7 @@
             [dev.onionpancakes.serval.test-utils.client
              :refer [send]]
             [clojure.test :refer [deftest is]]
-            [clojure.core.async :refer [go chan close! >!]])
-  (:import [java.nio ByteBuffer]))
+            [clojure.core.async :refer [go chan close! >!]]))
 
 (extend-channel-as-response-body!)
 
