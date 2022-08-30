@@ -6,20 +6,17 @@
 ;; Read
 
 (defn read-transit
-  ([ctx]
-   (read-transit ctx nil))
-  ([ctx {:keys [from to error type]
-         :or   {from  [:serval.service/request :input-stream]
-                to    [:serval.transit/value]
-                error [:serval.transit/error]
-                type  :json}}]
+  ([ctx type]
+   (read-transit ctx type nil))
+  ([ctx type {:keys [reader-opts]}]
    (try
-     (let [value (-> (get-in ctx from)
-                     (transit/reader type)
+     (let [value (-> (:serval.service/request ctx)
+                     (:input-stream)
+                     (transit/reader type reader-opts)
                      (transit/read))]
-       (assoc-in ctx to value))
-     (catch Exception ex
-       (assoc-in ctx error {:exception ex})))))
+       (assoc ctx :serval.transit/value value))
+     (catch Throwable ex
+       (assoc ctx :serval.transit/error ex)))))
 
 ;; Write
 

@@ -17,45 +17,31 @@
     (.toByteArray out)))
 
 (deftest test-read-transit
+  ;; Json
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
         ctx   {:serval.service/request {:input-stream in}}
-        ret   (srv.transit/read-transit ctx)]
+        ret   (srv.transit/read-transit ctx :json)]
     (is (= (:serval.transit/value ret) value)))
 
-  ;; Empty options
-  (let [value {:foo "bar"}
-        in    (ByteArrayInputStream. (transit-bytes value :json))
-        ctx   {:serval.service/request {:input-stream in}}
-        ret   (srv.transit/read-transit ctx {})]
-    (is (= (:serval.transit/value ret) value)))
-
-  ;; Json-verbose
-  (let [value {:foo "bar"}
-        in    (ByteArrayInputStream. (transit-bytes value :json-verbose))
-        ctx   {:serval.service/request {:input-stream in}}
-        ret   (srv.transit/read-transit ctx {:type :json-verbose})]
-    (is (= (:serval.transit/value ret) value)))
-
-  ;; Msgpack
+    ;; Msgpack
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :msgpack))
         ctx   {:serval.service/request {:input-stream in}}
-        ret   (srv.transit/read-transit ctx {:type :msgpack})]
+        ret   (srv.transit/read-transit ctx :msgpack)]
     (is (= (:serval.transit/value ret) value)))
 
-  ;; To/from
+  ;; Reader opts
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
-        ctx   {:input in}
-        ret   (srv.transit/read-transit ctx {:from [:input]
-                                             :to   [:output]})]
-    (is (= (:output ret) value))))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.transit/read-transit ctx :json {:reader-opts {}})]
+    (is (= (:serval.transit/value ret) value))))
 
 (deftest test-read-transit-error
   (let [in    (ByteArrayInputStream. (.getBytes "foo"))
         ctx   {:serval.service/request {:input-stream in}}
-        ret   (srv.transit/read-transit ctx)]
+        ret   (srv.transit/read-transit ctx :json)]
     (is (:serval.transit/error ret))))
 
 (deftest test-transit-body
