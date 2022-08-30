@@ -9,48 +9,40 @@
 (def keyword-keys-object-mapper
   j/keyword-keys-object-mapper)
 
-(def read-default-object-mapper
-  default-object-mapper)
-
-(def write-default-object-mapper
-  default-object-mapper)
-
 ;; Read
 
 (defn read-json
   ([ctx]
-   (read-json ctx nil))
-  ([ctx {:keys [to from error object-mapper]
-         :or   {from          [:serval.service/request :reader]
-                to            [:serval.jsonista/value]
-                error         [:serval.jsonista/error]
-                object-mapper read-default-object-mapper}}]
+   (read-json ctx default-object-mapper))
+  ([ctx object-mapper]
    (try
-     (let [source (get-in ctx from)
-           value  (j/read-value source object-mapper)]
-       (assoc-in ctx to value))
-     (catch com.fasterxml.jackson.core.JsonParseException ex
-       (assoc-in ctx error {:exception ex}))
-     (catch com.fasterxml.jackson.databind.exc.MismatchedInputException ex
-       (assoc-in ctx error {:exception ex})))))
+     (let [value (-> (:serval.service/request ctx)
+                     (:input-stream)
+                     (j/read-value object-mapper))]
+       (assoc ctx :serval.jsonista/value value))
+     (catch Throwable ex
+       (assoc ctx :serval.jsonista/error ex)))))
 
 ;; Write
 
-(defrecord JsonBody [value options]
+(defrecord JsonBody [value object-mapper]
   io.body/ResponseBody
   (io.body/service-body [_ _ _ response]
-    (let [object-mapper (:object-mapper options write-default-object-mapper)]
-      (j/write-value (.getWriter ^ServletResponse response) value object-mapper))))
+    (-> (.getOutputStream ^ServletResponse response)
+        (j/write-value value object-mapper))))
 
 (defn json-body
   ([value]
-   (JsonBody. value nil))
-  ([value options]
-   (JsonBody. value options)))
+   (JsonBody. value default-object-mapper))
+  ([value object-mapper]
+   (JsonBody. value object-mapper)))
 
 (defn extend-map-as-json-response-body!
-  []
-  (extend-protocol io.body/ResponseBody
-    java.util.Map
-    (io.body/service-body [this _ _ ^ServletResponse response]
-      (j/write-value (.getWriter response) this write-default-object-mapper))))
+  ([]
+   (extend-map-as-json-response-body! default-object-mapper))
+  ([object-mapper]
+   (extend-protocol io.body/ResponseBody
+     java.util.Map
+     (io.body/service-body [this _ _ response]
+       (-> (.getOutputStream ^ServletResponse response)
+           (j/write-value this object-mapper))))))

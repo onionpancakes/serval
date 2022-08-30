@@ -5,36 +5,39 @@
             [dev.onionpancakes.serval.test-utils.server
              :refer [with-response]]
             [dev.onionpancakes.serval.jsonista :as srv.json]
-            [clojure.test :refer [deftest is]])
-  (:import [java.io StringReader]))
+            [clojure.test :refer [deftest is]]
+            [jsonista.core :as j])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
+
+(defn json-bytes
+  [value]
+  (let [out (ByteArrayOutputStream.)
+        _   (j/write-value out value)]
+    (.toByteArray out)))
 
 (deftest test-read-json
-  (let [rdr (StringReader. "{\"foo\": \"bar\"}")
-        ctx {:serval.service/request {:reader rdr}}
-        ret (srv.json/read-json ctx)]
-    (is (= {"foo" "bar"} (:serval.jsonista/value ret))))
+  (let [value {"foo" "bar"}
+        in    (ByteArrayInputStream. (json-bytes value))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.json/read-json ctx)]
+    (is (= (:serval.jsonista/value ret) value)))
 
-  ;; Error
-  (let [rdr (StringReader. "{\"foo\": }")
-        ctx {:serval.service/request {:reader rdr}}
-        ret (srv.json/read-json ctx)]
-    (is (:serval.jsonista/error ret)))
+  ;; Keyword keys
+  (let [value {:foo "bar"}
+        in    (ByteArrayInputStream. (json-bytes value))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.json/read-json ctx srv.json/keyword-keys-object-mapper)]
+    (is (= (:serval.jsonista/value ret) value))))
 
-  ;; Empty
-  (let [rdr (StringReader. "")
-        ctx {:serval.service/request {:reader rdr}}
+(deftest test-read-json-error
+  (let [in  (ByteArrayInputStream. (.getBytes "{foo"))
+        ctx {:serval.service/request {:input-stream in}}
         ret (srv.json/read-json ctx)]
-    (is (:serval.jsonista/error ret)))
-
-  ;; Opts
-  (let [rdr  (StringReader. "{\"foo\": \"bar\"}")
-        ctx  {:json-from rdr}
-        opts {:from          [:json-from]
-              :to            [:json-to]
-              :object-mapper srv.json/keyword-keys-object-mapper}
-        ret  (srv.json/read-json ctx opts)]
-    (is (= {:foo "bar"} (:json-to ret)))))
+    (is (:serval.jsonista/error ret))))
 
 (deftest test-json-body
-  (with-response {:serval.response/body (srv.json/json-body {:foo "bar"})}
-    (is (= (:body (send)) "{\"foo\":\"bar\"}"))))
+  (let [value {"foo" "bar"}]
+    (with-response {:serval.response/body (srv.json/json-body value)}
+      (let [resp       (send)
+            resp-value (j/read-value (:body resp))]
+        (is (= resp-value value))))))
