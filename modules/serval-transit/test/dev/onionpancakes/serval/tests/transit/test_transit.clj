@@ -46,7 +46,7 @@
 
 (deftest test-transit-body
   (let [value {:foo "bar"}]
-    (with-response {:serval.response/body (srv.transit/transit-body value)}
+    (with-response {:serval.response/body (srv.transit/transit-body value :json)}
       (let [resp       (send nil :input-stream)
             reader     (transit/reader (:body resp) :json)
             read-value (transit/read reader)]

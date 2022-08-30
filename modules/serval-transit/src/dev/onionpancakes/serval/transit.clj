@@ -20,28 +20,26 @@
 
 ;; Write
 
-(defrecord TransitBody [value options]
+(defrecord TransitBody [value type options]
   io.body/ResponseBody
   (io.body/service-body [_ _ _ response]
-    (let [write-type (:type options :json)
-          writer     (-> (.getOutputStream ^ServletResponse response)
-                         (transit/writer write-type))]
-      (transit/write writer value))))
+    (-> (.getOutputStream ^ServletResponse response)
+        (transit/writer type options)
+        (transit/write value))))
 
 (defn transit-body
-  ([value]
-   (TransitBody. value nil))
-  ([value options]
-   (TransitBody. value options)))
+  ([value type]
+   (TransitBody. value type nil))
+  ([value type options]
+   (TransitBody. value type options)))
 
 (defn extend-map-as-transit-response-body!
-  ([]
-   (extend-map-as-transit-response-body! nil))
-  ([options]
+  ([type]
+   (extend-map-as-transit-response-body! type nil))
+  ([type options]
    (extend-protocol io.body/ResponseBody
      java.util.Map
      (io.body/response-body [this _ _ response]
-       (let [write-type (:type options :json)
-             writer     (-> (.getOutputStream ^ServletResponse response)
-                            (transit/writer write-type))]
-         (transit/write writer this))))))
+       (-> (.getOutputStream ^ServletResponse response)
+           (transit/writer type options)
+           (transit/write this))))))
