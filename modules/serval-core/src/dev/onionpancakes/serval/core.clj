@@ -75,6 +75,6 @@
 ;; Async
 
 (defn async-body
-  [value]
   "Wraps body value for asynchronous write."
+  [value]
   (io.async/->AsyncBody value))
