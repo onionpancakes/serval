@@ -1,35 +1,33 @@
 (ns dev.onionpancakes.serval.reitit
   (:require [reitit.core :as r]))
 
-(def router
-  r/router)
+;; Match handler priority
+;; 1. Handler found under capitalized method key.
+;; e.g. {:GET {:handler (fn [ctx] ...)}}
+;; 2. Handler under :handler key
+;; e.g. {:handler (fn [ctx] ...)}
+;; 3. Handler given in default arg.
 
-(defn match-by-path
-  ([ctx router]
-   (match-by-path ctx router nil))
-  ([ctx router {:keys [path-in match-in]
-                :or   {path-in  [:serval.service/request :path]
-                       match-in [:serval.reitit/match]}}]
-   (let [path  (get-in ctx path-in)
-         match (r/match-by-path router path)]
-     (assoc-in ctx match-in match))))
-
-(defn handle-match-by-method
-  ([ctx]
-   (handle-match-by-method ctx nil))
-  ([ctx {:keys [match-in default]
-         :or   {match-in [:serval.reitit/match]
-                default  identity}}]
-   (let [match   (get-in ctx match-in)
-         method  (get-in ctx [:serval.service/request :method])
-         handler (get-in match [:data method :handler])]
-     (if (some? handler)
-       (handler ctx)
-       (default ctx)))))
+(defn get-match-handler
+  "Return the handler mapped to method or default is not found."
+  [match method default]
+  (let [data (:data match)]
+    (or (get-in data [method :handler])
+        (get data :handler default))))
 
 (defn route
   ([ctx router]
    (route ctx router nil))
-  ([ctx router opts]
-   (-> (match-by-path ctx router opts)
-       (handle-match-by-method opts))))
+  ([ctx router {:keys [path-key match-key default]
+                :or   {path-key  [:serval.service/request :path]
+                       match-key :serval.reitit/match
+                       default   identity}}]
+   (let [path    (get-in ctx path-key)
+         match   (r/match-by-path router path)
+         method  (get-in ctx [:serval.service/request :method])
+         handler (get-match-handler match method default)]
+     (-> (assoc ctx match-key match)
+         (handler)))))
+
+(def router
+  r/router)
