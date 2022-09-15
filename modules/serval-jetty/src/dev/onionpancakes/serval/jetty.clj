@@ -1,10 +1,14 @@
 (ns dev.onionpancakes.serval.jetty
-  (:require [dev.onionpancakes.serval.core :as serval])
+  (:refer-clojure :exclude [error-handler])
+  (:require [dev.onionpancakes.serval.core :as serval]
+            [dev.onionpancakes.serval.io.http :as io.http])
   (:import [jakarta.servlet Servlet]
            [org.eclipse.jetty.server
             Server Handler ServerConnector
             HttpConnectionFactory HttpConfiguration
             CustomRequestLog]
+           [org.eclipse.jetty.server.handler ErrorHandler]
+           [org.eclipse.jetty.server.session SessionHandler]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
@@ -25,47 +29,54 @@
   Servlet
   (to-servlet [this] this))
 
-(defn ^ServletHolder servlet-holder
-  [servlet config]
-  (let [holder (ServletHolder. (to-servlet servlet))]
-    (if (contains? config :multipart-config)
-      (-> (.getRegistration holder)
-          (.setMultipartConfig (:multipart-config config))))
-    holder))
+(defprotocol IServletPaths
+  (servlet-paths [this]))
 
-(defn servlet-context-handler
-  [servlet-context-spec]
-  (let [sch (ServletContextHandler.)]
-    (doseq [[^String path servlet config] servlet-context-spec]
-      (.addServlet sch (servlet-holder servlet config) path))
-    sch))
-
-(defprotocol IHandler
-  (to-handler [this]))
-
-(extend-protocol IHandler
+(extend-protocol IServletPaths
   clojure.lang.PersistentVector
-  (to-handler [this]
-    (servlet-context-handler this))
+  (servlet-paths [this] this)
   clojure.lang.AFunction
-  (to-handler [this]
-    (servlet-context-handler [["/*" this]]))
+  (servlet-paths [this] [["/*" this]])
   clojure.lang.Var
-  (to-handler [this]
-    (servlet-context-handler [["/*" this]]))
+  (servlet-paths [this] [["/*" this]])
   Servlet
-  (to-handler [this]
-    (servlet-context-handler [["/*" this]]))
-  Handler
-  (to-handler [this] this)
+  (servlet-paths [this] [["/*" this]])
   nil
-  (to-handler [_] nil))
+  (servlet-paths [this] nil))
+
+(defprotocol ISessionHandler
+  (to-session-handler [this]))
+
+(extend-protocol ISessionHandler
+  SessionHandler
+  (to-session-handler [this] this))
+
+(defn error-handler
+  [handler-fn]
+  (let [service-fn (io.http/service-fn handler-fn)]
+    (proxy [ErrorHandler] []
+      (handle [_ _ request response]
+        (println :handle-error)
+        (service-fn this request response)))))
+
+(defprotocol IErrorHandler
+  (to-error-handler [this]))
+
+(extend-protocol IErrorHandler
+  clojure.lang.AFunction
+  (to-error-handler [this]
+    (println :error-proto)
+    (error-handler this))
+  clojure.lang.Var
+  (to-error-handler [this]
+    (error-handler this))
+  ErrorHandler
+  (to-error-handler [this] this))
 
 (defn ^GzipHandler gzip-handler
-  ([handler] (gzip-handler handler nil))
-  ([handler config]
+  ([] (gzip-handler nil))
+  ([config]
    (let [gzhandler (GzipHandler.)]
-     (.setHandler gzhandler (to-handler handler))
      (if (contains? config :excluded-methods)
        (->> (:excluded-methods config)
             (map name)
@@ -95,6 +106,40 @@
      (if (contains? config :min-gzip-size)
        (.setMinGzipSize gzhandler (:min-gzip-size config)))
      gzhandler)))
+
+(defprotocol IGzipHandler
+  (to-gzip-handler [this]))
+
+(extend-protocol IGzipHandler
+  java.util.Map
+  (to-gzip-handler [this]
+    (gzip-handler this))
+  Boolean
+  (to-gzip-handler [this]
+    (if this (gzip-handler) nil))
+  Handler
+  (to-gzip-handler [this] this))
+
+(defn ^ServletHolder servlet-holder
+  [servlet config]
+  (let [holder (ServletHolder. (to-servlet servlet))]
+    (if (contains? config :multipart-config)
+      (-> (.getRegistration holder)
+          (.setMultipartConfig (:multipart-config config))))
+    holder))
+
+(defn servlet-context-handler
+  [{:keys [servlets session-handler error-handler gzip-handler]}]
+  (let [sch (ServletContextHandler.)]
+    (doseq [[^String path servlet config] (servlet-paths servlets)]
+      (.addServlet sch (servlet-holder servlet config) path))
+    (if session-handler
+      (.setSessionHandler sch (to-session-handler session-handler)))
+    (if error-handler
+      (.setErrorHandler sch (to-error-handler error-handler)))
+    (if gzip-handler
+      (.insertHandler sch (to-gzip-handler gzip-handler)))
+    sch))
 
 ;; Server connector
 
@@ -162,6 +207,30 @@
 
 ;; Server
 
+(defprotocol IServerHandler
+  (to-server-handler [this]))
+
+(extend-protocol IServerHandler
+  java.util.Map
+  (to-server-handler [this]
+    (servlet-context-handler this))
+  clojure.lang.PersistentVector
+  (to-server-handler [this]
+    (servlet-context-handler {:servlets this}))
+  clojure.lang.AFunction
+  (to-server-handler [this]
+    (servlet-context-handler {:servlets this}))
+  clojure.lang.Var
+  (to-server-handler [this]
+    (servlet-context-handler {:servlets this}))
+  Servlet
+  (to-server-handler [this]
+    (servlet-context-handler {:servlets this}))
+  Handler
+  (to-server-handler [this] this)
+  nil
+  (to-server-handler [_] nil))
+
 (defn ^Server configure-server!
   [^Server server config]
   (if (contains? config :connectors)
@@ -170,7 +239,7 @@
          (into-array ServerConnector)
          (.setConnectors server)))
   (if (contains? config :handler)
-    (.setHandler server (to-handler (:handler config))))
+    (.setHandler server (to-server-handler (:handler config))))
   (if (contains? config :request-log)
     (.setRequestLog server (:request-log config)))
   server)
