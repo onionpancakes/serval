@@ -56,7 +56,6 @@
   (let [service-fn (io.http/service-fn handler-fn)]
     (proxy [ErrorHandler] []
       (handle [_ _ request response]
-        (println :handle-error)
         (service-fn this request response)))))
 
 (defprotocol IErrorHandler
@@ -65,7 +64,6 @@
 (extend-protocol IErrorHandler
   clojure.lang.AFunction
   (to-error-handler [this]
-    (println :error-proto)
     (error-handler this))
   clojure.lang.Var
   (to-error-handler [this]
