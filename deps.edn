@@ -23,7 +23,10 @@
 
   :run-tests
   {:extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.0" :git/sha "b3fd0d2"}
-                 org.clojure/core.async               {:mvn/version "1.5.648"}}
+                 ;; Deps for test-utils
+                 jakarta.servlet/jakarta.servlet-api  {:mvn/version "5.0.0"}
+                 org.eclipse.jetty/jetty-servlet      {:mvn/version "11.0.6"}
+                 org.eclipse.jetty/jetty-server       {:mvn/version "11.0.6"}}
    :extra-paths ["./modules/serval-core/test"
                  "./modules/serval-core-async/test"
                  "./modules/serval-jetty/test"
