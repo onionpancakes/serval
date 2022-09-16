@@ -14,7 +14,7 @@
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
 
-;; Servlets and handlers
+;; Servlet
 
 (defprotocol IServlet
   (to-servlet ^Servlet [this]))
@@ -29,20 +29,40 @@
   Servlet
   (to-servlet [this] this))
 
-(defprotocol IServletPaths
-  (servlet-paths [this]))
+;; ServletHolder
 
-(extend-protocol IServletPaths
-  clojure.lang.PersistentVector
-  (servlet-paths [this] this)
+(defn servlet-holder
+  [{:keys [servlet name multipart-config]}]
+  (let [holder (ServletHolder.)]
+    (if servlet
+      (.setServlet holder (to-servlet servlet)))
+    (if name
+      (.setName holder name))
+    (if multipart-config
+      (-> (.getRegistration holder)
+          (.setMultipartConfig multipart-config)))
+    holder))
+
+(defprotocol IServletHolder
+  (to-servlet-holder [this]))
+
+(extend-protocol IServletHolder
+  java.util.Map
+  (to-servlet-holder [this]
+    (servlet-holder this))
   clojure.lang.AFunction
-  (servlet-paths [this] [["/*" this]])
+  (to-servlet-holder [this]
+    (servlet-holder {:servlet this}))
   clojure.lang.Var
-  (servlet-paths [this] [["/*" this]])
+  (to-servlet-holder [this]
+    (servlet-holder {:servlet this}))
   Servlet
-  (servlet-paths [this] [["/*" this]])
-  nil
-  (servlet-paths [this] nil))
+  (to-servlet-holder [this]
+    (servlet-holder {:servlet this}))
+  ServletHolder
+  (to-servlet-holder [this] this))
+
+;; SessionHandler
 
 (defprotocol ISessionHandler
   (to-session-handler [this]))
@@ -50,6 +70,8 @@
 (extend-protocol ISessionHandler
   SessionHandler
   (to-session-handler [this] this))
+
+;; ErrorHandler
 
 (defn error-handler
   [handler-fn]
@@ -70,6 +92,8 @@
     (error-handler this))
   ErrorHandler
   (to-error-handler [this] this))
+
+;; GzipHandler
 
 (defn ^GzipHandler gzip-handler
   ([] (gzip-handler nil))
@@ -118,19 +142,28 @@
   Handler
   (to-gzip-handler [this] this))
 
-(defn ^ServletHolder servlet-holder
-  [servlet config]
-  (let [holder (ServletHolder. (to-servlet servlet))]
-    (if (contains? config :multipart-config)
-      (-> (.getRegistration holder)
-          (.setMultipartConfig (:multipart-config config))))
-    holder))
+;; ServletContextHandler
+
+(defprotocol IServletPaths
+  (servlet-paths [this]))
+
+(extend-protocol IServletPaths
+  clojure.lang.PersistentVector
+  (servlet-paths [this] this)
+  clojure.lang.AFunction
+  (servlet-paths [this] [["/*" this]])
+  clojure.lang.Var
+  (servlet-paths [this] [["/*" this]])
+  Servlet
+  (servlet-paths [this] [["/*" this]])
+  nil
+  (servlet-paths [this] nil))
 
 (defn servlet-context-handler
   [{:keys [servlets session-handler error-handler gzip-handler]}]
   (let [sch (ServletContextHandler.)]
-    (doseq [[^String path servlet config] (servlet-paths servlets)]
-      (.addServlet sch (servlet-holder servlet config) path))
+    (doseq [[^String path srv-holder] (servlet-paths servlets)]
+      (.addServlet sch (to-servlet-holder srv-holder) path))
     (if session-handler
       (.setSessionHandler sch (to-session-handler session-handler)))
     (if error-handler
