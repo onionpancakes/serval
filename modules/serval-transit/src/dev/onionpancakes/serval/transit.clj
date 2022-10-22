@@ -8,15 +8,16 @@
 (defn read-transit
   ([ctx type]
    (read-transit ctx type nil))
-  ([ctx type {:keys [reader-opts]}]
-   (try
-     (let [value (-> (:serval.service/request ctx)
-                     (:input-stream)
-                     (transit/reader type reader-opts)
-                     (transit/read))]
-       (assoc ctx :serval.transit/value value))
-     (catch Throwable ex
-       (assoc ctx :serval.transit/error ex)))))
+  ([ctx type {:keys [reader-opts value-key error-key]
+              :or   {value-key :serval.transit/value
+                     error-key :serval.transit/error}}]
+   (let [reader (-> (:serval.service/request ctx)
+                    (:input-stream)
+                    (transit/reader type reader-opts))]
+     (try
+       (assoc ctx value-key (transit/read reader))
+       (catch Throwable ex
+         (assoc ctx error-key ex))))))
 
 ;; Write
 
