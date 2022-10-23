@@ -22,8 +22,8 @@
 ;; Write
 
 (defrecord TransitBody [value type options]
-  io.body/ResponseBody
-  (io.body/service-body [_ _ _ response]
+  io.body/ResponseBodySync
+  (io.body/service-body-sync [_ _ _ response]
     (-> (.getOutputStream ^ServletResponse response)
         (transit/writer type options)
         (transit/write value))))
@@ -34,13 +34,13 @@
   ([value type options]
    (TransitBody. value type options)))
 
-(defn extend-map-as-transit-response-body!
+#_(defn extend-map-as-transit-response-body!
   ([type]
    (extend-map-as-transit-response-body! type nil))
   ([type options]
-   (extend-protocol io.body/ResponseBody
-     java.util.Map
-     (io.body/response-body [this _ _ response]
+   (extend-type java.util.Map
+     io.body/ResponseBodySync
+     (io.body/response-body-sync [this _ _ response]
        (-> (.getOutputStream ^ServletResponse response)
            (transit/writer type options)
            (transit/write this))))))
