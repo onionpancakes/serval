@@ -22,18 +22,31 @@
         ret   (srv.json/read-json ctx)]
     (is (= (:serval.jsonista/value ret) value)))
 
-  ;; Keyword keys
+  ;; Custom value key
+  (let [value {"foo" "bar"}
+        in    (ByteArrayInputStream. (json-bytes value))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.json/read-json ctx {:value-key :value})]
+    (is (= (:value ret) value)))
+
+  ;; Keyword keys object mapper
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (json-bytes value))
         ctx   {:serval.service/request {:input-stream in}}
-        ret   (srv.json/read-json ctx srv.json/keyword-keys-object-mapper)]
+        ret   (srv.json/read-json ctx {:object-mapper srv.json/keyword-keys-object-mapper})]
     (is (= (:serval.jsonista/value ret) value))))
 
 (deftest test-read-json-error
   (let [in  (ByteArrayInputStream. (.getBytes "{foo"))
         ctx {:serval.service/request {:input-stream in}}
         ret (srv.json/read-json ctx)]
-    (is (:serval.jsonista/error ret))))
+    (is (:serval.jsonista/error ret)))
+
+  ;; Custom error key
+  (let [in  (ByteArrayInputStream. (.getBytes "{foo"))
+        ctx {:serval.service/request {:input-stream in}}
+        ret (srv.json/read-json ctx {:error-key :error})]
+    (is (:error ret))))
 
 (deftest test-json-body
   (let [value {"foo" "bar"}]
