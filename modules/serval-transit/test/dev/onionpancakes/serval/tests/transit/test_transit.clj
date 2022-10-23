@@ -16,7 +16,7 @@
         _      (transit/write writer value)]
     (.toByteArray out)))
 
-(deftest test-read-transit
+(deftest test-read-transit-type
   ;; Json
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
@@ -29,8 +29,9 @@
         in    (ByteArrayInputStream. (transit-bytes value :msgpack))
         ctx   {:serval.service/request {:input-stream in}}
         ret   (srv.transit/read-transit ctx :msgpack)]
-    (is (= (:serval.transit/value ret) value)))
+    (is (= (:serval.transit/value ret) value))))
 
+(deftest test-read-transit-reader-opts
   ;; Reader opts
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
@@ -38,11 +39,31 @@
         ret   (srv.transit/read-transit ctx :json {:reader-opts {}})]
     (is (= (:serval.transit/value ret) value))))
 
+(deftest test-read-transit-value
+  ;; Default key
+  (let [value {:foo "bar"}
+        in    (ByteArrayInputStream. (transit-bytes value :json))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.transit/read-transit ctx :json)]
+    (is (= (:serval.transit/value ret) value)))
+  ;; Custom key
+  (let [value {:foo "bar"}
+        in    (ByteArrayInputStream. (transit-bytes value :json))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.transit/read-transit ctx :json {:value-key :body})]
+    (is (= (:body ret) value))))
+
 (deftest test-read-transit-error
+  ;; Default key
   (let [in    (ByteArrayInputStream. (.getBytes "foo"))
         ctx   {:serval.service/request {:input-stream in}}
         ret   (srv.transit/read-transit ctx :json)]
-    (is (:serval.transit/error ret))))
+    (is (:serval.transit/error ret)))
+  ;; Custom key
+  (let [in    (ByteArrayInputStream. (.getBytes "foo"))
+        ctx   {:serval.service/request {:input-stream in}}
+        ret   (srv.transit/read-transit ctx :json {:error-key :error})]
+    (is (:error ret))))
 
 (deftest test-transit-body
   (let [value {:foo "bar"}]
