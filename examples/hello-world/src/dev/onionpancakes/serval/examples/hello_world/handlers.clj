@@ -33,7 +33,6 @@
    :serval.response/content-type "application/json"
    :serval.response/body         (-> {:message "Bad Json."
                                       :error   (-> (:serval.jsonista/error ctx)
-                                                   (:exception)
                                                    (.getMessage))}
                                      (srv.json/json-body))})
 
