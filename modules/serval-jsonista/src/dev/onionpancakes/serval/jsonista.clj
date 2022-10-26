@@ -29,10 +29,9 @@
 ;; Write
 
 (defrecord JsonBody [value object-mapper]
-  io.body/ResponseBodySync
-  (io.body/service-body-sync [_ _ _ response]
-    (-> (.getOutputStream ^ServletResponse response)
-        (j/write-value value object-mapper))))
+  io.body/Writable
+  (io.body/write [_ out]
+    (j/write-value out value object-mapper)))
 
 (defn json-body
   ([value]
@@ -45,7 +44,6 @@
    (extend-map-as-json-response-body! default-object-mapper))
   ([object-mapper]
    (extend-type java.util.Map
-     io.body/ResponseBodySync
-     (io.body/service-body-sync [this _ _ response]
-       (-> (.getOutputStream ^ServletResponse response)
-           (j/write-value this object-mapper))))))
+     io.body/Writable
+     (io.body/service-body-sync [this out]
+       (j/write-value out this object-mapper)))))

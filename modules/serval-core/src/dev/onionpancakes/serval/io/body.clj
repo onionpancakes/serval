@@ -1,57 +1,55 @@
 (ns dev.onionpancakes.serval.io.body
-  (:import [jakarta.servlet ServletResponse]
+  (:import [jakarta.servlet ServletResponse ServletOutputStream]
            [java.nio.file Files]
            [java.util.concurrent CompletionStage]))
 
-;; Sync
+;; Writable
 
-(defprotocol ResponseBodySync
-  (service-body-sync [this servlet request response]))
+(defprotocol Writable
+  (write [this out]))
 
-(extend-protocol ResponseBodySync
+(extend-protocol Writable
   (Class/forName "[B")
-  (service-body-sync [this _ _ ^ServletResponse response]
-    (.. response getOutputStream (write ^bytes this)))
+  (write [this ^ServletOutputStream out]
+    (.write out ^bytes this))
   String
-  (service-body-sync [this _ _ ^ServletResponse response]
-    (.. response getOutputStream (print this)))
+  (write [this ^ServletOutputStream out]
+    (.print out this))
   java.io.InputStream
-  (service-body-sync [this _ _ ^ServletResponse response]
+  (write [this out]
     (try
-      (.transferTo this (.getOutputStream response))
+      (.transferTo this out)
       (finally
         (.close this))))
   java.nio.file.Path
-  (service-body-sync [this _ _ ^ServletResponse response]
-    (Files/copy this (.getOutputStream response)))
+  (write [this out]
+    (Files/copy this out))
   java.io.File
-  (service-body-sync [this _ _ ^ServletResponse response]
-    (Files/copy (.toPath this) (.getOutputStream response)))
+  (write [this out]
+    (Files/copy (.toPath this) out))
   nil
-  (service-body-sync [_ _ _ _] nil)
-
-  ;; Seq
+  (write [_ _] nil)
   clojure.lang.ISeq
-  (service-body-sync [this servlet request response]
+  (write [this out]
     (doseq [i this]
-      (service-body-sync i servlet request response))))
+      (write i out))))
 
-;; Response body protocol
+;; ResponseBody
 
 (defprotocol ResponseBody
   (service-body [this servlet request response]))
 
 (extend-protocol ResponseBody
   CompletionStage
-  (service-body [this servlet request response]
+  (service-body [this _ _ ^ServletResponse response]
     (.thenAccept this (reify java.util.function.Consumer
                         (accept [_ body]
-                          (service-body body servlet request response)))))
+                          (write body (.getOutputStream response))))))
   Object
-  (service-body [this servlet request response]
-    (service-body-sync this servlet request response)
+  (service-body [this _ _ ^ServletResponse response]
+    (write this (.getOutputStream response))
     nil)
   nil
-  (service-body [this servlet request response]
-    (service-body-sync this servlet request response)
+  (service-body [this _ _ ^ServletResponse response]
+    (write this (.getOutputStream response))
     nil))
