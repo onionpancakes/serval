@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map])
   (:require [dev.onionpancakes.serval.io.http :as io.http]
-            [dev.onionpancakes.serval.io.async :as io.async])
+            #_[dev.onionpancakes.serval.io.async :as io.async])
   (:import [jakarta.servlet Servlet GenericServlet]))
 
 ;; Servlet
@@ -74,7 +74,7 @@
 
 ;; Async
 
-(defn async-body
+#_(defn async-body
   "Wraps body value for asynchronous write."
   [value]
   (io.async/->AsyncBody value))

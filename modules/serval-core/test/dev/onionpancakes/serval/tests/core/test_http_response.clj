@@ -43,6 +43,7 @@
     (CompletableFuture/completedFuture "foo") "foo"
 
     ;; Async
+    #_#_#_#_#_#_#_#_
     (srv/async-body (Path/of (.toURI example-foo))) "foo"
     (srv/async-body (File. (.toURI example-foo)))   "foo"
     (srv/async-body (.getBytes "foo"))              "foo"

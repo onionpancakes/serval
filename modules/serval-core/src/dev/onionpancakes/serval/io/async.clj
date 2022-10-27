@@ -1,6 +1,6 @@
 (ns dev.onionpancakes.serval.io.async
-  (:require [dev.onionpancakes.serval.io.body :as io.body])
-  (:import [jakarta.servlet
+  #_(:require [dev.onionpancakes.serval.io.body :as io.body])
+  #_(:import [jakarta.servlet
             ServletRequest
             ServletResponse ServletOutputStream WriteListener]
            [java.nio ByteBuffer]
@@ -11,33 +11,41 @@
             StandardOpenOption]
            [java.util.concurrent CompletableFuture]))
 
-(defn write-buffer!
-  "Write bytes from ByteBuffer to ServletOutputStream until
+;; Note: Shelving async body code for the hammock.
+;; Revisit when the use case is more obvious.
+
+;; Current line of thought is that async io should be reserved
+;; for large byte buffer payloads.
+;; e.g. Files, streaming content?
+;; ByteRange requests should be considered.
+
+#_(defn write-buffer!
+    "Write bytes from ByteBuffer to ServletOutputStream until
   either ByteBuffer is depleted or outputstream is unable to
   to accept more data. Returns true if outputstream remains
   ready or false if not."
-  [^ByteBuffer buf ^ServletOutputStream out]
-  (loop []
-    (if (.hasRemaining buf)
-      (do
-        (.write out (.get buf))
-        (if (.isReady out) (recur) false))
-      true)))
+    [^ByteBuffer buf ^ServletOutputStream out]
+    (loop []
+      (if (.hasRemaining buf)
+        (do
+          (.write out (.get buf))
+          (if (.isReady out) (recur) false))
+        true)))
 
-(defprotocol AsyncWritable
+#_(defprotocol AsyncWritable
   (write! [this out] "Write bytes from this to ServetOutputStream.
                       Returns true if outputstream remains ready or
                       false if not."))
 
-(extend-protocol AsyncWritable
+#_(extend-protocol AsyncWritable
   ByteBuffer
   (write! [this out]
     (write-buffer! this out)))
 
-(defprotocol AsyncWritableValue
+#_(defprotocol AsyncWritableValue
   (writable [this] "Returns a AsyncWritable from value."))
 
-(extend-protocol AsyncWritableValue
+#_(extend-protocol AsyncWritableValue
   (Class/forName "[B")
   (writable [this]
     (ByteBuffer/wrap this))
@@ -47,7 +55,7 @@
 
 ;; Value write listener
 
-(deftype AsyncWritableWriteListener [data
+#_(deftype AsyncWritableWriteListener [data
                                      ^ServletOutputStream out
                                      ^CompletableFuture cf]
   WriteListener
@@ -57,14 +65,14 @@
   (onError [_ throwable]
     (.completeExceptionally cf throwable)))
 
-(defn async-writable-write-listener
+#_(defn async-writable-write-listener
   [value out cf]
   (-> (writable value)
       (AsyncWritableWriteListener. out cf)))
 
 ;; File write listener
 
-(deftype AsyncFileChannelWriteListener [^AsynchronousFileChannel ch
+#_(deftype AsyncFileChannelWriteListener [^AsynchronousFileChannel ch
                                         ^ByteBuffer buf
                                         ^:volatile-mutable ^long pos
                                         ^ServletOutputStream out
@@ -96,13 +104,13 @@
   (failed [_ throwable _]
     (.completeExceptionally cf throwable)))
 
-(def default-buffer-size 4092)
+#_(def default-buffer-size 4092)
 
-(def default-file-channel-opts
+#_(def default-file-channel-opts
   (->> [StandardOpenOption/READ]
        (into-array StandardOpenOption)))
 
-(defn async-file-channel-write-listener
+#_(defn async-file-channel-write-listener
   ([path out cf]
    (async-file-channel-write-listener path out cf default-buffer-size))
   ([path out cf buffer-size]
@@ -112,10 +120,10 @@
 
 ;; Async Body
 
-(defprotocol ResponseBodyAsync
+#_(defprotocol ResponseBodyAsync
   (service-body-async [this servlet request response]))
 
-(extend-protocol ResponseBodyAsync
+#_(extend-protocol ResponseBodyAsync
   java.nio.file.Path
   (service-body-async [this _ ^ServletRequest request ^ServletResponse response]
     (let [out (.getOutputStream response)
@@ -144,7 +152,7 @@
           _   (.setWriteListener out wl)]
       cf)))
 
-(deftype AsyncBody [value]
+#_(deftype AsyncBody [value]
   io.body/ResponseBody
   (service-body [_ servlet request response]
     (service-body-async value servlet request response)))
