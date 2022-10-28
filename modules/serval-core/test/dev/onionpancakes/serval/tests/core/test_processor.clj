@@ -45,3 +45,14 @@
     {}                       {:foo  :bar :foo2 :bar2}
     {:stop true}             {:stop true :foo2 :bar2}
     {:stop true :stop2 true} {:stop true :stop2 true}))
+
+(def test-when-example
+  (c/handler (comp (c/map assoc :foo :bar)
+                   (c/when :add assoc :added :data)
+                   (c/map assoc :baz :buz))))
+
+(deftest test-when
+  (are [x y] (= (test-when-example x) y)
+    {}          {:foo :bar :baz :buz}
+    {:abc 123}  {:foo :bar :baz :buz :abc 123}
+    {:add true} {:foo :bar :baz :buz :added :data :add true}))

@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.core
-  (:refer-clojure :exclude [map])
+  (:refer-clojure :exclude [map when])
   (:require [dev.onionpancakes.serval.io.http :as io.http]
             #_[dev.onionpancakes.serval.io.async :as io.async])
   (:import [jakarta.servlet Servlet GenericServlet]))
@@ -50,13 +50,27 @@
   returns logical true, the transformed result is
   not passed to the next process step, effectively
   terminating the input as this process step. If
-  pred returns logical false, the result is passed
+  pred returns logical false, the input is passed
   untouched to the next process step."
   [pred f & args]
   (fn [handler]
     (fn [input]
       (if (pred input)
         (apply f input args)
+        (handler input)))))
+
+(defn when
+  "Returns a process step function, applying
+  handler f with input and the supplied args if
+  pred of the input returns logical true, and
+  passing the result to the next process step. If
+  the pred returns logical false, the input is passed
+  untouched to the next process step."
+  [pred f & args]
+  (fn [handler]
+    (fn [input]
+      (if (pred input)
+        (handler (apply f input args))
         (handler input)))))
 
 ;; Handler
