@@ -6,7 +6,7 @@
 
 ;; Servlet
 
-(defn ^Servlet generic-servlet
+(defn ^Servlet make-servlet
   "Creates a generic Servlet from a service function."
   [service-fn]
   (proxy [GenericServlet] []
@@ -16,7 +16,7 @@
 (defn ^Servlet http-servlet
   "Creates a http Servlet from a handler function."
   [handler]
-  (generic-servlet (io.http/service-fn handler)))
+  (make-servlet (io.http/service-fn handler)))
 
 ;; Processors
 
