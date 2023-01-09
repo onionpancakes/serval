@@ -43,19 +43,23 @@
           :serval.response/content-type       "text/plain"
           :serval.response/character-encoding "utf-8"})))
 
-#_(deftest test-set-headers
-  (is (= (h/set-headers nil nil)
-         {:serval.response/headers {}}))
-  (is (= (h/set-headers {} {})
-         {:serval.response/headers {}}))
-  (is (= (h/set-headers {:foo :bar} {})
-         {:foo                     :bar
-          :serval.response/headers {}}))
-  (is (= (h/set-headers {:foo :bar} {"Foo" ["Bar"]})
-         {:foo                     :bar
-          :serval.response/headers {"Foo" ["Bar"]}}))
-  (is (= (h/set-headers {:foo                     :bar
-                         :serval.response/headers {"Foo" ["Bar"], "ABC" ["123"]}}
-                        {"Foo" ["Baz"] "XYZ" [456]})
-         {:foo                     :bar
-          :serval.response/headers {"Foo" ["Baz"] "ABC" ["123"] "XYZ" [456]}})))
+(deftest test-set-headers
+  (is (-> nil
+          (h/set-headers)
+          (= {:serval.response/headers {}})))
+  (is (-> {}
+          (h/set-headers :foo)
+          (= {:serval.response/headers {}})))
+  (is (-> {:foo :bar}
+          (h/set-headers)
+          (= {:foo                     :bar
+              :serval.response/headers {}})))
+  (is (-> {:foo :bar}
+          (h/set-headers :abc "xyz")
+          (= {:foo                     :bar
+              :serval.response/headers {"abc" ["xyz"]}})))
+  (is (-> {:serval.response/headers {"replaced"     ["foo"]
+                                     "not-replaced" ["bar"]}}
+          (h/set-headers :replaced "abc" :replaced "def")
+          (= {:serval.response/headers {"replaced"     ["abc" "def"]
+                                        "not-replaced" ["bar"]}}))))

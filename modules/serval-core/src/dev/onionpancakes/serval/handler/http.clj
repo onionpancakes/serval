@@ -19,6 +19,14 @@
                       :serval.response/character-encoding character-encoding})))
 
 (defn set-headers
-  [ctx headers]
-  (update ctx :serval.response/headers (fnil into {}) headers))
+  "Set context response headers given key-value pairs, replacing previous
+  header values at given keys and preserving header values at keys not specified.
+  Keyword keys will be converted to strings."
+  [ctx & kvs]
+  (->> (partition 2 kvs)
+       (eduction (map (juxt (comp name first) second)))
+       (reduce (fn [ret [k v]]
+                 (update ret k (fnil conj []) v))
+               {})
+       (update ctx :serval.response/headers (fnil into {}))))
 
