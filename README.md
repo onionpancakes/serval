@@ -4,6 +4,13 @@
 
 Servlet oriented web framework for Clojure.
 
+## Motivations
+
+* Composable linear request processing flow, using transducer like *middleware*.
+* Access to the latest servlet API developments with minimal maintenance.
+* Extensible request handling via protocols.
+* Easy to use asynchronous APIs for I/O and computation. (TBD)
+
 # Status
 
 Currently for my personal use. Future breaking changes possible.
