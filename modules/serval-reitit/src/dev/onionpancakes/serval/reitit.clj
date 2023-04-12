@@ -15,14 +15,21 @@
     (or (get-in data [method :handler])
         (get data :handler default))))
 
+(defn default-path-fn
+  "Return path-info as path, or root path \"/\" if path-info is null."
+  [ctx]
+  (if-some [path (get-in ctx [:serval.service/request :path-info])]
+    path
+    "/"))
+
 (defn route
   ([ctx router]
    (route ctx router nil))
-  ([ctx router {:keys [path-key match-key default]
-                :or   {path-key  [:serval.service/request :path]
+  ([ctx router {:keys [path-fn match-key default]
+                :or   {path-fn   default-path-fn
                        match-key :serval.reitit/match
                        default   identity}}]
-   (let [path    (get-in ctx path-key)
+   (let [path    (path-fn ctx)
          match   (r/match-by-path router path)
          method  (get-in ctx [:serval.service/request :method])
          handler (get-match-handler match method default)]
