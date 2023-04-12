@@ -8,10 +8,11 @@
   io.body/ResponseBody
   (io.body/service-body [_ _ _ response]
     (let [out (.getOutputStream ^ServletResponse response)
+          enc (.getCharacterEncoding ^ServletResponse response)
           rch (async/thread
                 (loop [value (<!! ch)]
                   (when (some? value)
-                    (io.body/write value out)
+                    (io.body/write value out enc)
                     (recur (<!! ch)))))
           cf  (CompletableFuture.)
           _   (async/take! rch (fn [_] (.complete cf nil)))]

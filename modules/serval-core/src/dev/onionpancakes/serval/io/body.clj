@@ -6,33 +6,38 @@
 ;; Writable
 
 (defprotocol Writable
-  (write [this out]))
+  (write [this out enc]))
 
 (extend-protocol Writable
   (Class/forName "[B")
-  (write [this ^ServletOutputStream out]
+  (write [this ^ServletOutputStream out _]
     (.write out ^bytes this))
   String
-  (write [this ^ServletOutputStream out]
+  (write [this ^ServletOutputStream out _]
     (.print out this))
-  java.io.InputStream
-  (write [this out]
-    (try
-      (.transferTo this out)
-      (finally
-        (.close this))))
-  java.nio.file.Path
-  (write [this out]
-    (Files/copy this out))
-  java.io.File
-  (write [this out]
-    (Files/copy (.toPath this) out))
-  nil
-  (write [_ _] nil)
+  Throwable
+  (write [this ^ServletOutputStream out ^String enc]
+    (.printStackTrace this (java.io.PrintStream. out true enc)))
   clojure.lang.ISeq
-  (write [this out]
+  (write [this out enc]
     (doseq [i this]
-      (write i out))))
+      (write i out enc)))
+  java.io.File
+  (write [this out _]
+    (Files/copy (.toPath this) out))
+  java.io.InputStream
+  (write [this out _]
+    (with-open [in this]
+      (.transferTo in out)))
+  java.net.URL
+  (write [this out _]
+    (with-open [in (.openStream this)]
+      (.transferTo in out)))
+  java.nio.file.Path
+  (write [this out _]
+    (Files/copy this out))
+  nil
+  (write [_ _ _] nil))
 
 ;; ResponseBody
 
@@ -44,12 +49,12 @@
   (service-body [this _ _ ^ServletResponse response]
     (.thenAccept this (reify java.util.function.Consumer
                         (accept [_ body]
-                          (write body (.getOutputStream response))))))
+                          (write body (.getOutputStream response) (.getCharacterEncoding response))))))
   Object
   (service-body [this _ _ ^ServletResponse response]
-    (write this (.getOutputStream response))
+    (write this (.getOutputStream response) (.getCharacterEncoding response))
     nil)
   nil
   (service-body [this _ _ ^ServletResponse response]
-    (write this (.getOutputStream response))
+    (write this (.getOutputStream response) (.getCharacterEncoding response))
     nil))

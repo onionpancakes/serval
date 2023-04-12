@@ -6,7 +6,7 @@ Servlet oriented web framework for Clojure.
 
 ## Motivations
 
-* Composable linear request processing flow, using transducer like *middleware*.
+* Composable linear request processing flow, using transducer like *processors*.
 * Access to the latest servlet API developments with minimal maintenance.
 * Extensible request handling via protocols.
 * Easy to use asynchronous APIs for I/O and computation. (TBD)
@@ -40,7 +40,7 @@ To specify specific modules, use `:deps/root`.
      :deps/root "modules/serval-jetty"}}}
 ```
 
-# Usage
+# Example
 
 Require the namespaces.
 
@@ -54,10 +54,10 @@ Write a handler.
 ```clojure
 (defn my-handler
   [ctx]
-  ;; Assoc the response into ctx map.
-  (into ctx {:serval.response/status       200
-             :serval.response/body         "Hello world!"
-             :serval.response/context-type "text/plain"}))
+  ;; Set the response in the ctx map.
+  (merge ctx {:serval.response/status       200
+              :serval.response/body         "Hello world!"
+              :serval.response/context-type "text/plain"}))
 ```
 
 Add the handler to server.

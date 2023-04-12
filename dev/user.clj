@@ -7,16 +7,19 @@
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]
             [promesa.core :as p]
-            [clojure.pprint :refer [pprint]]))
+            [clojure.pprint :refer [pprint]]
+            [clojure.java.io :as io]))
 
 (set! *warn-on-reflection* true)
 
 (defn my-handler
   [ctx]
   ;; Assoc the response into ctx map.
-  (into ctx {:serval.response/status       200
-             :serval.response/body         "Hello world!"
-             :serval.response/context-type "text/plain"}))
+  (into ctx {:serval.response/status             200
+             :serval.response/headers            {}
+             :serval.response/body               "Hello world!"
+             :serval.response/content-type       "text/plain"
+             :serval.response/character-encoding "utf-8"}))
 
 (defonce server
   (srv.jetty/server {:connectors [{:protocol :http

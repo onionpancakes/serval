@@ -107,6 +107,19 @@
 
 (defn service-response-map
   [m servlet request ^HttpServletResponse response]
+  ;; Status
+  (when-some [value (:serval.response/status m)]
+    (.setStatus response value))
+  ;; Headers
+  (when-some [entries (:serval.response/headers m)]
+    (doseq [[hname values] entries
+            value          values]
+      ;; TODO: Add spec guard for header names, must be strings.
+      (.addHeader response hname (str value))))
+  (when-some [cookies (:serval.response/cookies m)]
+    (doseq [cookie cookies]
+      (.addCookie response cookie)))
+  ;; Body
   ;; Note: If content-type is not set,
   ;; character-encoding does not show up in headers.
   ;; TODO: warn if this is the case?
@@ -114,16 +127,6 @@
     (.setContentType response value))
   (when-some [value (:serval.response/character-encoding m)]
     (.setCharacterEncoding response value))
-  (when-some [cookies (:serval.response/cookies m)]
-    (doseq [cookie cookies]
-      (.addCookie response cookie)))
-  (when-some [value (:serval.response/status m)]
-    (.setStatus response value))
-  (when-some [entries (:serval.response/headers m)]
-    (doseq [[hname values] entries
-            value          values]
-      ;; TODO: Add spec guard for header names, must be strings.
-      (.addHeader response hname (str value))))
   ;; Return what service-body returns, either nil or CompletionStage.
   (-> (:serval.response/body m)
       (io.body/service-body servlet request response)))

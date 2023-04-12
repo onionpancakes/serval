@@ -23,7 +23,7 @@
 
 (defrecord TransitBody [value type options]
   io.body/Writable
-  (io.body/write [_ out]
+  (io.body/write [_ out _]
     (-> (transit/writer out type options)
         (transit/write value))))
 

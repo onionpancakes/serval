@@ -30,7 +30,7 @@
 
 (defrecord JsonBody [value object-mapper]
   io.body/Writable
-  (io.body/write [_ out]
+  (io.body/write [_ out _]
     (j/write-value out value object-mapper)))
 
 (defn json-body

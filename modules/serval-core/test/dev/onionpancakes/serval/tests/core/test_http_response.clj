@@ -37,6 +37,7 @@
     (ByteArrayInputStream. (.getBytes "foo")) "foo"
     (Path/of (.toURI example-foo))            "foo"
     (File. (.toURI example-foo))              "foo"
+    example-foo                               "foo"
     `("foo" "bar")                            "foobar"
     `("foo" ~(.getBytes "bar"))               "foobar"
     nil                                       ""
@@ -48,6 +49,12 @@
     (srv/async-body (File. (.toURI example-foo)))   "foo"
     (srv/async-body (.getBytes "foo"))              "foo"
     (srv/async-body "foo")                          "foo"))
+
+(deftest test-body-throwable
+  (with-response {:serval.response/body (ex-info "foo" {})}
+    (is (not (empty? (:body (send)))))))
+
+;; TODO test throwable body with explicit character encoding?
 
 (deftest test-body-encoding
   (are [body enc expected] (with-response {:serval.response/body body
