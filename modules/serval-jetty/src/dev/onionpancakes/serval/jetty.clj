@@ -8,9 +8,8 @@
             HttpConnectionFactory HttpConfiguration
             CustomRequestLog]
            [org.eclipse.jetty.server.handler ErrorHandler]
-           [org.eclipse.jetty.server.session SessionHandler]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
-           [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]
+           [org.eclipse.jetty.ee10.servlet ServletHolder ServletContextHandler SessionHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
 

@@ -1,8 +1,8 @@
 (ns dev.onionpancakes.serval.test-utils.server
   (:require [dev.onionpancakes.serval.core :as srv])
   (:import [jakarta.servlet Servlet]
-           [org.eclipse.jetty.server Server]
-           [org.eclipse.jetty.servlet ServletHolder ServletContextHandler]))
+           [org.eclipse.jetty.server Handler Server]
+           [org.eclipse.jetty.ee10.servlet ServletHolder ServletContextHandler]))
 
 (defn set-handler!
   [^Server server ^Servlet servlet]
@@ -10,12 +10,13 @@
         handler (ServletContextHandler.)
         _       (.addServlet handler holder "/*")]
     (doto server
-      (.setHandler handler))))
+      (.setHandler ^Handler handler))))
 
 (defn reset-handler!
   [^Server server]
-  (doto server
-    (.setHandler nil)))
+  (let [^Handler nilled nil]
+    (doto server
+      (.setHandler nilled))))
 
 ;; Test server
 
