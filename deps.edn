@@ -1,4 +1,4 @@
-{:deps {org.clojure/clojure                 {:mvn/version "1.11.0"}
+{:deps {org.clojure/clojure                 {:mvn/version "1.11.1"}
         dev.onionpancakes/serval-core       {:local/root "./modules/serval-core"}
         dev.onionpancakes/serval-core-async {:local/root "./modules/serval-core-async"}
         dev.onionpancakes/serval-jetty      {:local/root "./modules/serval-jetty"}
@@ -8,8 +8,8 @@
 
  :aliases
  {:dev
-  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.0-alpha5"}
-                 funcool/promesa        {:mvn/version "6.0.2"}}
+  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.7"}
+                 funcool/promesa        {:mvn/version "11.0.674"}}
    :extra-paths ["dev"
                  "./modules/serval-core/test"
                  "./modules/serval-core-async/test"
@@ -22,7 +22,7 @@
   {:extra-deps {org.clojure/core.async {:mvn/version "1.5.648"}}}
 
   :run-tests
-  {:extra-deps  {io.github.cognitect-labs/test-runner      {:git/tag "v0.5.0" :git/sha "b3fd0d2"}
+  {:extra-deps  {io.github.cognitect-labs/test-runner      {:git/tag "v0.5.1" :git/sha "dfb30dd"}
                  ;; Deps for test-utils
                  jakarta.servlet/jakarta.servlet-api       {:mvn/version "6.0.0"}
                  org.eclipse.jetty.ee10/jetty-ee10-servlet {:mvn/version "12.0.0"}
