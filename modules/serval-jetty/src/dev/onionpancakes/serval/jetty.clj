@@ -7,11 +7,11 @@
             Server Handler ServerConnector
             HttpConnectionFactory HttpConfiguration
             CustomRequestLog]
-           [org.eclipse.jetty.server.handler ErrorHandler]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
-           [org.eclipse.jetty.ee10.servlet ServletHolder ServletContextHandler SessionHandler]
+           [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]
+           [org.eclipse.jetty.server.handler ErrorHandler]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
-           [org.eclipse.jetty.util.thread ThreadPool QueuedThreadPool]))
+           [org.eclipse.jetty.ee10.servlet ServletHolder ServletContextHandler SessionHandler]))
 
 ;; Servlet
 
@@ -138,7 +138,7 @@
   Boolean
   (to-gzip-handler [this]
     (if this (gzip-handler) nil))
-  Handler
+  GzipHandler
   (to-gzip-handler [this] this))
 
 ;; ServletContextHandler
