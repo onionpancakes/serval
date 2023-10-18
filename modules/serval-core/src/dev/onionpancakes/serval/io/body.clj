@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.io.body
   (:import [jakarta.servlet ServletResponse ServletOutputStream]
            [java.nio.file Files]
-           [java.util.concurrent CompletionStage CompletableFuture]))
+           [java.util.concurrent CompletionStage CompletableFuture]
+           [java.util.function Function]))
 
 ;; Writable
 
@@ -49,7 +50,7 @@
   CompletionStage
   (async-body? [this] true)
   (service-body [this _ _ ^ServletResponse response]
-    (.thenApply this (reify java.util.function.Function
+    (.thenApply this (reify Function
                        (apply [_ body]
                          (let [out (.getOutputStream response)
                                enc (.getCharacterEncoding response)]
