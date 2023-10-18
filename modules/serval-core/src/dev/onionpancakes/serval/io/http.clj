@@ -35,7 +35,7 @@
 
 (defprotocol HttpResponse
   (async-response? [this])
-  (service-response ^CompletionStage [this servlet request response]))
+  (^CompletionStage service-response [this servlet request response]))
 
 (extend-protocol HttpResponse
   java.util.Map
