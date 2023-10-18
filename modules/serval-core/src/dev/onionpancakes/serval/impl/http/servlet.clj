@@ -2,8 +2,7 @@
   (:require [dev.onionpancakes.serval.impl.http.servlet-request
              :as impl.http.request]
             [dev.onionpancakes.serval.io.http :as io.http])
-  (:import [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function Function BiConsumer]
+  (:import [java.util.function BiConsumer]
            [jakarta.servlet GenericServlet]
            [jakarta.servlet.http
             HttpServletRequest
@@ -15,32 +14,21 @@
    :serval.service/request  (impl.http.request/servlet-request-proxy request)
    :serval.service/response response})
 
-(defn complete-async
-  [^CompletionStage cstage ^HttpServletRequest request ^HttpServletResponse response]
-  (when-some [atx (cond
-                    (.isAsyncStarted request) (.getAsyncContext request)
-                    (some? cstage)            (.startAsync request))]
-    (if cstage
-      (.whenComplete cstage (reify BiConsumer
-                              (accept [_ _ throwable]
-                                (if throwable
-                                  (->> (.getMessage ^Throwable throwable)
-                                       (.sendError response 500)))
-                                (.complete atx))))
-      (.complete atx))))
-
-(defn http-service-fn
-  [handler]
-  (fn [servlet request response]
-    (-> (context servlet request response)
-        (handler)
-        (io.http/service-response servlet request response)
-        (complete-async request response))))
-
 (defn http-servlet
   ^GenericServlet
   [handler]
-  (let [service-fn (http-service-fn handler)]
-    (proxy [GenericServlet] []
-      (service [request response]
-        (service-fn this request response)))))
+  (proxy [GenericServlet] []
+    (service [^HttpServletRequest request ^HttpServletResponse response]
+      (let [ctx (context this request response)
+            ret (handler ctx)
+            atx (cond
+                  (.isAsyncStarted request)     (.getAsyncContext request)
+                  (io.http/async-response? ret) (.startAsync request))]
+        (.. (io.http/service-response ret this request response)
+            (whenComplete (reify BiConsumer
+                            (accept [_ _ throwable]
+                              (if throwable
+                                (->> (.getMessage ^Throwable throwable)
+                                     (.sendError response 500)))
+                              (if atx
+                                (.complete atx))))))))))

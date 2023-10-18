@@ -1,176 +1,52 @@
 (ns dev.onionpancakes.serval.io.http
   (:require [dev.onionpancakes.serval.io.body :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function Function BiConsumer]
-           [jakarta.servlet.http
-            HttpServletRequest
-            HttpServletResponse
-            HttpServletRequestWrapper]))
+           [jakarta.servlet.http HttpServletResponse]))
 
-;; Request
-
-(deftype Attributes [^HttpServletRequest request]
-  clojure.lang.ILookup
-  (valAt [this k]
-    (.valAt this k nil))
-  (valAt [this k not-found]
-    ;; Can't use 'or' function because ret might be false.
-    (if-some [val (.getAttribute request k)]
-      val
-      not-found)))
-
-(deftype Headers [^HttpServletRequest request]
-  clojure.lang.ILookup
-  (valAt [this key]
-    (.valAt this key nil))
-  (valAt [this key not-found]
-    (if-some [val (some->> (.getHeaders request key)
-                           (enumeration-seq)
-                           (vec))]
-      val
-      not-found)))
-
-(defn lookup-servlet-request
-  [^HttpServletRequest request k not-found]
-  (case k
-    ;; Attributes
-    :attributes      (Attributes. request)
-    :attribute-names (some->> (.getAttributeNames request)
-                              (enumeration-seq)
-                              (vec))
-
-    :remote-addr (.getRemoteAddr request)
-    :remote-host (.getRemoteHost request)
-    :remote-port (.getRemotePort request)
-
-    :local-addr (.getLocalAddr request)
-    :local-name (.getLocalName request)
-    :local-port (.getLocalPort request)
-
-    :dispatcher-type (.getDispatcherType request)
-
-    ;; URL
-    :scheme        (.getScheme request)
-    :server-name   (.getServerName request)
-    :server-port   (.getServerPort request)
-    :path          (.getRequestURI request)
-    :context-path  (.getContextPath request)
-    :servlet-path  (.getServletPath request)
-    :path-info     (.getPathInfo request)
-    :query-string  (.getQueryString request)
-    :parameter-map (->> (.getParameterMap request)
-                        (into {} (map (juxt key (comp vec val)))))
-
-    ;; HTTP
-    :protocol (.getProtocol request)
-    :method   (keyword (.getMethod request))
-
-    ;; Headers
-    :headers            (Headers. request)
-    :header-names       (some->> (.getHeaderNames request)
-                                 (enumeration-seq)
-                                 (vec))
-    :content-length     (.getContentLengthLong request)
-    :content-type       (.getContentType request)
-    :character-encoding (.getCharacterEncoding request)
-    :locales            (some->> (.getLocales request)
-                                 (enumeration-seq)
-                                 (vec))
-    
-    :cookies            (some->> (.getCookies request)
-                                 (seq)
-                                 (vec))
-
-    ;; Body
-    :reader       (.getReader request)
-    :input-stream (.getInputStream request)
-
-    ;; Multipart throws exceptions if servlet is not configured,
-    ;; or if request is malformed.
-    ;; Users should use method rather than ILookup to access parts.
-    ;; :parts        (vec (.getParts request))
-
-    ;; TODO: Trailers fields?
-
-    not-found))
-
-(defn servlet-request-lookup-proxy
-  [^HttpServletRequest request]
-  (proxy [HttpServletRequestWrapper clojure.lang.ILookup] [request]
-    (valAt
-      ([k]
-       (lookup-servlet-request this k nil))
-      ([k not-found]
-       (lookup-servlet-request this k not-found)))))
-
-;; Response
-
-(defn service-response-map
+(defn service-response-from-map
   [m servlet request ^HttpServletResponse response]
   ;; Status
-  (when-some [value (:serval.response/status m)]
-    (.setStatus response value))
+  (when (contains? m :serval.response/status)
+    (.setStatus response (:serval.response/status m)))
   ;; Headers
-  (when-some [entries (:serval.response/headers m)]
-    (doseq [[hname values] entries
-            value          values]
-      ;; TODO: Add spec guard for header names, must be strings.
-      (.addHeader response hname (str value))))
-  (when-some [cookies (:serval.response/cookies m)]
-    (doseq [cookie cookies]
+  (when (contains? m :serval.response/headers)
+    (doseq [[header-name values] (:serval.response/headers m)
+            value                values]
+      (.addHeader response header-name (str value))))
+  ;; Cookies
+  (when (contains? m :serval.response/cookies)
+    (doseq [cookie (:serval.response/cookies m)]
       (.addCookie response cookie)))
-  ;; Body
+  ;; ContentType
   ;; Note: If content-type is not set,
   ;; character-encoding does not show up in headers.
   ;; TODO: warn if this is the case?
-  (when-some [value (:serval.response/content-type m)]
-    (.setContentType response value))
-  (when-some [value (:serval.response/character-encoding m)]
-    (.setCharacterEncoding response value))
-  ;; Return what service-body returns, either nil or CompletionStage.
-  (-> (:serval.response/body m)
-      (io.body/service-body servlet request response)))
+  (when (contains? m :serval.response/content-type)
+    (.setContentType response (:serval.response/content-type m)))
+  ;; CharacterEncoding
+  (when (contains? m :serval.response/character-encoding)
+    (.setCharacterEncoding response (:serval.response/character-encoding m)))
+  ;; Body
+  ;; Return CompletionStage from service-body.
+  (if (contains? m :serval.response/body)
+    (-> (:serval.response/body m)
+        (io.body/service-body servlet request response))
+    (CompletableFuture/completedFuture nil)))
 
 (defprotocol HttpResponse
+  (async-response? [this])
   (service-response ^CompletionStage [this servlet request response]))
 
 (extend-protocol HttpResponse
   java.util.Map
+  (async-response? [this]
+    (and (contains? this :serval.response/body)
+         (io.body/async-body? (:serval.response/body this))))
   (service-response [this servlet request response]
-    (service-response-map this servlet request response))
+    (service-response-from-map this servlet request response))
   CompletionStage
+  (async-response? [this] true)
   (service-response [this servlet request response]
-    (.thenCompose this (reify Function
+    (.thenCompose this (reify java.util.function.Function
                          (apply [_ input]
-                           (or (service-response input servlet request response)
-                               (CompletableFuture/completedStage nil)))))))
-
-;; Service
-
-(defn context
-  [servlet request response]
-  {:serval.service/servlet  servlet
-   :serval.service/request  (servlet-request-lookup-proxy request)
-   :serval.service/response response})
-
-(defn complete-async
-  [^CompletionStage cstage ^HttpServletRequest request ^HttpServletResponse response]
-  (when-some [atx (cond
-                    (.isAsyncStarted request) (.getAsyncContext request)
-                    (some? cstage)            (.startAsync request))]
-    ;; TODO: handle if async is not supported?
-    (-> (or cstage (CompletableFuture/completedStage nil))
-        (.whenComplete (reify BiConsumer
-                         (accept [_ _ throwable]
-                           (if throwable
-                             (->> (.getMessage ^Throwable throwable)
-                                  (.sendError response 500)))
-                           (.complete atx)))))))
-
-(defn service-fn
-  [handler]
-  (fn [servlet request response]
-    (-> (context servlet request response)
-        (handler)
-        (service-response servlet request response)
-        (complete-async request response))))
+                           (service-response input servlet request response))))))
