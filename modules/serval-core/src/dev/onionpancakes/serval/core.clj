@@ -1,15 +1,12 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map when])
-  (:require [dev.onionpancakes.serval.impl.http.servlet :as impl.http.servlet]
-            #_[dev.onionpancakes.serval.io.http :as io.http]
-            #_[dev.onionpancakes.serval.io.async :as io.async])
-  (:import [jakarta.servlet GenericServlet]))
+  (:require [dev.onionpancakes.serval.impl.http.servlet :as impl.http.servlet]))
 
 ;; Servlet
 
 (defn http-servlet
   "Creates a http Servlet from a handler function."
-  ^GenericServlet
+  ^jakarta.servlet.GenericServlet
   [handler]
   (impl.http.servlet/http-servlet handler))
 
@@ -80,10 +77,3 @@
   [& xfs]
   (->> (into '() handler-xf xfs)
        (apply comp)))
-
-;; Async
-
-#_(defn async-body
-  "Wraps body value for asynchronous write."
-  [value]
-  (io.async/->AsyncBody value))
