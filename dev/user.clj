@@ -40,3 +40,9 @@
    (configure server-config))
   ([config]
    (srv.jetty/configure-server! server config)))
+
+(defn restart
+  []
+  (stop)
+  (configure)
+  (start))
