@@ -1,22 +1,17 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map when])
-  (:require [dev.onionpancakes.serval.io.http :as io.http]
+  (:require [dev.onionpancakes.serval.impl.http.servlet :as impl.http.servlet]
+            #_[dev.onionpancakes.serval.io.http :as io.http]
             #_[dev.onionpancakes.serval.io.async :as io.async])
-  (:import [jakarta.servlet Servlet GenericServlet]))
+  (:import [jakarta.servlet GenericServlet]))
 
 ;; Servlet
 
-(defn ^Servlet make-servlet
-  "Creates a generic Servlet from a service function."
-  [service-fn]
-  (proxy [GenericServlet] []
-    (service [request response]
-      (service-fn this request response))))
-
-(defn ^Servlet http-servlet
+(defn http-servlet
   "Creates a http Servlet from a handler function."
+  ^GenericServlet
   [handler]
-  (make-servlet (io.http/service-fn handler)))
+  (impl.http.servlet/http-servlet handler))
 
 ;; Processors
 

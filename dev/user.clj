@@ -14,17 +14,18 @@
 
 (defn my-handler
   [ctx]
-  ;; Assoc the response into ctx map.
   (into ctx {:serval.response/status             200
              :serval.response/headers            {}
              :serval.response/body               "Hello world!"
              :serval.response/content-type       "text/plain"
              :serval.response/character-encoding "utf-8"}))
 
+(def server-config
+  {:connectors [{:protocol :http :port 3000}]
+   :handler    #'my-handler})
+
 (defonce server
-  (srv.jetty/server {:connectors [{:protocol :http
-                                   :port     3000}]
-                     :handler    #'my-handler}))
+  (srv.jetty/server server-config))
 
 (defn start
   []
@@ -35,5 +36,7 @@
   (srv.jetty/stop server))
 
 (defn configure
-  [config]
-  (srv.jetty/configure-server! server config))
+  ([]
+   (configure server-config))
+  ([config]
+   (srv.jetty/configure-server! server config)))
