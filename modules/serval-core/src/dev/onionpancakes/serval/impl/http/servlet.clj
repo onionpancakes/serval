@@ -14,21 +14,27 @@
    :serval.service/request  (impl.http.request/servlet-request-proxy request)
    :serval.service/response response})
 
+(defn service-fn
+  [handler]
+  (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
+    (let [ctx (context servlet request response)
+          ret (handler ctx)
+          atx (cond
+                (.isAsyncStarted request)     (.getAsyncContext request)
+                (io.http/async-response? ret) (.startAsync request))]
+      (.. (io.http/service-response ret servlet request response)
+          (whenComplete (reify BiConsumer
+                          (accept [_ _ throwable]
+                            (if throwable
+                              (->> (.getMessage ^Throwable throwable)
+                                   (.sendError response 500)))
+                            (if atx
+                              (.complete atx)))))))))
+
 (defn http-servlet
   ^GenericServlet
   [handler]
-  (proxy [GenericServlet] []
-    (service [^HttpServletRequest request ^HttpServletResponse response]
-      (let [ctx (context this request response)
-            ret (handler ctx)
-            atx (cond
-                  (.isAsyncStarted request)     (.getAsyncContext request)
-                  (io.http/async-response? ret) (.startAsync request))]
-        (.. (io.http/service-response ret this request response)
-            (whenComplete (reify BiConsumer
-                            (accept [_ _ throwable]
-                              (if throwable
-                                (->> (.getMessage ^Throwable throwable)
-                                     (.sendError response 500)))
-                              (if atx
-                                (.complete atx))))))))))
+  (let [methods {"service" (service-fn handler)}]
+    (-> (get-proxy-class GenericServlet)
+        (construct-proxy)
+        (init-proxy methods))))

@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.jetty
   (:refer-clojure :exclude [error-handler])
   (:require [dev.onionpancakes.serval.core :as serval]
-            [dev.onionpancakes.serval.io.http :as io.http])
+            [dev.onionpancakes.serval.impl.http.servlet
+             :as impl.http.servlet])
   (:import [jakarta.servlet Servlet]
            [org.eclipse.jetty.server
             Server Handler ServerConnector
@@ -74,7 +75,7 @@
 
 (defn error-handler
   [handler-fn]
-  (let [service-fn (io.http/service-fn handler-fn)]
+  (let [service-fn (impl.http.servlet/service-fn handler-fn)]
     (proxy [ErrorHandler] []
       (handle [_ _ request response]
         (service-fn this request response)))))

@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.handler.http)
+(ns dev.onionpancakes.serval.handlers.http)
 
 (defn response
   "Set the response status, body, content-type, and character encoding."
