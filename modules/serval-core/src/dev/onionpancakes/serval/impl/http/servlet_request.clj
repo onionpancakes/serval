@@ -3,6 +3,47 @@
             HttpServletRequest
             HttpServletRequestWrapper]))
 
+;; Attributes
+
+(deftype AttributesProxy [^HttpServletRequest request]
+  java.util.Map
+  (clear [this]
+    (throw (UnsupportedOperationException.)))
+  (containsKey [this k]
+    (some? (.getAttribute request k)))
+  (containsValue [this value]
+    (->> (.getAttributeNames request)
+         (enumeration-seq)
+         (keep (comp #{value} #(.get this %)))
+         (first)
+         (some?)))
+  (entrySet [this]
+    (let [create-map-entry #(when-some [value (.get this %)]
+                              (clojure.lang.MapEntry. % value))]
+      (->> (.getAttributeNames request)
+           (enumeration-seq)
+           (into #{} (keep create-map-entry)))))
+  (get [this k]
+    (.getAttribute request k))
+  (isEmpty [this]
+    (->> (.getAttributeNames request)
+         (enumeration-seq)
+         (nil?)))
+  (keySet [this]
+    (set (enumeration-seq (.getAttributeNames request))))
+  (put [this k value]
+    (throw (UnsupportedOperationException.)))
+  (putAll [this m]
+    (throw (UnsupportedOperationException.)))
+  (remove [this k]
+    (throw (UnsupportedOperationException.)))
+  (size [this]
+    (count (enumeration-seq (.getAttributeNames request))))
+  (values [this]
+    (->> (.getAttributeNames request)
+         (enumeration-seq)
+         (into [] (keep #(.get this %))))))
+
 ;; Headers
 
 (deftype HeadersProxy [^HttpServletRequest request]
@@ -72,76 +113,73 @@
 
 (defn servlet-request-proxy
   [^HttpServletRequest request]
-  (let [attributes nil
-        parameters nil
-        headers    (HeadersProxy. request)]
-    (proxy [HttpServletRequestWrapper java.util.Map] [request]
-      (clear []
-        (throw (UnsupportedOperationException.)))
-      (containsKey [k]
-        (some? (.get ^java.util.Map this k)))
-      (containsValue [value]
-        (->> servlet-request-proxy-keys
-             (keep (comp #{value} #(.get ^java.util.Map this %)))
-             (first)
-             (some?)))
-      (entrySet []
-        (let [create-map-entry #(when-some [value (.get ^java.util.Map this %)]
-                                  (clojure.lang.MapEntry. % value))]
-          (into #{} (keep create-map-entry) servlet-request-proxy-keys)))
-      (get [k]
-        (case k
-          ;; Attributes
-          :attributes          attributes
-          ;; Request Id
-          :request-id          (.getRequestId request)
-          :protocol-request-id (.getProtocolRequestId request)
-          ;; Remote connection
-          :remote-addr         (.getRemoteAddr request)
-          :remote-host         (.getRemoteHost request)
-          :remote-port         (.getRemotePort request)
-          ;; Local connection
-          :local-addr          (.getLocalAddr request)
-          :local-name          (.getLocalName request)
-          :local-port          (.getLocalPort request)
-          ;; DispatcherType
-          :dispatcher-type     (.getDispatcherType request)
-          ;; URI
-          :scheme              (.getScheme request)
-          :server-name         (.getServerName request)
-          :server-port         (.getServerPort request)
-          :path                (.getRequestURI request)
-          :context-path        (.getContextPath request)
-          :servlet-path        (.getServletPath request)
-          :path-info           (.getPathInfo request)
-          :query-string        (.getQueryString request)
-          :parameters          parameters
-          ;; HTTP
-          :protocol            (.getProtocol request)
-          :method              (keyword (.getMethod request))
-          ;; Headers
-          :headers             headers
-          :content-length      (.getContentLengthLong request)
-          :content-type        (.getContentType request)
-          :character-encoding  (.getCharacterEncoding request)
-          :cookies             (if-some [cookies (.getCookies request)]
-                                 (vec cookies))
-          :locale              (.getLocale request)
-          :locales             (enumeration-seq (.getLocales request))
-          ;; Body
-          :body                (.getInputStream request)
-          ;; Default nil
-          nil))
-      (isEmpty [] false)
-      (keySet []
-        (into #{} (filter #(.get ^java.util.Map this %)) servlet-request-proxy-keys))
-      (put [k value]
-        (throw (UnsupportedOperationException.)))
-      (putAll [m]
-        (throw (UnsupportedOperationException.)))
-      (remove [k]
-        (throw (UnsupportedOperationException.)))
-      (size []
-        (count (keep #(.get ^java.util.Map this %) servlet-request-proxy-keys)))
-      (values []
-        (into [] (keep #(.get ^java.util.Map this %)) servlet-request-proxy-keys)))))
+  (proxy [HttpServletRequestWrapper java.util.Map] [request]
+    (clear []
+      (throw (UnsupportedOperationException.)))
+    (containsKey [k]
+      (some? (.get ^java.util.Map this k)))
+    (containsValue [value]
+      (->> servlet-request-proxy-keys
+           (keep (comp #{value} #(.get ^java.util.Map this %)))
+           (first)
+           (some?)))
+    (entrySet []
+      (let [create-map-entry #(when-some [value (.get ^java.util.Map this %)]
+                                (clojure.lang.MapEntry. % value))]
+        (into #{} (keep create-map-entry) servlet-request-proxy-keys)))
+    (get [k]
+      (case k
+        ;; Attributes
+        :attributes          (AttributesProxy. request)
+        ;; Request Id
+        :request-id          (.getRequestId request)
+        :protocol-request-id (.getProtocolRequestId request)
+        ;; Remote connection
+        :remote-addr         (.getRemoteAddr request)
+        :remote-host         (.getRemoteHost request)
+        :remote-port         (.getRemotePort request)
+        ;; Local connection
+        :local-addr          (.getLocalAddr request)
+        :local-name          (.getLocalName request)
+        :local-port          (.getLocalPort request)
+        ;; DispatcherType
+        :dispatcher-type     (.getDispatcherType request)
+        ;; URI
+        :scheme              (.getScheme request)
+        :server-name         (.getServerName request)
+        :server-port         (.getServerPort request)
+        :path                (.getRequestURI request)
+        :context-path        (.getContextPath request)
+        :servlet-path        (.getServletPath request)
+        :path-info           (.getPathInfo request)
+        :query-string        (.getQueryString request)
+        :parameters          (.getParametersMap request)
+        ;; HTTP
+        :protocol            (.getProtocol request)
+        :method              (keyword (.getMethod request))
+        ;; Headers
+        :headers             (HeadersProxy. request)
+        :content-length      (.getContentLengthLong request)
+        :content-type        (.getContentType request)
+        :character-encoding  (.getCharacterEncoding request)
+        :cookies             (if-some [cookies (.getCookies request)]
+                               (vec cookies))
+        :locale              (.getLocale request)
+        :locales             (enumeration-seq (.getLocales request))
+        ;; Body
+        :body                (.getInputStream request)
+        ;; Default nil
+        nil))
+    (isEmpty [] false)
+    (keySet []
+      (into #{} (filter #(.get ^java.util.Map this %)) servlet-request-proxy-keys))
+    (put [k value]
+      (throw (UnsupportedOperationException.)))
+    (putAll [m]
+      (throw (UnsupportedOperationException.)))
+    (remove [k]
+      (throw (UnsupportedOperationException.)))
+    (size []
+      (count (keep #(.get ^java.util.Map this %) servlet-request-proxy-keys)))
+    (values []
+      (into [] (keep #(.get ^java.util.Map this %)) servlet-request-proxy-keys))))
