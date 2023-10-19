@@ -1,6 +1,6 @@
 (ns dev.onionpancakes.serval.tests.core.test-http-request-lookup
-  (:require [dev.onionpancakes.serval.io.http
-             :refer [servlet-request-lookup-proxy]]
+  (:require [dev.onionpancakes.serval.impl.http.servlet-request
+             :refer [servlet-request-proxy]]
             [clojure.test :refer [deftest is are]])
   (:import [java.io StringReader BufferedReader]
            [java.util Collections HashMap Locale]
@@ -43,12 +43,11 @@
     (getInputStream [_] (proxy [ServletInputStream] []))))
 
 (def lookup-proxy
-  (servlet-request-lookup-proxy mock-http-servlet-request))
+  (servlet-request-proxy mock-http-servlet-request))
 
 (deftest test-request-lookup
   (are [path expected] (= (get-in lookup-proxy path) expected)
     [:attributes "foo"]   "foo"
-    [:attribute-names]    ["foo"]
     [:remote-addr]        "foo"
     [:remote-host]        "foo"
     [:remote-port]        3000
@@ -64,16 +63,13 @@
     [:servlet-path]       "foo"
     [:path-info]          "foo"
     [:query-string]       "foo"
-    [:parameter-map]      {"foo" ["bar"]}
+    [:parameters "foo" 0] "bar"
     [:protocol]           "foo"
     [:method]             :foo
-    [:headers "foo"]      ["foo"]
-    [:header-names]       ["foo"]
+    [:headers "foo" 0]    "foo"
     [:content-length]     0
     [:content-type]       "foo"
     [:character-encoding] "foo"
-    [:locales]            [(Locale. "en")]
-    [:cookies]            nil)
+    [:locales]            [(Locale. "en")])
 
-  (is (instance? BufferedReader (:reader lookup-proxy)))
-  (is (instance? ServletInputStream (:input-stream lookup-proxy))))
+  (is (instance? ServletInputStream (:body lookup-proxy))))

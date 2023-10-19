@@ -12,7 +12,7 @@
               :or   {value-key :serval.transit/value
                      error-key :serval.transit/error}}]
    (let [reader (-> (:serval.service/request ctx)
-                    (:input-stream)
+                    (:body)
                     (transit/reader type reader-opts))]
      (try
        (assoc ctx value-key (transit/read reader))

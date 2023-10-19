@@ -20,14 +20,14 @@
   ;; Json
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :json)]
     (is (= (:serval.transit/value ret) value)))
 
     ;; Msgpack
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :msgpack))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :msgpack)]
     (is (= (:serval.transit/value ret) value))))
 
@@ -35,7 +35,7 @@
   ;; Reader opts
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :json {:reader-opts {}})]
     (is (= (:serval.transit/value ret) value))))
 
@@ -43,25 +43,25 @@
   ;; Default key
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :json)]
     (is (= (:serval.transit/value ret) value)))
   ;; Custom key
   (let [value {:foo "bar"}
         in    (ByteArrayInputStream. (transit-bytes value :json))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :json {:value-key :body})]
     (is (= (:body ret) value))))
 
 (deftest test-read-transit-error
   ;; Default key
   (let [in    (ByteArrayInputStream. (.getBytes "foo"))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :json)]
     (is (:serval.transit/error ret)))
   ;; Custom key
   (let [in    (ByteArrayInputStream. (.getBytes "foo"))
-        ctx   {:serval.service/request {:input-stream in}}
+        ctx   {:serval.service/request {:body in}}
         ret   (srv.transit/read-transit ctx :json {:error-key :error})]
     (is (:error ret))))
 

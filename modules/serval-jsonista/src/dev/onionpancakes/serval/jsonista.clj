@@ -20,7 +20,7 @@
                 error-key     :serval.jsonista/error}}]
    (try
      (let [value (-> (:serval.service/request ctx)
-                     (:input-stream)
+                     (:body)
                      (j/read-value object-mapper))]
        (assoc ctx value-key value))
      (catch Throwable ex

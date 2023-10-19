@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.tests.core.test-handler-http
-  (:require [dev.onionpancakes.serval.handler.http :as h]
+  (:require [dev.onionpancakes.serval.handlers.http :as h]
             [clojure.test :refer [deftest is]]))
 
 (deftest test-response-handler

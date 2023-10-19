@@ -6,6 +6,7 @@
 
 (defrecord ChannelBody [ch]
   io.body/ResponseBody
+  (io.body/async-body? [_] true)
   (io.body/service-body [_ _ _ response]
     (let [out (.getOutputStream ^ServletResponse response)
           enc (.getCharacterEncoding ^ServletResponse response)

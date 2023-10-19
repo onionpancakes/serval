@@ -153,7 +153,7 @@
         :servlet-path        (.getServletPath request)
         :path-info           (.getPathInfo request)
         :query-string        (.getQueryString request)
-        :parameters          (.getParametersMap request)
+        :parameters          (.getParameterMap request)
         ;; HTTP
         :protocol            (.getProtocol request)
         :method              (keyword (.getMethod request))
