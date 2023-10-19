@@ -74,6 +74,6 @@
   "Convert process step functions into a handler.
   When given multiple functions, they are composed
   such that the functions are called from left to right."
-  [& xfs]
-  (->> (into '() handler-xf xfs)
+  [& steps]
+  (->> (into '() handler-xf steps)
        (apply comp)))
