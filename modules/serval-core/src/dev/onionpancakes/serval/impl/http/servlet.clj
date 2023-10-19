@@ -34,7 +34,5 @@
 (defn http-servlet
   ^GenericServlet
   [handler]
-  (let [methods {"service" (service-fn handler)}]
-    (-> (get-proxy-class GenericServlet)
-        (construct-proxy)
-        (init-proxy methods))))
+  (-> (proxy [GenericServlet] [])
+      (init-proxy {"service" (service-fn handler)})))
