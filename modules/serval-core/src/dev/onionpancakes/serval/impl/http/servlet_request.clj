@@ -44,6 +44,19 @@
          (enumeration-seq)
          (into [] (keep #(.get this %))))))
 
+(defn get-request-attributes
+  [request]
+  (AttributesProxy. request))
+
+;; Parameters
+
+(def get-request-parameters-xf
+  (map (juxt key (comp vec val))))
+
+(defn get-request-parameters
+  [^HttpServletRequest request]
+  (into {} get-request-parameters-xf (.getParameterMap request)))
+
 ;; Headers
 
 (deftype HeadersProxy [^HttpServletRequest request]
@@ -87,10 +100,14 @@
          (enumeration-seq)
          (into [] (keep #(.get this %))))))
 
+(defn get-request-headers
+  [request]
+  (HeadersProxy. request))
+
 ;; Request
 
 (def servlet-request-proxy-keys
-  [;; Attributes
+  [ ;; Attributes
    :attributes
    ;; Request Id
    :request-id :protocol-request-id
@@ -130,7 +147,7 @@
     (get [k]
       (case k
         ;; Attributes
-        :attributes          (AttributesProxy. request)
+        :attributes          (get-request-attributes request)
         ;; Request Id
         :request-id          (.getRequestId request)
         :protocol-request-id (.getProtocolRequestId request)
@@ -153,12 +170,12 @@
         :servlet-path        (.getServletPath request)
         :path-info           (.getPathInfo request)
         :query-string        (.getQueryString request)
-        :parameters          (.getParameterMap request)
+        :parameters          (get-request-parameters request)
         ;; HTTP
         :protocol            (.getProtocol request)
         :method              (keyword (.getMethod request))
         ;; Headers
-        :headers             (HeadersProxy. request)
+        :headers             (get-request-headers request)
         :content-length      (.getContentLengthLong request)
         :content-type        (.getContentType request)
         :character-encoding  (.getCharacterEncoding request)
