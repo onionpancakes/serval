@@ -1,6 +1,7 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as srv]
             [dev.onionpancakes.serval.handlers.http
+             :as handlers.http
              :refer [response]]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             [dev.onionpancakes.serval.reitit :as srv.reitit]
@@ -39,10 +40,10 @@
   ([]
    (configure server-config))
   ([config]
-   (srv.jetty/configure-server! server config)))
+   (srv.jetty/configure-server server config)))
 
 (defn restart
-  []
-  (stop)
-  (configure)
-  (start))
+  ([]
+   (srv.jetty/restart server server-config))
+  ([config]
+   (srv.jetty/restart server config)))

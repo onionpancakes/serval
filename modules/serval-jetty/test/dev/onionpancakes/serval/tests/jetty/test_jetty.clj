@@ -13,14 +13,14 @@
   [config & body]
   `(try
      (.stop server/server)
-     (srv.jetty/configure-server! server/server ~config)
+     (srv.jetty/configure-server server/server ~config)
      (.start server/server)
      ~@body
      (finally
        (.stop server/server)
        (.join server/server)
-       (srv.jetty/configure-server! server/server {:connectors [{:port server/port}]
-                                                   :handler    nil}))))
+       (srv.jetty/configure-server server/server {:connectors [{:port server/port}]
+                                                  :handler    nil}))))
 
 ;; Tests
 
