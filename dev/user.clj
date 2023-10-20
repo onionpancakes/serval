@@ -44,6 +44,6 @@
 
 (defn restart
   ([]
-   (srv.jetty/restart server server-config))
+   (srv.jetty/restart server))
   ([config]
    (srv.jetty/restart server config)))
