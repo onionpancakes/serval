@@ -46,8 +46,7 @@
     (is (instance? Match match))
     (is (= (get ret :handled) :root)))
 
-  (let [ctx   {:serval.service/request {:method    :GET
-                                        :path-info nil}}
+  (let [ctx   {:serval.service/request {:method :GET}}
         ret   (srv.reitit/route ctx router)
         match (:serval.reitit/match ret)]
     (is (instance? Match match))
