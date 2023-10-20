@@ -1,8 +1,6 @@
 (ns dev.onionpancakes.serval.jetty
   (:require [dev.onionpancakes.serval.jetty.impl.server
              :as impl.server]
-            [dev.onionpancakes.serval.jetty.impl.ee10.servlet
-             :as impl.ee10.servlet]
             [dev.onionpancakes.serval.jetty.impl.thread-pools
              :as impl.thread-pools])
   (:import [org.eclipse.jetty.server Server CustomRequestLog]
@@ -17,14 +15,19 @@
 
 ;; Server
 
-(def as-server-handler
-  impl.ee10.servlet/as-servlet-context-handler)
+(def as-server-handler-fn
+  (delay
+    (require '[dev.onionpancakes.serval.jetty.impl.ee10.servlet])
+    (resolve 'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)))
+
+(defn server-config
+  [config]
+  (cond-> config
+    (contains? config :handler) (update :handler @as-server-handler-fn)))
 
 (defn configure-server
   [server config]
-  (let [cf (cond-> config
-             (contains? config :handler) (update :handler as-server-handler))]
-    (impl.server/configure-server server cf)))
+  (impl.server/configure-server server (server-config config)))
 
 (def default-server-config
   {:request-log (CustomRequestLog.)})
