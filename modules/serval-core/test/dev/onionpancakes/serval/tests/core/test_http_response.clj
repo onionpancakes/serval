@@ -42,6 +42,7 @@
     `("foo" ~(.getBytes "bar"))               "foobar"
     nil                                       ""
     (CompletableFuture/completedFuture "foo") "foo"
+    (eduction (map identity) ["foo" "bar"])   "foobar"
 
     ;; Async
     #_#_#_#_#_#_#_#_

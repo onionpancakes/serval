@@ -19,10 +19,6 @@
   Throwable
   (write [this ^ServletOutputStream out ^String enc]
     (.printStackTrace this (java.io.PrintStream. out true enc)))
-  clojure.lang.ISeq
-  (write [this out enc]
-    (doseq [i this]
-      (write i out enc)))
   java.io.File
   (write [this out _]
     (Files/copy (.toPath this) out))
@@ -37,6 +33,14 @@
   java.nio.file.Path
   (write [this out _]
     (Files/copy this out))
+  clojure.core.Eduction
+  (write [this out enc]
+    (let [xf (map #(write % out enc))]
+      (transduce xf (constantly nil) nil this)))
+  clojure.lang.ISeq
+  (write [this out enc]
+    (doseq [i this]
+      (write i out enc)))
   nil
   (write [_ _ _] nil))
 
