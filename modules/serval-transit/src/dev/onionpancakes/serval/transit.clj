@@ -1,7 +1,6 @@
 (ns dev.onionpancakes.serval.transit
   (:require [dev.onionpancakes.serval.io.body :as io.body]
-            [cognitect.transit :as transit])
-  (:import [jakarta.servlet ServletResponse]))
+            [cognitect.transit :as transit]))
 
 ;; Read
 
@@ -21,24 +20,14 @@
 
 ;; Write
 
-(defrecord TransitBody [value type options]
+(defrecord TransitValue [value type options]
   io.body/Writable
   (io.body/write [_ out _]
     (-> (transit/writer out type options)
         (transit/write value))))
 
-(defn transit-body
+(defn transit-value
   ([value type]
-   (TransitBody. value type nil))
+   (TransitValue. value type nil))
   ([value type options]
-   (TransitBody. value type options)))
-
-#_(defn extend-map-as-transit-response-body!
-  ([type]
-   (extend-map-as-transit-response-body! type nil))
-  ([type options]
-   (extend-type java.util.Map
-     io.body/Writable
-     (io.body/write [this out]
-       (-> (transit/writer out type options)
-           (transit/write this))))))
+   (TransitValue. value type options)))

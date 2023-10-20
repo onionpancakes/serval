@@ -1,13 +1,12 @@
 (ns dev.onionpancakes.serval.jsonista
   (:require [dev.onionpancakes.serval.io.body :as io.body]
-            [jsonista.core :as j])
-  (:import [jakarta.servlet ServletResponse]))
+            [jsonista.core :as json]))
 
 (def default-object-mapper
-  j/default-object-mapper)
+  json/default-object-mapper)
 
 (def keyword-keys-object-mapper
-  j/keyword-keys-object-mapper)
+  json/keyword-keys-object-mapper)
 
 ;; Read
 
@@ -21,29 +20,20 @@
    (try
      (let [value (-> (:serval.service/request ctx)
                      (:body)
-                     (j/read-value object-mapper))]
+                     (json/read-value object-mapper))]
        (assoc ctx value-key value))
      (catch Throwable ex
        (assoc ctx error-key ex)))))
 
 ;; Write
 
-(defrecord JsonBody [value object-mapper]
+(defrecord JsonValue [value object-mapper]
   io.body/Writable
   (io.body/write [_ out _]
-    (j/write-value out value object-mapper)))
+    (json/write-value out value object-mapper)))
 
-(defn json-body
+(defn json-value
   ([value]
-   (JsonBody. value default-object-mapper))
+   (JsonValue. value default-object-mapper))
   ([value object-mapper]
-   (JsonBody. value object-mapper)))
-
-#_(defn extend-map-as-json-response-body!
-  ([]
-   (extend-map-as-json-response-body! default-object-mapper))
-  ([object-mapper]
-   (extend-type java.util.Map
-     io.body/Writable
-     (io.body/service-body-sync [this out]
-       (j/write-value out this object-mapper)))))
+   (JsonValue. value object-mapper)))

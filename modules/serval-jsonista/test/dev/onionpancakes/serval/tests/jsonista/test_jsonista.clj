@@ -6,13 +6,13 @@
              :refer [with-response]]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [clojure.test :refer [deftest is]]
-            [jsonista.core :as j])
+            [jsonista.core :as json])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defn json-bytes
   [value]
   (let [out (ByteArrayOutputStream.)
-        _   (j/write-value out value)]
+        _   (json/write-value out value)]
     (.toByteArray out)))
 
 (deftest test-read-json
@@ -50,7 +50,7 @@
 
 (deftest test-json-body
   (let [value {"foo" "bar"}]
-    (with-response {:serval.response/body (srv.json/json-body value)}
+    (with-response {:serval.response/body (srv.json/json-value value)}
       (let [resp       (send)
-            resp-value (j/read-value (:body resp))]
+            resp-value (json/read-value (:body resp))]
         (is (= resp-value value))))))
