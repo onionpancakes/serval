@@ -4,30 +4,22 @@
   "Set the response status, body, content-type, and character encoding."
   ([ctx status]
    {:pre [(int? status)]}
-   (-> (transient ctx)
-       (assoc! :serval.response/status status)
-       (persistent!)))
+   (assoc ctx :serval.response/status status))
   ([ctx status body]
    {:pre [(int? status)]}
-   (-> (transient ctx)
-       (assoc! :serval.response/status status
-               :serval.response/body   body)
-       (persistent!)))
+   (assoc ctx :serval.response/status status
+              :serval.response/body   body))
   ([ctx status body content-type]
    {:pre [(int? status)]}
-   (-> (transient ctx)
-       (assoc! :serval.response/status       status
-               :serval.response/body         body
-               :serval.response/content-type content-type)
-       (persistent!)))
+   (assoc ctx :serval.response/status       status
+              :serval.response/body         body
+              :serval.response/content-type content-type))
   ([ctx status body content-type character-encoding]
    {:pre [(int? status)]}
-   (-> (transient ctx)
-       (assoc! :serval.response/status             status
-               :serval.response/body               body
-               :serval.response/content-type       content-type
-               :serval.response/character-encoding character-encoding)
-       (persistent!))))
+   (assoc ctx :serval.response/status             status
+              :serval.response/body               body
+              :serval.response/content-type       content-type
+              :serval.response/character-encoding character-encoding)))
 
 (defn set-headers
   "Set context response headers given key-value pairs, replacing previous
