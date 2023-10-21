@@ -3,6 +3,42 @@
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [jakarta.servlet.http HttpServletResponse]))
 
+;; HeaderValue
+
+(defprotocol HeaderValue
+  (add-header [this header-name response]))
+
+(extend-protocol HeaderValue
+  String
+  (add-header [this header-name ^HttpServletResponse response]
+    (.addHeader response header-name this))
+  java.lang.Integer
+  (add-header [this header-name ^HttpServletResponse response]
+    (.addIntHeader response header-name this))
+  java.util.Date
+  (add-header [this header-name ^HttpServletResponse response]
+    (.addDateHeader response header-name (.getTime this)))
+  java.time.Instant
+  (add-header [this header-name ^HttpServletResponse response]
+    (.addDateHeader response header-name (.toEpochMilli this)))
+  Object
+  (add-header [this header-name ^HttpServletResponse response]
+    (.addHeader response header-name (str this))))
+
+(defn add-response-headers-rf
+  [response header-name values]
+  (loop [i 0]
+    (when (< i (count values))
+      (add-header (nth values i) header-name response)
+      (recur (inc i))))
+  response)
+
+(defn add-response-headers
+  [response headers]
+  (reduce-kv add-response-headers-rf response headers))
+
+;; HttpResponse
+
 (defn service-response-from-map
   [m servlet request ^HttpServletResponse response]
   ;; Status
@@ -10,9 +46,7 @@
     (.setStatus response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
-    (doseq [[header-name values] (:serval.response/headers m)
-            value                values]
-      (.addHeader response header-name (str value))))
+    (add-response-headers response (:serval.response/headers m)))
   ;; Cookies
   (when (contains? m :serval.response/cookies)
     (doseq [cookie (:serval.response/cookies m)]
