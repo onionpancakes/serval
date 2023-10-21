@@ -19,17 +19,10 @@
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
     (let [ctx (context servlet request response)
           ret (handler ctx)
-          atx (cond
-                (.isAsyncStarted request)     (.getAsyncContext request)
-                (io.http/async-response? ret) (.startAsync request))]
-      (.. (io.http/service-response ret servlet request response)
-          (whenComplete (reify BiConsumer
-                          (accept [_ _ throwable]
-                            (if throwable
-                              (->> (.getMessage ^Throwable throwable)
-                                   (.sendError response 500)))
-                            (if atx
-                              (.complete atx)))))))))
+          _   (if (io.http/async-response? ret)
+                (.startAsync request))]
+      (-> (io.http/service-response ret servlet request response)
+          (io.http/complete-response servlet request response)))))
 
 (defn http-servlet
   ^GenericServlet

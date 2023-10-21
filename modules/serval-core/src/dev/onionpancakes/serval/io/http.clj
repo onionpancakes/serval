@@ -1,6 +1,7 @@
 (ns dev.onionpancakes.serval.io.http
   (:require [dev.onionpancakes.serval.io.body :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
+           [java.util.function BiConsumer]
            [jakarta.servlet.http HttpServletResponse]))
 
 ;; Headers
@@ -90,14 +91,13 @@
          (.setTrailerFields response)))
   ;; Body
   ;; Return CompletionStage from service-body.
-  (if (contains? m :serval.response/body)
+  (when (contains? m :serval.response/body)
     (-> (:serval.response/body m)
-        (io.body/service-body servlet request response))
-    (CompletableFuture/completedFuture nil)))
+        (io.body/service-body servlet request response))))
 
 (defprotocol HttpResponse
   (async-response? [this])
-  (^CompletionStage service-response [this servlet request response]))
+  (service-response [this servlet request response]))
 
 (extend-protocol HttpResponse
   java.util.Map
@@ -111,4 +111,31 @@
   (service-response [this servlet request response]
     (.thenCompose this (reify java.util.function.Function
                          (apply [_ input]
-                           (service-response input servlet request response))))))
+                           (let [cs (service-response input servlet request response)]
+                             (if (instance? CompletionStage cs)
+                               cs
+                               (CompletableFuture/completedFuture cs))))))))
+
+;; HttpResponseCompleter
+
+(defprotocol HttpResponseCompleter
+  (complete-response [this servlet request response]))
+
+(extend-protocol HttpResponseCompleter
+  CompletionStage
+  (complete-response [this _ request response]
+    (.whenComplete this (reify BiConsumer
+                          (accept [_ _ throwable]
+                            (if throwable
+                              (->> (.getMessage ^Throwable throwable)
+                                   (.sendError response 500)))
+                            (if (.isAsyncStarted request)
+                              (.. request (getAsyncContext) (complete)))))))
+  Object
+  (complete-response [_ _ request _]
+    (if (.isAsyncStarted request)
+      (.. request (getAsyncContext) (complete))))
+  nil
+  (complete-response [_ _ request _]
+    (if (.isAsyncStarted request)
+      (.. request (getAsyncContext) (complete)))))
