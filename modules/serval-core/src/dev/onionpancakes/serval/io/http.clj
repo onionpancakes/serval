@@ -3,7 +3,7 @@
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [jakarta.servlet.http HttpServletResponse]))
 
-;; HeaderValue
+;; Headers
 
 (defprotocol HeaderValue
   (add-header [this header-name response]))
@@ -37,6 +37,29 @@
   [response headers]
   (reduce-kv add-response-headers-rf response headers))
 
+;; Trailers
+
+(defprotocol Trailers
+  (as-trailer-fields-supplier [this]))
+
+(extend-protocol Trailers
+  clojure.lang.IDeref
+  (as-trailer-fields-supplier [this]
+    (reify java.util.function.Supplier
+      (get [_]
+        (deref this))))
+  java.util.concurrent.Future
+  (as-trailer-fields-supplier [this]
+    (reify java.util.function.Supplier
+      (get [_]
+        (.get this))))
+  java.util.Map
+  (as-trailer-fields-supplier [this]
+    (reify java.util.function.Supplier
+      (get [_] this)))
+  java.util.function.Supplier
+  (as-trailer-fields-supplier [this] this))
+
 ;; HttpResponse
 
 (defn service-response-from-map
@@ -60,6 +83,11 @@
   ;; CharacterEncoding
   (when (contains? m :serval.response/character-encoding)
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
+  ;; Trailers
+  (when (contains? m :serval.response/trailers)
+    (->> (:serval.response/trailers m)
+         (as-trailer-fields-supplier)
+         (.setTrailerFields response)))
   ;; Body
   ;; Return CompletionStage from service-body.
   (if (contains? m :serval.response/body)
