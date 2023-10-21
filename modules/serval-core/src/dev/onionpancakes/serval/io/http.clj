@@ -2,7 +2,7 @@
   (:require [dev.onionpancakes.serval.io.body :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [java.util.function BiConsumer]
-           [jakarta.servlet.http HttpServletResponse]))
+           [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
 ;; Headers
 
@@ -116,12 +116,12 @@
                                cs
                                (CompletableFuture/completedFuture cs))))))))
 
-;; HttpResponseCompleter
+;; HttpResponseCompletable
 
-(defprotocol HttpResponseCompleter
+(defprotocol HttpResponseCompletable
   (complete-response [this servlet request response]))
 
-(extend-protocol HttpResponseCompleter
+(extend-protocol HttpResponseCompletable
   CompletionStage
   (complete-response [this _ request response]
     (.whenComplete this (reify BiConsumer
@@ -139,3 +139,13 @@
   (complete-response [_ _ request _]
     (if (.isAsyncStarted request)
       (.. request (getAsyncContext) (complete)))))
+
+;; Service
+
+(defn service
+  [this servlet ^HttpServletRequest request response]
+  (let [_ (if (and (async-response? this)
+                   (not (.isAsyncStarted request)))
+            (.startAsync request))]
+    (-> (service-response this servlet request response)
+        (complete-response servlet request response))))

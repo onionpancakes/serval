@@ -18,11 +18,8 @@
   [handler]
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
     (let [ctx (context servlet request response)
-          ret (handler ctx)
-          _   (if (io.http/async-response? ret)
-                (.startAsync request))]
-      (-> (io.http/service-response ret servlet request response)
-          (io.http/complete-response servlet request response)))))
+          ret (handler ctx)]
+      (io.http/service ret servlet request response))))
 
 (defn http-servlet
   ^GenericServlet
