@@ -132,13 +132,9 @@
                             (if (.isAsyncStarted request)
                               (.. request (getAsyncContext) (complete)))))))
   Object
-  (complete-response [_ _ request _]
-    (if (.isAsyncStarted request)
-      (.. request (getAsyncContext) (complete))))
+  (complete-response [_ _ _ _] nil)
   nil
-  (complete-response [_ _ request _]
-    (if (.isAsyncStarted request)
-      (.. request (getAsyncContext) (complete)))))
+  (complete-response [_ _ _ _] nil))
 
 ;; Service
 

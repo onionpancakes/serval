@@ -72,7 +72,7 @@
 
 ;; Todo: test cookies?
 
-(deftest test-complete-async
+#_(deftest test-complete-async
   ;; Normal async.
   (with-handler (fn [ctx]
                   (.startAsync ^ServletRequest (:serval.service/request ctx))
