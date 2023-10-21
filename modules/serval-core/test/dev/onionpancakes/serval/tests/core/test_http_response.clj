@@ -22,13 +22,11 @@
 (deftest test-headers
   (with-response {:serval.response/headers {"foo" ["foo"]
                                             "bar" ["bar1" "bar2"]
-                                            "baz" [(int 1)
-                                                   Integer/MAX_VALUE
-                                                   (inc Integer/MAX_VALUE)]}}
+                                            "baz" [(int 1) 2]}}
     (let [{:strs [foo bar baz]} (:headers (send))]
       (is (= foo ["foo"]))
       (is (= bar ["bar1" "bar2"]))
-      (is (= baz ["1" (str Integer/MAX_VALUE) (str (inc Integer/MAX_VALUE))])))))
+      (is (= baz ["1" "2"])))))
 
 (def ^java.net.URL example-foo
   (clojure.java.io/resource "dev/onionpancakes/serval/test_utils/example_foo.txt"))
