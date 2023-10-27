@@ -6,6 +6,7 @@
              :as handlers.http
              :refer [response]]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
+            [dev.onionpancakes.serval.jetty.test :as srv.jetty.test]
             [dev.onionpancakes.serval.reitit :as srv.reitit]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]

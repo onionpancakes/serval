@@ -2,6 +2,7 @@
         dev.onionpancakes/serval-core       {:local/root "./modules/serval-core"}
         dev.onionpancakes/serval-core-async {:local/root "./modules/serval-core-async"}
         dev.onionpancakes/serval-jetty      {:local/root "./modules/serval-jetty"}
+        dev.onionpancakes/serval-jetty-test {:local/root "./modules/serval-jetty-test"}
         dev.onionpancakes/serval-jsonista   {:local/root "./modules/serval-jsonista"}
         dev.onionpancakes/serval-reitit     {:local/root "./modules/serval-reitit"}
         dev.onionpancakes/serval-transit    {:local/root "./modules/serval-transit"}}
@@ -14,6 +15,7 @@
                  "./modules/serval-core/test"
                  "./modules/serval-core-async/test"
                  "./modules/serval-jetty/test"
+                 "./modules/serval-jetty-test/test"
                  "./modules/serval-jsonista/test"
                  "./modules/serval-reitit/test"
                  "./modules/serval-transit/test"]}
@@ -30,6 +32,7 @@
    :extra-paths ["./modules/serval-core/test"
                  "./modules/serval-core-async/test"
                  "./modules/serval-jetty/test"
+                 "./modules/serval-jetty-test/test"
                  "./modules/serval-jsonista/test"
                  "./modules/serval-reitit/test"
                  "./modules/serval-transit/test"]
@@ -37,6 +40,7 @@
    :exec-args   {:dirs     ["./modules/serval-core/test"
                             "./modules/serval-core-async/test"
                             "./modules/serval-jetty/test"
+                            "./modules/serval-jetty-test/test"
                             "./modules/serval-jsonista/test"
                             "./modules/serval-reitit/test"
                             "./modules/serval-transit/test"]
