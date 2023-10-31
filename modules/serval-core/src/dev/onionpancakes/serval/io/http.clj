@@ -7,36 +7,36 @@
 ;; Headers
 
 (defprotocol HeaderValue
-  (add-header [this header-name response]))
+  (add-header-value [this header-name response]))
 
 (extend-protocol HeaderValue
   String
-  (add-header [this header-name ^HttpServletResponse response]
+  (add-header-value [this header-name ^HttpServletResponse response]
     (.addHeader response header-name this))
   java.lang.Integer
-  (add-header [this header-name ^HttpServletResponse response]
+  (add-header-value [this header-name ^HttpServletResponse response]
     (.addIntHeader response header-name this))
   java.util.Date
-  (add-header [this header-name ^HttpServletResponse response]
+  (add-header-value [this header-name ^HttpServletResponse response]
     (.addDateHeader response header-name (.getTime this)))
   java.time.Instant
-  (add-header [this header-name ^HttpServletResponse response]
+  (add-header-value [this header-name ^HttpServletResponse response]
     (.addDateHeader response header-name (.toEpochMilli this)))
   Object
-  (add-header [this header-name ^HttpServletResponse response]
+  (add-header-value [this header-name ^HttpServletResponse response]
     (.addHeader response header-name (str this))))
 
-(defn add-response-headers-rf
+(defn add-response-header-values
   [response header-name values]
   (loop [i 0]
     (when (< i (count values))
-      (add-header (nth values i) header-name response)
+      (add-header-value (nth values i) header-name response)
       (recur (inc i))))
   response)
 
 (defn add-response-headers
   [response headers]
-  (reduce-kv add-response-headers-rf response headers))
+  (reduce-kv add-response-header-values response headers))
 
 ;; Trailers
 
