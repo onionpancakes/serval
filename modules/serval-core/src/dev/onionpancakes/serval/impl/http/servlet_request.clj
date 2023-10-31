@@ -118,10 +118,10 @@
    ;; DispatcherType
    :dispatcher-type
    ;; URI
-   :scheme :server-name :server-port :path :context-path       
-   :servlet-path :path-info :query-string :parameters         
+   :scheme :server-name :server-port :path :context-path
+   :servlet-path :path-info :query-string :parameters
    ;; HTTP
-   :protocol :method             
+   :protocol :method
    ;; Headers
    :headers :content-length :content-type :character-encoding
    :cookies :locale :locales
