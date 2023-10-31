@@ -28,10 +28,10 @@
 
 (defn add-response-header-values
   [response header-name values]
-  (loop [i 0]
-    (when (< i (count values))
+  (loop [i 0 cnt (count values)]
+    (when (< i cnt)
       (add-header-value (nth values i) header-name response)
-      (recur (inc i))))
+      (recur (inc i) cnt)))
   response)
 
 (defn add-response-headers
