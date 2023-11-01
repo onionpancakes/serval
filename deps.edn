@@ -44,4 +44,9 @@
                             "./modules/serval-jsonista/test"
                             "./modules/serval-reitit/test"
                             "./modules/serval-transit/test"]
-                 :patterns ["dev\\.onionpancakes\\.serval\\.tests\\..*"]}}}}
+                 :patterns ["dev\\.onionpancakes\\.serval\\.tests\\..*"
+                            "dev\\.onionpancakes\\.serval\\.core\\.tests\\..*"
+                            "dev\\.onionpancakes\\.serval\\.jetty\\.tests\\..*"
+                            "dev\\.onionpancakes\\.serval\\.jsonista\\.tests\\..*"
+                            "dev\\.onionpancakes\\.serval\\.reitit\\.tests\\..*"
+                            "dev\\.onionpancakes\\.serval\\.transit\\.tests\\..*"]}}}}
