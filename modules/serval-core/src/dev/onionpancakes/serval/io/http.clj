@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.io.http
   (:require [dev.onionpancakes.serval.io.body :as io.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function BiConsumer]
+           [java.util.function Function BiConsumer]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
 ;; Headers
@@ -109,12 +109,12 @@
   CompletionStage
   (async-response? [this] true)
   (service-response [this servlet request response]
-    (.thenCompose this (reify java.util.function.Function
-                         (apply [_ input]
-                           (let [cs (service-response input servlet request response)]
-                             (if (instance? CompletionStage cs)
-                               cs
-                               (CompletableFuture/completedFuture cs))))))))
+    (.thenCompose this (reify Function
+                         (apply [_ m]
+                           (let [ret (service-response-from-map m servlet request response)]
+                             (if (instance? CompletionStage ret)
+                               ret
+                               (CompletableFuture/completedFuture ret))))))))
 
 ;; HttpResponseCompletable
 
