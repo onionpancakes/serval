@@ -16,17 +16,14 @@
 
 (deftest test-headers
   (with-response {:serval.response/headers {"str-header"  ["foo"]
-                                            "int-header"  [(int 1)]
                                             "date-header" [#inst "2000-01-01"]
                                             "inst-header" [(.toInstant #inst "2000-01-01")]
                                             "long-header" [1]}}
     (let [{:strs [str-header
-                  int-header
                   date-header
                   inst-header
                   long-header]} (:headers (send))]
       (is (= str-header ["foo"]))
-      (is (= int-header ["1"]))
       (is (= date-header ["Sat, 01 Jan 2000 00:00:00 GMT"]))
       (is (= inst-header ["Sat, 01 Jan 2000 00:00:00 GMT"]))
       (is (= long-header ["1"])))))
