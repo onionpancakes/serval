@@ -2,7 +2,7 @@
   (:require [dev.onionpancakes.serval.impl.body.service
              :as impl.body.service])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function Function BiConsumer]
+           [java.util.function Function BiConsumer Supplier]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
 ;; Headers
@@ -14,9 +14,6 @@
   String
   (add-header-value [this header-name ^HttpServletResponse response]
     (.addHeader response header-name this))
-  java.lang.Integer
-  (add-header-value [this header-name ^HttpServletResponse response]
-    (.addIntHeader response header-name this))
   java.util.Date
   (add-header-value [this header-name ^HttpServletResponse response]
     (.addDateHeader response header-name (.getTime this)))
@@ -47,19 +44,10 @@
 (extend-protocol Trailers
   clojure.lang.IDeref
   (as-trailer-fields-supplier [this]
-    (reify java.util.function.Supplier
+    (reify Supplier
       (get [_]
         (deref this))))
-  java.util.concurrent.Future
-  (as-trailer-fields-supplier [this]
-    (reify java.util.function.Supplier
-      (get [_]
-        (.get this))))
-  java.util.Map
-  (as-trailer-fields-supplier [this]
-    (reify java.util.function.Supplier
-      (get [_] this)))
-  java.util.function.Supplier
+  Supplier
   (as-trailer-fields-supplier [this] this))
 
 ;; HttpResponse
