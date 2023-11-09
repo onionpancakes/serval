@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.jsonista
-  (:require [dev.onionpancakes.serval.io.body :as io.body]
+  (:require [dev.onionpancakes.serval.impl.body.service
+             :as srv.impl.body.service]
             [jsonista.core :as json]))
 
 (def default-object-mapper
@@ -28,8 +29,8 @@
 ;; Write
 
 (defrecord JsonValue [value object-mapper]
-  io.body/Writable
-  (io.body/write [_ out _]
+  srv.impl.body.service/Writable
+  (write [_ out _]
     (json/write-value out value object-mapper)))
 
 (defn json-value
