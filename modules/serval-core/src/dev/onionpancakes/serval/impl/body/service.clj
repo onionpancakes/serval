@@ -53,13 +53,13 @@
   nil
   (write [_ _ _] nil))
 
-;; ResponseBody
+;; Body
 
-(defprotocol ResponseBody
+(defprotocol Body
   (async-body? [this])
   (service-body [this servlet request response]))
 
-(extend-protocol ResponseBody
+(extend-protocol Body
   CompletionStage
   (async-body? [this] true)
   (service-body [this _ _ ^ServletResponse response]

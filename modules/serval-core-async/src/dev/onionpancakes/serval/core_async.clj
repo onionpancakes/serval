@@ -6,7 +6,7 @@
            [java.util.concurrent CompletableFuture]))
 
 (defrecord ChannelBody [ch]
-  srv.impl.body.service/ResponseBody
+  srv.impl.body.service/Body
   (async-body? [_] true)
   (service-body [_ _ _ response]
     (let [out (.getOutputStream ^ServletResponse response)
