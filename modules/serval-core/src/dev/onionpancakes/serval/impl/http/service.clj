@@ -8,33 +8,53 @@
 ;; Headers
 
 (defprotocol HeaderValue
-  (add-header-value [this header-name response]))
+  (add-header-value [this header-name response])
+  (set-header-value [this header-name response]))
 
 (extend-protocol HeaderValue
   String
   (add-header-value [this header-name ^HttpServletResponse response]
     (.addHeader response header-name this))
+  (set-header-value [this header-name ^HttpServletResponse response]
+    (.setHeader response header-name this))
   java.util.Date
   (add-header-value [this header-name ^HttpServletResponse response]
     (.addDateHeader response header-name (.getTime this)))
+  (set-header-value [this header-name ^HttpServletResponse response]
+    (.setDateHeader response header-name (.getTime this)))
   java.time.Instant
   (add-header-value [this header-name ^HttpServletResponse response]
     (.addDateHeader response header-name (.toEpochMilli this)))
+  (set-header-value [this header-name ^HttpServletResponse response]
+    (.setDateHeader response header-name (.toEpochMilli this)))
   Object
   (add-header-value [this header-name ^HttpServletResponse response]
-    (.addHeader response header-name (str this))))
+    (.addHeader response header-name (str this)))
+  (set-header-value [this header-name ^HttpServletResponse response]
+    (.setHeader response header-name (str this))))
 
-(defn add-response-header-values
+(defprotocol HeaderValues
+  (service-header-values [this header-name response]))
+
+(extend-protocol HeaderValues
+  java.util.RandomAccess
+  (service-header-values [this header-name ^HttpServletResponse response]
+    (loop [i 0 cnt (count this)]
+      (when (< i cnt)
+        (add-header-value (nth this i) header-name response)
+        (recur (inc i) cnt))))
+  Object
+  (service-header-values [this header-name response]
+    (set-header-value this header-name response)))
+
+(defn service-response-header-values
   [response header-name values]
-  (loop [i 0 cnt (count values)]
-    (when (< i cnt)
-      (add-header-value (nth values i) header-name response)
-      (recur (inc i) cnt)))
+  (service-header-values values header-name response)
   response)
 
-(defn add-response-headers
+(defn service-response-headers
   [response headers]
-  (reduce-kv add-response-header-values response headers))
+  (reduce-kv service-response-header-values response headers))
 
 ;; Trailers
 
@@ -59,7 +79,7 @@
     (.setStatus response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
-    (add-response-headers response (:serval.response/headers m)))
+    (service-response-headers response (:serval.response/headers m)))
   ;; Cookies
   (when (contains? m :serval.response/cookies)
     (doseq [cookie (:serval.response/cookies m)]

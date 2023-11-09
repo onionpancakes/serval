@@ -15,18 +15,21 @@
     400))
 
 (deftest test-headers
-  (with-response {:serval.response/headers {"str-header"  ["foo"]
-                                            "date-header" [#inst "2000-01-01"]
-                                            "inst-header" [(.toInstant #inst "2000-01-01")]
-                                            "long-header" [1]}}
+  (with-response {:serval.response/headers {"str-header"  "foo"
+                                            "date-header" #inst "2000-01-01"
+                                            "inst-header" (.toInstant #inst "2000-01-01")
+                                            "long-header" 1
+                                            "vec-header"  ["foo" 1]}}
     (let [{:strs [str-header
                   date-header
                   inst-header
-                  long-header]} (:headers (send))]
+                  long-header
+                  vec-header]} (:headers (send))]
       (is (= str-header ["foo"]))
       (is (= date-header ["Sat, 01 Jan 2000 00:00:00 GMT"]))
       (is (= inst-header ["Sat, 01 Jan 2000 00:00:00 GMT"]))
-      (is (= long-header ["1"])))))
+      (is (= long-header ["1"]))
+      (is (= vec-header ["foo" "1"])))))
 
 (def ^java.net.URL example-foo-url
   (io/resource "dev/onionpancakes/serval/core/tests/data/foo.txt"))
