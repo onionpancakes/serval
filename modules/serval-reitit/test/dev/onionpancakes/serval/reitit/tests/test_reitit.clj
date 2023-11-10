@@ -13,40 +13,40 @@
   (srv.reitit/router router-spec))
 
 (deftest test-route
-  (let [ctx   {:serval.service/request {:method    :GET
+  (let [ctx   {:serval.context/request {:method    :GET
                                         :path-info "/get-method"}}
         ret   (srv.reitit/route ctx router)
         match (:serval.reitit/match ret)]
     (is (instance? Match match))
     (is (= (get ret :handled) :get-method)))
 
-  (let [ctx   {:serval.service/request {:method    :GET
+  (let [ctx   {:serval.context/request {:method    :GET
                                         :path-info "/no-method"}}
         ret   (srv.reitit/route ctx router)
         match (:serval.reitit/match ret)]
     (is (instance? Match match))
     (is (= (get ret :handled) :no-method)))
 
-  (let [ctx   {:serval.service/request {:method    :GET
+  (let [ctx   {:serval.context/request {:method    :GET
                                         :path-info "/empty"}}
         ret   (srv.reitit/route ctx router)
         match (:serval.reitit/match ret)]
     (is (instance? Match match))
     (is (= (dissoc ret :serval.reitit/match) ctx)))
 
-  (let [ctx {:serval.service/request {:method    :GET
+  (let [ctx {:serval.context/request {:method    :GET
                                       :path-info "/default"}}
         ret (srv.reitit/route ctx router {:default #(assoc % :handled :default)})]
     (is (= (get ret :handled) :default)))
 
-  (let [ctx   {:serval.service/request {:method    :GET
+  (let [ctx   {:serval.context/request {:method    :GET
                                         :path-info "/"}}
         ret   (srv.reitit/route ctx router)
         match (:serval.reitit/match ret)]
     (is (instance? Match match))
     (is (= (get ret :handled) :root)))
 
-  (let [ctx   {:serval.service/request {:method :GET}}
+  (let [ctx   {:serval.context/request {:method :GET}}
         ret   (srv.reitit/route ctx router)
         match (:serval.reitit/match ret)]
     (is (instance? Match match))

@@ -11,9 +11,9 @@
 
 (defn context
   [servlet request response]
-  {:serval.service/servlet  servlet
-   :serval.service/request  (impl.http.request/servlet-request-proxy request)
-   :serval.service/response response})
+  {:serval.context/servlet  servlet
+   :serval.context/request  (impl.http.request/servlet-request-proxy request)
+   :serval.context/response response})
 
 (defn service-fn
   [handler]

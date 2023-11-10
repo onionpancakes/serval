@@ -33,7 +33,7 @@
 (deftest test-multiple-connectors
   (with-config {:connectors [{:protocol :http :port 42000}
                              {:protocol :http2c :port 42001}]
-                :handler    #(case (long (:server-port (:serval.service/request %)))
+                :handler    #(case (long (:server-port (:serval.context/request %)))
                                42000 {:serval.response/body "foo"}
                                42001 {:serval.response/body "bar"})}
     (let [resp (send "http://localhost:42000")]

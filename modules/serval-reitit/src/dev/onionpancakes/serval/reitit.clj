@@ -18,7 +18,7 @@
 (defn get-route-path
   "Return path-info as path, or root path \"/\" if path-info is absent."
   [ctx]
-  (get-in ctx [:serval.service/request :path-info] "/"))
+  (get-in ctx [:serval.context/request :path-info] "/"))
 
 (defn route
   ([ctx router]
@@ -29,7 +29,7 @@
                        default   identity}}]
    (let [path    (path-fn ctx)
          match   (r/match-by-path router path)
-         method  (get-in ctx [:serval.service/request :method])
+         method  (get-in ctx [:serval.context/request :method])
          handler (get-match-handler match method default)]
      (-> (assoc ctx match-key match)
          (handler)))))

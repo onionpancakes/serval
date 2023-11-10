@@ -19,7 +19,7 @@
                 value-key     :serval.jsonista/value
                 error-key     :serval.jsonista/error}}]
    (try
-     (let [value (-> (:serval.service/request ctx)
+     (let [value (-> (:serval.context/request ctx)
                      (:body)
                      (json/read-value object-mapper))]
        (assoc ctx value-key value))
