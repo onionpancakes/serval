@@ -27,34 +27,30 @@
     (.addDateHeader response header-name (.toEpochMilli this)))
   (set-header-value [this header-name ^HttpServletResponse response]
     (.setDateHeader response header-name (.toEpochMilli this)))
+  ;; List
+  java.util.RandomAccess
+  (add-header-value [this header-name response]
+    (loop [i 0 cnt (count this)]
+      (when (< i cnt)
+        (add-header-value (nth this i) header-name response)
+        (recur (inc i) cnt))))
+  (set-header-value [this header-name response]
+    (add-header-value this header-name response))
+  ;; Default
   Object
   (add-header-value [this header-name ^HttpServletResponse response]
     (.addHeader response header-name (str this)))
   (set-header-value [this header-name ^HttpServletResponse response]
     (.setHeader response header-name (str this))))
 
-(defprotocol HeaderValues
-  (service-header-values [this header-name response]))
-
-(extend-protocol HeaderValues
-  java.util.RandomAccess
-  (service-header-values [this header-name ^HttpServletResponse response]
-    (loop [i 0 cnt (count this)]
-      (when (< i cnt)
-        (add-header-value (nth this i) header-name response)
-        (recur (inc i) cnt))))
-  Object
-  (service-header-values [this header-name response]
-    (set-header-value this header-name response)))
-
-(defn service-response-header-values
+(defn set-response-header-values
   [response header-name values]
-  (service-header-values values header-name response)
+  (set-header-value values header-name response)
   response)
 
-(defn service-response-headers
+(defn set-response-headers
   [response headers]
-  (reduce-kv service-response-header-values response headers))
+  (reduce-kv set-response-header-values response headers))
 
 ;; Trailers
 
@@ -79,7 +75,7 @@
     (.setStatus response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
-    (service-response-headers response (:serval.response/headers m)))
+    (set-response-headers response (:serval.response/headers m)))
   ;; Cookies
   (when (contains? m :serval.response/cookies)
     (doseq [cookie (:serval.response/cookies m)]
