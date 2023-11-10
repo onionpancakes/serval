@@ -45,14 +45,14 @@
   {:add-header-value add-header-value-from-random-access
    :set-header-value add-header-value-from-random-access})
 
-(defn set-response-header-values
-  [response header-name values]
-  (set-header-value values header-name response)
+(defn set-servlet-response-header-value
+  [response header-name value]
+  (set-header-value value header-name response)
   response)
 
-(defn set-response-headers
+(defn set-servlet-response-headers
   [response headers]
-  (reduce-kv set-response-header-values response headers))
+  (reduce-kv set-servlet-response-header-value response headers))
 
 ;; Trailers
 
@@ -82,7 +82,7 @@
     (.setStatus response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
-    (set-response-headers response (:serval.response/headers m)))
+    (set-servlet-response-headers response (:serval.response/headers m)))
   ;; Trailers
   (when (contains? m :serval.response/trailers)
     (->> (:serval.response/trailers m)
