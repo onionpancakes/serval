@@ -1,6 +1,6 @@
 (ns dev.onionpancakes.serval.transit
-  (:require [dev.onionpancakes.serval.impl.body.service
-             :as srv.impl.body.service]
+  (:require [dev.onionpancakes.serval.service.body
+             :as service.body]
             [cognitect.transit :as transit]))
 
 ;; Read
@@ -22,7 +22,7 @@
 ;; Write
 
 (defrecord TransitValue [value type options]
-  srv.impl.body.service/Writable
+  service.body/Writable
   (write [_ out _]
     (-> (transit/writer out type options)
         (transit/write value))))

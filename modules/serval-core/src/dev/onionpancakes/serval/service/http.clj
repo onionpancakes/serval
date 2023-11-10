@@ -1,6 +1,6 @@
-(ns dev.onionpancakes.serval.impl.http.service
-  (:require [dev.onionpancakes.serval.impl.body.service
-             :as impl.body.service])
+(ns dev.onionpancakes.serval.service.http
+  (:require [dev.onionpancakes.serval.service.body
+             :as service.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [java.util.function Function BiConsumer Supplier]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
@@ -102,7 +102,7 @@
   ;; Return CompletionStage from service-body.
   (when (contains? m :serval.response/body)
     (-> (:serval.response/body m)
-        (impl.body.service/service-body servlet request response))))
+        (service.body/service-body servlet request response))))
 
 (defprotocol HttpResponse
   (async-response? [this])
@@ -112,7 +112,7 @@
   java.util.Map
   (async-response? [this]
     (and (contains? this :serval.response/body)
-         (impl.body.service/async-body? (:serval.response/body this))))
+         (service.body/async-body? (:serval.response/body this))))
   (service-response [this servlet request response]
     (service-response-from-map this servlet request response))
   CompletionStage

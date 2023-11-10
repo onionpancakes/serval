@@ -1,8 +1,8 @@
 (ns dev.onionpancakes.serval.impl.http.servlet
   (:require [dev.onionpancakes.serval.impl.http.servlet-request
              :as impl.http.request]
-            [dev.onionpancakes.serval.impl.http.service
-             :as impl.http.service])
+            [dev.onionpancakes.serval.service.http
+             :as service.http])
   (:import [java.util.function BiConsumer]
            [jakarta.servlet GenericServlet]
            [jakarta.servlet.http
@@ -20,7 +20,7 @@
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
     (-> (context servlet request response)
         (handler)
-        (impl.http.service/service servlet request response))))
+        (service.http/service servlet request response))))
 
 (defn http-servlet
   ^GenericServlet

@@ -1,12 +1,12 @@
 (ns dev.onionpancakes.serval.core-async
   (:require [clojure.core.async :as async :refer [<!!]]
-            [dev.onionpancakes.serval.impl.body.service
-             :as srv.impl.body.service])
+            [dev.onionpancakes.serval.service.body
+             :as service.body])
   (:import [jakarta.servlet ServletResponse]
            [java.util.concurrent CompletableFuture]))
 
 (defrecord ChannelBody [ch]
-  srv.impl.body.service/Body
+  service.body/Body
   (async-body? [_] true)
   (service-body [_ _ _ response]
     (let [out (.getOutputStream ^ServletResponse response)
@@ -14,7 +14,7 @@
           rch (async/thread
                 (loop [value (<!! ch)]
                   (when (some? value)
-                    (srv.impl.body.service/write value out enc)
+                    (service.body/write value out enc)
                     (recur (<!! ch)))))
           cf  (CompletableFuture.)
           _   (async/take! rch (fn [_] (.complete cf nil)))]
