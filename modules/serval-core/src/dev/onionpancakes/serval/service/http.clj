@@ -102,7 +102,7 @@
   (when (contains? m :serval.response/character-encoding)
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
   ;; Body
-  ;; Return CompletionStage from service-body.
+  ;; Return from set-body.
   (when (contains? m :serval.response/body)
     (-> (:serval.response/body m)
         (service.body/set-body servlet request response))))
