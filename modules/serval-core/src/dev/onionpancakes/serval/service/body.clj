@@ -57,12 +57,12 @@
 
 (defprotocol Body
   (async-body? [this])
-  (service-body [this servlet request response]))
+  (set-body [this servlet request response]))
 
 (extend-protocol Body
   CompletionStage
   (async-body? [this] true)
-  (service-body [this _ _ ^ServletResponse response]
+  (set-body [this _ _ ^ServletResponse response]
     (.thenApply this (reify Function
                        (apply [_ body]
                          (let [out (.getOutputStream response)
@@ -70,9 +70,9 @@
                            (write body out enc))))))
   Object
   (async-body? [this] false)
-  (service-body [this _ _ ^ServletResponse response]
+  (set-body [this _ _ ^ServletResponse response]
     (write this (.getOutputStream response) (.getCharacterEncoding response)))
   nil
   (async-body? [this] false)
-  (service-body [this _ _ ^ServletResponse response]
+  (set-body [this _ _ ^ServletResponse response]
     (write this (.getOutputStream response) (.getCharacterEncoding response))))

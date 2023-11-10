@@ -8,7 +8,7 @@
 (defrecord ChannelBody [ch]
   service.body/Body
   (async-body? [_] true)
-  (service-body [_ _ _ response]
+  (set-body [_ _ _ response]
     (let [out (.getOutputStream ^ServletResponse response)
           enc (.getCharacterEncoding ^ServletResponse response)
           rch (async/thread

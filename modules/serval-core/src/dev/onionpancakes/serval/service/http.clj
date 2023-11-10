@@ -105,7 +105,7 @@
   ;; Return CompletionStage from service-body.
   (when (contains? m :serval.response/body)
     (-> (:serval.response/body m)
-        (service.body/service-body servlet request response))))
+        (service.body/set-body servlet request response))))
 
 (defn complete-response
   [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
