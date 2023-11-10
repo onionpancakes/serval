@@ -70,12 +70,12 @@
 
 ;; Service response
 
-(defn async-response?
+(defn async-http-response?
   [m]
   (and (contains? m :serval.response/body)
        (service.body/async-body? (:serval.response/body m))))
 
-(defn set-response
+(defn set-http-response
   [m servlet request ^HttpServletResponse response]
   ;; Status
   (when (contains? m :serval.response/status)
@@ -107,7 +107,7 @@
     (-> (:serval.response/body m)
         (service.body/set-body servlet request response))))
 
-(defn complete-response
+(defn complete-http-response
   [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
   (.whenComplete stage (reify BiConsumer
                          (accept [_ _ throwable]
@@ -117,11 +117,11 @@
                            (if (.isAsyncStarted request)
                              (.. request (getAsyncContext) (complete)))))))
 
-(defn service-response
+(defn service-http-response
   [this servlet ^HttpServletRequest request response]
-  (let [_ (if (and (async-response? this)
+  (let [_ (if (and (async-http-response? this)
                    (not (.isAsyncStarted request)))
             (.startAsync request))
-        c (set-response this servlet request response)]
+        c (set-http-response this servlet request response)]
     (if (instance? CompletionStage c)
-      (complete-response c servlet request response))))
+      (complete-http-response c servlet request response))))
