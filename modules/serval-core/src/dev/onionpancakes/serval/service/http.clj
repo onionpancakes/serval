@@ -83,6 +83,11 @@
   ;; Headers
   (when (contains? m :serval.response/headers)
     (set-response-headers response (:serval.response/headers m)))
+  ;; Trailers
+  (when (contains? m :serval.response/trailers)
+    (->> (:serval.response/trailers m)
+         (as-trailer-fields-supplier)
+         (.setTrailerFields response)))
   ;; Cookies
   (when (contains? m :serval.response/cookies)
     (doseq [cookie (:serval.response/cookies m)]
@@ -96,11 +101,6 @@
   ;; CharacterEncoding
   (when (contains? m :serval.response/character-encoding)
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
-  ;; Trailers
-  (when (contains? m :serval.response/trailers)
-    (->> (:serval.response/trailers m)
-         (as-trailer-fields-supplier)
-         (.setTrailerFields response)))
   ;; Body
   ;; Return CompletionStage from service-body.
   (when (contains? m :serval.response/body)
