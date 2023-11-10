@@ -68,9 +68,14 @@
   Supplier
   (as-trailer-fields-supplier [this] this))
 
-;; HttpResponse
+;; Service response
 
-(defn service-response-from-map
+(defn async-response?
+  [m]
+  (and (contains? m :serval.response/body)
+       (service.body/async-body? (:serval.response/body m))))
+
+(defn set-response
   [m servlet request ^HttpServletResponse response]
   ;; Status
   (when (contains? m :serval.response/status)
@@ -102,53 +107,21 @@
     (-> (:serval.response/body m)
         (service.body/service-body servlet request response))))
 
-(defprotocol HttpResponse
-  (async-response? [this])
-  (service-response [this servlet request response]))
+(defn complete-response
+  [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
+  (.whenComplete stage (reify BiConsumer
+                         (accept [_ _ throwable]
+                           (if throwable
+                             (->> (.getMessage ^Throwable throwable)
+                                  (.sendError response 500)))
+                           (if (.isAsyncStarted request)
+                             (.. request (getAsyncContext) (complete)))))))
 
-(extend-protocol HttpResponse
-  java.util.Map
-  (async-response? [this]
-    (and (contains? this :serval.response/body)
-         (service.body/async-body? (:serval.response/body this))))
-  (service-response [this servlet request response]
-    (service-response-from-map this servlet request response))
-  CompletionStage
-  (async-response? [this] true)
-  (service-response [this servlet request response]
-    (.thenCompose this (reify Function
-                         (apply [_ m]
-                           (let [ret (service-response-from-map m servlet request response)]
-                             (if (instance? CompletionStage ret)
-                               ret
-                               (CompletableFuture/completedFuture ret))))))))
-
-;; HttpResponseCompletable
-
-(defprotocol HttpResponseCompletable
-  (complete-response [this servlet request response]))
-
-(extend-protocol HttpResponseCompletable
-  CompletionStage
-  (complete-response [this _ request response]
-    (.whenComplete this (reify BiConsumer
-                          (accept [_ _ throwable]
-                            (if throwable
-                              (->> (.getMessage ^Throwable throwable)
-                                   (.sendError response 500)))
-                            (if (.isAsyncStarted request)
-                              (.. request (getAsyncContext) (complete)))))))
-  Object
-  (complete-response [_ _ _ _] nil)
-  nil
-  (complete-response [_ _ _ _] nil))
-
-;; Service
-
-(defn service
+(defn service-response
   [this servlet ^HttpServletRequest request response]
   (let [_ (if (and (async-response? this)
                    (not (.isAsyncStarted request)))
-            (.startAsync request))]
-    (-> (service-response this servlet request response)
-        (complete-response servlet request response))))
+            (.startAsync request))
+        c (set-response this servlet request response)]
+    (if (instance? CompletionStage c)
+      (complete-response c servlet request response))))
