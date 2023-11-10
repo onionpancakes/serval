@@ -108,20 +108,21 @@
         (service.body/set-body servlet request response))))
 
 (defn complete-http-response
-  [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
-  (.whenComplete stage (reify BiConsumer
-                         (accept [_ _ throwable]
-                           (if throwable
-                             (->> (.getMessage ^Throwable throwable)
-                                  (.sendError response 500)))
-                           (if (.isAsyncStarted request)
-                             (.. request (getAsyncContext) (complete)))))))
+  [stage _ ^HttpServletRequest request ^HttpServletResponse response]
+  (if (instance? CompletionStage stage)
+    (let [complete-step (reify BiConsumer
+                          (accept [_ _ throwable]
+                            (if throwable
+                              (->> (.getMessage ^Throwable throwable)
+                                   (.sendError response 500)))
+                            (if (.isAsyncStarted request)
+                              (.. request (getAsyncContext) (complete)))))]
+      (.whenComplete ^CompletionStage stage complete-step))))
 
 (defn service-http-response
   [this servlet ^HttpServletRequest request response]
   (let [_ (if (and (async-http-response? this)
                    (not (.isAsyncStarted request)))
-            (.startAsync request))
-        c (set-http-response this servlet request response)]
-    (if (instance? CompletionStage c)
-      (complete-http-response c servlet request response))))
+            (.startAsync request))]
+    (-> (set-http-response this servlet request response)
+        (complete-http-response servlet request response))))
