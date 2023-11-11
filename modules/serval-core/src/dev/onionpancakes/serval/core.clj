@@ -4,11 +4,11 @@
 
 ;; Servlet
 
-(defn http-servlet
-  "Creates a http Servlet from a handler function."
+(defn servlet
+  "Creates a Servlet which services a http response from the handler function."
   ^jakarta.servlet.GenericServlet
   [handler]
-  (impl.http.servlet/http-servlet handler))
+  (impl.http.servlet/servlet handler))
 
 ;; Processors
 

@@ -9,10 +9,10 @@
 (extend-protocol Servlet
   clojure.lang.AFunction
   (as-servlet [this]
-    (srv/http-servlet this))
+    (srv/servlet this))
   clojure.lang.Var
   (as-servlet [this]
-    (srv/http-servlet this))
+    (srv/servlet this))
   jakarta.servlet.Servlet
   (as-servlet [this] this))
 

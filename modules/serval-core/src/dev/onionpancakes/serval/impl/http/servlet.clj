@@ -22,7 +22,7 @@
         (handler)
         (service.http/service-http-response servlet request response))))
 
-(defn http-servlet
+(defn servlet
   ^GenericServlet
   [handler]
   (-> (proxy [GenericServlet] [])
