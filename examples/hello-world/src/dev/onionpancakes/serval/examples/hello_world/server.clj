@@ -20,5 +20,5 @@
 (defn stop []
   (srv.jetty/stop server))
 
-(defn -main []
-  (start))
+(defn restart []
+  (srv.jetty/restart server))

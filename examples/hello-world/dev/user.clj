@@ -1,12 +1,7 @@
 (ns user
-  (:require [dev.onionpancakes.serval.examples.hello-world.server :as server]
-            [dev.onionpancakes.serval.examples.hello-world.app :as app]))
+  (:require [dev.onionpancakes.serval.examples.hello-world.app :as app]
+            [dev.onionpancakes.serval.examples.hello-world.server :as server
+             :refer [start stop restart]]))
 
 (defn init-dev []
   (server/configure {:dev? true}))
-
-(defn start []
-  (server/start))
-
-(defn stop []
-  (server/stop))
