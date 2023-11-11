@@ -65,6 +65,3 @@
   ([] (send nil))
   ([req] (send req *body-handler*))
   ([req body-handler] (hop/send (request-with-defaults req) body-handler)))
-
-
-
