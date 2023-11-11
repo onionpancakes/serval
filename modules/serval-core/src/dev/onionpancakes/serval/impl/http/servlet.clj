@@ -20,7 +20,7 @@
   (fn [servlet ^HttpServletRequest request ^HttpServletResponse response]
     (-> (context servlet request response)
         (handler)
-        (service.http/service-http-response servlet request response))))
+        (service.http/service-response servlet request response))))
 
 (defn servlet
   ^GenericServlet

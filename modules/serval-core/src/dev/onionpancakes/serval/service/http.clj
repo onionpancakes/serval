@@ -33,7 +33,7 @@
   (set-header-value [this header-name ^HttpServletResponse response]
     (.setHeader response header-name (.toString this))))
 
-(defn add-header-value-from-random-access
+(defn add-random-access-header-value
   [^java.util.List this header-name response]
   (loop [i 0 cnt (.size this)]
     (when (< i cnt)
@@ -42,17 +42,17 @@
 
 (extend java.util.RandomAccess
   HeaderValue
-  {:add-header-value add-header-value-from-random-access
-   :set-header-value add-header-value-from-random-access})
+  {:add-header-value add-random-access-header-value
+   :set-header-value add-random-access-header-value})
 
-(defn set-servlet-response-header-value
+(defn set-http-servlet-response-header-value
   [response header-name value]
   (set-header-value value header-name response)
   response)
 
-(defn set-servlet-response-headers
+(defn set-http-servlet-response-headers
   [response headers]
-  (reduce-kv set-servlet-response-header-value response headers))
+  (reduce-kv set-http-servlet-response-header-value response headers))
 
 ;; Trailers
 
@@ -70,19 +70,19 @@
 
 ;; Service response
 
-(defn async-http-response?
+(defn async-response?
   [m]
   (and (contains? m :serval.response/body)
        (service.body/async-body? (:serval.response/body m))))
 
-(defn set-http-response
+(defn set-response
   [m servlet request ^HttpServletResponse response]
   ;; Status
   (when (contains? m :serval.response/status)
     (.setStatus response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
-    (set-servlet-response-headers response (:serval.response/headers m)))
+    (set-http-servlet-response-headers response (:serval.response/headers m)))
   ;; Trailers
   (when (contains? m :serval.response/trailers)
     (->> (:serval.response/trailers m)
@@ -108,7 +108,7 @@
         (service.body/set-body servlet request response))
     (CompletableFuture/completedFuture nil)))
 
-(defn complete-http-response
+(defn complete-response
   [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
   (.whenComplete stage (reify BiConsumer
                          (accept [_ _ throwable]
@@ -118,10 +118,10 @@
                            (if (.isAsyncStarted request)
                              (.. request (getAsyncContext) (complete)))))))
 
-(defn service-http-response
+(defn service-response
   [this servlet ^HttpServletRequest request response]
-  (let [_ (if (and (async-http-response? this)
+  (let [_ (if (and (async-response? this)
                    (not (.isAsyncStarted request)))
             (.startAsync request))]
-    (-> (set-http-response this servlet request response)
-        (complete-http-response servlet request response))))
+    (-> (set-response this servlet request response)
+        (complete-response servlet request response))))
