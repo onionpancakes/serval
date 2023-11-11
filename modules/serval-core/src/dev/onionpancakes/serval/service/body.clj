@@ -71,8 +71,10 @@
   Object
   (async-body? [this] false)
   (set-body [this _ _ ^ServletResponse response]
-    (write this (.getOutputStream response) (.getCharacterEncoding response)))
+    (-> (write this (.getOutputStream response) (.getCharacterEncoding response))
+        (CompletableFuture/completedFuture)))
   nil
   (async-body? [this] false)
   (set-body [this _ _ ^ServletResponse response]
-    (write this (.getOutputStream response) (.getCharacterEncoding response))))
+    (-> (write this (.getOutputStream response) (.getCharacterEncoding response))
+        (CompletableFuture/completedFuture))))

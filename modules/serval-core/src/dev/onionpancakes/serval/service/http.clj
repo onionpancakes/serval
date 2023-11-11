@@ -103,21 +103,20 @@
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
   ;; Body
   ;; Return from set-body.
-  (when (contains? m :serval.response/body)
+  (if (contains? m :serval.response/body)
     (-> (:serval.response/body m)
-        (service.body/set-body servlet request response))))
+        (service.body/set-body servlet request response))
+    (CompletableFuture/completedFuture nil)))
 
 (defn complete-http-response
-  [stage _ ^HttpServletRequest request ^HttpServletResponse response]
-  (if (instance? CompletionStage stage)
-    (let [complete-step (reify BiConsumer
-                          (accept [_ _ throwable]
-                            (if throwable
-                              (->> (.getMessage ^Throwable throwable)
-                                   (.sendError response 500)))
-                            (if (.isAsyncStarted request)
-                              (.. request (getAsyncContext) (complete)))))]
-      (.whenComplete ^CompletionStage stage complete-step))))
+  [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
+  (.whenComplete stage (reify BiConsumer
+                         (accept [_ _ throwable]
+                           (if throwable
+                             (->> (.getMessage ^Throwable throwable)
+                                  (.sendError response 500)))
+                           (if (.isAsyncStarted request)
+                             (.. request (getAsyncContext) (complete)))))))
 
 (defn service-http-response
   [this servlet ^HttpServletRequest request response]
