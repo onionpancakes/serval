@@ -8,7 +8,6 @@
             [dev.onionpancakes.serval.reitit :as srv.reitit]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]
-            [promesa.core :as p]
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 

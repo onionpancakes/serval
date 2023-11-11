@@ -9,8 +9,7 @@
 
  :aliases
  {:dev
-  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.7"}
-                 funcool/promesa        {:mvn/version "11.0.674"}}
+  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.9"}}
    :extra-paths ["dev"
                  "./modules/serval-core/test"
                  "./modules/serval-core-async/test"
