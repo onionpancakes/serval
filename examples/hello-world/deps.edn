@@ -1,10 +1,18 @@
-{:deps  {dev.onionpancakes/serval {:local/root "../.."}
-         org.slf4j/slf4j-simple   {:mvn/version "2.0.0-alpha5"}}
+{:deps  {dev.onionpancakes/serval {:local/root "../.."}}
  :paths ["src"]
 
  :aliases
  {:dev
-  {:extra-paths ["dev"]}
+  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.9"}}
+   :extra-paths ["dev"]}
 
   :start
-  {:main-opts ["-m" "dev.onionpancakes.serval.examples.hello-world.server"]}}}
+  {:extra-deps {org.slf4j/slf4j-simple {:mvn/version "2.0.9"}}
+   :main-opts  ["-m" "dev.onionpancakes.serval.examples.hello-world.server"]}
+
+  :run-tests
+  {:extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+   :extra-paths ["test"]
+   :exec-fn     cognitect.test-runner.api/test
+   :exec-args   {:dirs     ["test"]
+                 :patterns ["dev\\.onionpancakes\\.serval\\.examples\\.hello-world\\.tests\\..*"]}}}}
