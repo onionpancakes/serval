@@ -30,7 +30,7 @@
   (let [error (.getMessage (:serval.jsonista/error ctx))
         data  {:message "Bad Json."
                :error   error}]
-    (response ctx 200 (srv.json/json-value data) "application/json")))
+    (response ctx 400 (srv.json/json-value data) "application/json")))
 
 (def echo-json
   (srv/handler (comp (srv/map srv.json/read-json)
