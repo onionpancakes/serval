@@ -76,6 +76,7 @@
        (service.body/async-body? (:serval.response/body m))))
 
 (defn set-response
+  ^CompletionStage
   [m servlet request ^HttpServletResponse response]
   ;; Status
   (when (contains? m :serval.response/status)

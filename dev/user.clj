@@ -1,5 +1,6 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as srv]
+            [dev.onionpancakes.serval.servlet :as srv.servlet]
             [dev.onionpancakes.serval.handlers.http
              :as handlers.http
              :refer [response]]
