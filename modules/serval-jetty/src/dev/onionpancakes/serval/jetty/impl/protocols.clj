@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.jetty.impl.protocols
-  (:require [dev.onionpancakes.serval.core :as srv]))
+  (:require [dev.onionpancakes.serval.servlet :as srv.servlet]))
 
 ;; Core
 
@@ -9,10 +9,10 @@
 (extend-protocol Servlet
   clojure.lang.AFunction
   (as-servlet [this]
-    (srv/servlet this))
+    (srv.servlet/servlet this))
   clojure.lang.Var
   (as-servlet [this]
-    (srv/servlet this))
+    (srv.servlet/servlet this))
   jakarta.servlet.Servlet
   (as-servlet [this] this))
 

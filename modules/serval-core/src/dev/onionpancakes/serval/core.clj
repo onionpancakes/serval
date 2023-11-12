@@ -1,14 +1,5 @@
 (ns dev.onionpancakes.serval.core
-  (:refer-clojure :exclude [map when])
-  (:require [dev.onionpancakes.serval.impl.http.servlet :as impl.http.servlet]))
-
-;; Servlet
-
-(defn servlet
-  "Creates a Servlet which services a http response from the handler function."
-  ^jakarta.servlet.GenericServlet
-  [handler]
-  (impl.http.servlet/servlet handler))
+  (:refer-clojure :exclude [map when]))
 
 ;; Processors
 
