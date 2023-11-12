@@ -9,7 +9,6 @@ Servlet oriented web framework for Clojure.
 * Composable linear request processing flow, using transducer like *processors*.
 * Access to the latest servlet API developments with minimal maintenance.
 * Extensible request handling via protocols.
-* Easy to use asynchronous APIs for I/O and computation. (TBD)
 
 # Status
 
@@ -75,7 +74,7 @@ Add the handler to server.
 Alternatively, create a `jakarta.servlet.Servlet` from handler. Use it in your favorite servlet container.
 
 ```clojure
-(srv/http-servlet my-handler)
+(srv/servlet my-handler)
 ```
 
 See example directory for complete solution.
