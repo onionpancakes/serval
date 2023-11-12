@@ -13,15 +13,14 @@
 (defn set-filter
   ^CompletionStage
   [m servlet request response ^FilterChain filter-chain]
-  (let [http-cf (service.http/set-response m servlet request response)]
-    (if (contains? m :serval.filter/next)
-      (-> (:serval.filter/next m)
-          (CompletableFuture/completedFuture) ; TODO filter next protocol
-          (.thenAcceptBoth http-cf (reify BiConsumer
-                                     (accept [_ do-filter _]
-                                       (if do-filter
-                                         (.doFilter filter-chain request response))))))
-      (CompletableFuture/completedFuture false))))
+  (let [next-cs (if (contains? m :serval.filter/next)
+                  (-> (:serval.filter/next m) ; TODO filter next protocol
+                      (CompletableFuture/completedFuture)))]
+    (cond-> (service.http/set-response m servlet request response)
+      next-cs (.thenAcceptBoth next-cs (reify BiConsumer
+                                         (accept [_ _ do-filter]
+                                           (if do-filter
+                                             (.doFilter filter-chain request response))))))))
 
 (defn complete-filter
   [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response _]
