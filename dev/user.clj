@@ -13,11 +13,11 @@
 
 (defn my-handler
   [ctx]
-  (into ctx {:serval.response/status             200
-             :serval.response/headers            {}
-             :serval.response/body               "Hello world!"
-             :serval.response/content-type       "text/plain"
-             :serval.response/character-encoding "utf-8"}))
+  (merge ctx {:serval.response/status             200
+              :serval.response/headers            {}
+              :serval.response/body               "Hello world!!"
+              :serval.response/content-type       "text/plain"
+              :serval.response/character-encoding "utf-8"}))
 
 (defn my-filter
   [ctx]
