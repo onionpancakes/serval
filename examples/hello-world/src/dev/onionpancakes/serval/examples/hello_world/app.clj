@@ -1,6 +1,5 @@
 (ns dev.onionpancakes.serval.examples.hello-world.app
-  (:require [dev.onionpancakes.serval.core :as srv]
-            [dev.onionpancakes.serval.handlers.http
+  (:require [dev.onionpancakes.serval.core :as srv
              :refer [response]]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.reitit :as srv.reitit]))
