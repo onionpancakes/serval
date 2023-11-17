@@ -5,7 +5,7 @@
   (:import [jakarta.servlet ServletResponse]
            [java.util.concurrent CompletableFuture]))
 
-(defrecord ChannelBody [ch]
+#_(defrecord ChannelBody [ch]
   service.body/Body
   (async-body? [_] true)
   (set-body [_ _ _ response]
@@ -20,6 +20,6 @@
           _   (async/take! rch (fn [_] (.complete cf nil)))]
       cf)))
 
-(defn channel-body
+#_(defn channel-body
   [ch]
   (ChannelBody. ch))

@@ -8,51 +8,51 @@
 ;; Headers
 
 (defprotocol HeaderValue
-  (add-header-value [this header-name response])
-  (set-header-value [this header-name response]))
+  (add-header-to-response [this response header-name])
+  (set-header-to-response [this response header-name]))
 
 (extend-protocol HeaderValue
   String
-  (add-header-value [this header-name ^HttpServletResponse response]
+  (add-header-to-response [this ^HttpServletResponse response header-name]
     (.addHeader response header-name this))
-  (set-header-value [this header-name ^HttpServletResponse response]
+  (set-header-to-response [this ^HttpServletResponse response header-name]
     (.setHeader response header-name this))
   java.util.Date
-  (add-header-value [this header-name ^HttpServletResponse response]
+  (add-header-to-response [this ^HttpServletResponse response header-name]
     (.addDateHeader response header-name (.getTime this)))
-  (set-header-value [this header-name ^HttpServletResponse response]
+  (set-header-to-response [this ^HttpServletResponse response header-name]
     (.setDateHeader response header-name (.getTime this)))
   java.time.Instant
-  (add-header-value [this header-name ^HttpServletResponse response]
+  (add-header-to-response [this ^HttpServletResponse response header-name]
     (.addDateHeader response header-name (.toEpochMilli this)))
-  (set-header-value [this header-name ^HttpServletResponse response]
+  (set-header-to-response [this ^HttpServletResponse response header-name]
     (.setDateHeader response header-name (.toEpochMilli this)))
   Object
-  (add-header-value [this header-name ^HttpServletResponse response]
+  (add-header-to-response [this ^HttpServletResponse response header-name]
     (.addHeader response header-name (.toString this)))
-  (set-header-value [this header-name ^HttpServletResponse response]
+  (set-header-to-response [this ^HttpServletResponse response header-name]
     (.setHeader response header-name (.toString this))))
 
-(defn add-random-access-header-value
-  [^java.util.List this header-name response]
-  (loop [i 0 cnt (.size this)]
-    (when (< i cnt)
-      (add-header-value (.get this i) header-name response)
-      (recur (inc i) cnt))))
+(defn add-random-access-header-to-response
+  [^java.util.List this response header-name]
+  (loop [i 0 size (.size this)]
+    (when (< i size)
+      (add-header-to-response (.get this i) response header-name)
+      (recur (inc i) size))))
 
 (extend java.util.RandomAccess
   HeaderValue
-  {:add-header-value add-random-access-header-value
-   :set-header-value add-random-access-header-value})
+  {:add-header-to-response add-random-access-header-to-response
+   :set-header-to-response add-random-access-header-to-response})
 
-(defn set-http-servlet-response-header-value
+(defn set-header-value
   [response header-name value]
-  (set-header-value value header-name response)
+  (set-header-to-response value response header-name)
   response)
 
-(defn set-http-servlet-response-headers
+(defn set-headers
   [response headers]
-  (reduce-kv set-http-servlet-response-header-value response headers))
+  (reduce-kv set-header-value response headers))
 
 ;; Trailers
 
@@ -68,27 +68,24 @@
   Supplier
   (as-trailer-fields-supplier [this] this))
 
-;; Service response
+(defn set-trailers
+  [^HttpServletResponse response trailers]
+  (.setTrailerFiles response (as-trailer-fields-supplier trailers))
+  response)
 
-(defn async-response?
-  [m]
-  (and (contains? m :serval.response/body)
-       (service.body/async-body? (:serval.response/body m))))
+;; Response
 
 (defn set-response
-  ^CompletionStage
-  [m servlet request ^HttpServletResponse response]
+  [^HttpServletResponse response m]
   ;; Status
   (when (contains? m :serval.response/status)
     (.setStatus response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
-    (set-http-servlet-response-headers response (:serval.response/headers m)))
+    (set-headers response (:serval.response/headers m)))
   ;; Trailers
   (when (contains? m :serval.response/trailers)
-    (->> (:serval.response/trailers m)
-         (as-trailer-fields-supplier)
-         (.setTrailerFields response)))
+    (set-trailers response (:serval.response/trailers m)))
   ;; Cookies
   (when (contains? m :serval.response/cookies)
     (doseq [cookie (:serval.response/cookies m)]
@@ -103,26 +100,6 @@
   (when (contains? m :serval.response/character-encoding)
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
   ;; Body
-  ;; Return from set-body.
-  (if (contains? m :serval.response/body)
-    (-> (:serval.response/body m)
-        (service.body/set-body servlet request response))
-    (CompletableFuture/completedFuture nil)))
-
-(defn complete-response
-  [^CompletionStage stage _ ^HttpServletRequest request ^HttpServletResponse response]
-  (.whenComplete stage (reify BiConsumer
-                         (accept [_ _ throwable]
-                           (if throwable
-                             (->> (.getMessage ^Throwable throwable)
-                                  (.sendError response 500)))
-                           (if (.isAsyncStarted request)
-                             (.. request (getAsyncContext) (complete)))))))
-
-(defn service-response
-  [this servlet ^HttpServletRequest request response]
-  (let [_ (if (and (async-response? this)
-                   (not (.isAsyncStarted request)))
-            (.startAsync request))]
-    (-> (set-response this servlet request response)
-        (complete-response servlet request response))))
+  (when (contains? m :serval.response/body)
+    (service.body/set-body response (:serval.response/body m)))
+  response)

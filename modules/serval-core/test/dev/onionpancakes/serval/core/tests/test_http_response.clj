@@ -53,19 +53,13 @@
     (let [body (:body (send))]
       (is (and (string? body) (not (empty? body)))))))
 
-(deftest test-body-async
-  (are [body expected] (with-response {:serval.response/body body}
-                         (= (:body (send)) expected))
-    (CompletableFuture/completedFuture "foo") "foo"))
-
 (deftest test-body-encoding
   (are [body enc expected] (with-response {:serval.response/body body
                                            :serval.response/content-type "text/plain"
                                            :serval.response/character-encoding enc}
                              (= (:body (send)) expected))
-    "foo" nil      "foo"
-    "foo" "utf-8"  "foo"
-    "foo" "utf-16" "foo"
-
+    "foo"                      nil      "foo"
+    "foo"                      "utf-8"  "foo"
+    "foo"                      "utf-16" "foo"
     (.getBytes "foo" "utf-16") "utf-16" "foo"))
 

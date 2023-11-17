@@ -18,9 +18,9 @@
 (defn service-fn
   [handler]
   (fn [servlet request response]
-    (-> (context servlet request response)
-        (handler)
-        (service.http/service-response servlet request response))))
+    (->> (context servlet request response)
+         (handler)
+         (service.http/set-response response))))
 
 (defn servlet
   ^GenericServlet

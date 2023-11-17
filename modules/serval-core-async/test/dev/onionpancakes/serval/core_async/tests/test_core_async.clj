@@ -6,7 +6,7 @@
             [clojure.test :refer [deftest is]]
             [clojure.core.async :as async]))
 
-(deftest test-channel-body
+#_(deftest test-channel-body
   (let [body (-> (async/to-chan! ["foo" "bar" "baz"])
                  (srv.async/channel-body))]
     (with-response {:serval.response/body body}

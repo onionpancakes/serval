@@ -53,28 +53,7 @@
   nil
   (write [_ _ _] nil))
 
-;; Body
-
-(defprotocol Body
-  (async-body? [this])
-  (set-body [this servlet request response]))
-
-(extend-protocol Body
-  CompletionStage
-  (async-body? [this] true)
-  (set-body [this _ _ ^ServletResponse response]
-    (.thenApply this (reify Function
-                       (apply [_ body]
-                         (let [out (.getOutputStream response)
-                               enc (.getCharacterEncoding response)]
-                           (write body out enc))))))
-  Object
-  (async-body? [this] false)
-  (set-body [this _ _ ^ServletResponse response]
-    (-> (write this (.getOutputStream response) (.getCharacterEncoding response))
-        (CompletableFuture/completedFuture)))
-  nil
-  (async-body? [this] false)
-  (set-body [this _ _ ^ServletResponse response]
-    (-> (write this (.getOutputStream response) (.getCharacterEncoding response))
-        (CompletableFuture/completedFuture))))
+(defn set-body
+  [^ServletResponse response body]
+  (write body (.getOutputStream response) (.getCharacterEncoding response))
+  response)
