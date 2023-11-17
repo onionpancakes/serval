@@ -79,6 +79,14 @@
   [ctx headers]
   (assoc ctx :serval.response/headers headers))
 
+(defn set-headers-kv!
+  "Sets the response headers immediately given key value pairs.
+
+  Context is unchanged."
+  [{:serval.context/keys [response] :as ctx} & {:as headers}]
+  (response.http/set-headers response headers)
+  ctx)
+
 (defn body
   "Sets the response body, content-type, and character-encoding."
   ([ctx body]
