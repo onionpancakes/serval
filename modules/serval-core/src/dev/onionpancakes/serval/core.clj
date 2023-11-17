@@ -1,6 +1,8 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map when])
-  (:require [dev.onionpancakes.serval.response.http
+  (:require [dev.onionpancakes.serval.response.body
+             :as response.body]
+            [dev.onionpancakes.serval.response.http
              :as response.http])
   (:import [jakarta.servlet FilterChain]))
 
@@ -79,11 +81,11 @@
   [ctx headers]
   (assoc ctx :serval.response/headers headers))
 
-(defn set-headers-kv!
-  "Sets the response headers immediately given key value pairs.
+(defn set-headers!
+  "Sets the response headers immediately.
 
   Context is unchanged."
-  [{:serval.context/keys [response] :as ctx} & {:as headers}]
+  [{:serval.context/keys [response] :as ctx} headers]
   (response.http/set-headers response headers)
   ctx)
 
@@ -100,6 +102,20 @@
           :serval.response/body               body
           :serval.response/content-type       content-type
           :serval.response/character-encoding character-encoding)))
+
+(defn set-body!
+  "Sets the response body immediately.
+
+  Context is unchanged."
+  ([{:serval.context/keys [response] :as ctx} body]
+   (response.body/set-body response body)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} body content-type]
+   (response.body/set-body response body content-type)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} body content-type character-encoding]
+   (response.body/set-body response body content-type character-encoding)
+   ctx))
 
 (defn response
   "Sets the response status, body, content-type, and character-encoding."
@@ -124,6 +140,30 @@
           :serval.response/body               body
           :serval.response/content-type       content-type
           :serval.response/character-encoding character-encoding)))
+
+(defn set-response!
+  "Sets the response status, body, content-type, and character-encoding immediately.
+
+  Context is unchanged."
+  ([{:serval.context/keys [response] :as ctx} status]
+   {:pre [(int? status)]}
+   (response.http/set-status response status)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} status body]
+   {:pre [(int? status)]}
+   (response.http/set-status response status)
+   (response.body/set-body response body)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} status body content-type]
+   {:pre [(int? status)]}
+   (response.http/set-status response status)
+   (response.body/set-body response body content-type)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} status body content-type character-encoding]
+   {:pre [(int? status)]}
+   (response.http/set-status response status)
+   (response.body/set-body response body content-type character-encoding)
+   ctx))
 
 (defn set-response-kv!
   "Sets the response immediately given key value pairs.

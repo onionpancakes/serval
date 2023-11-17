@@ -5,6 +5,13 @@
            [java.util.function Function BiConsumer Supplier]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
+;; Status
+
+(defn set-status
+  [^HttpServletResponse response status]
+  (doto response
+    (.setStatus status)))
+
 ;; Headers
 
 (defprotocol HeaderValue
@@ -70,8 +77,8 @@
 
 (defn set-trailers
   [^HttpServletResponse response trailers]
-  (.setTrailerFiles response (as-trailer-fields-supplier trailers))
-  response)
+  (doto response
+    (.setTrailerFields (as-trailer-fields-supplier trailers))))
 
 ;; Response
 
@@ -79,7 +86,7 @@
   [^HttpServletResponse response m]
   ;; Status
   (when (contains? m :serval.response/status)
-    (.setStatus response (:serval.response/status m)))
+    (set-status response (:serval.response/status m)))
   ;; Headers
   (when (contains? m :serval.response/headers)
     (set-headers response (:serval.response/headers m)))

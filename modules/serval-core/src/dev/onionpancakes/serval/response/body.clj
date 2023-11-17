@@ -54,6 +54,15 @@
   (write [_ _ _] nil))
 
 (defn set-body
-  [^ServletResponse response body]
-  (write body (.getOutputStream response) (.getCharacterEncoding response))
-  response)
+  ([^ServletResponse response body]
+   (write body (.getOutputStream response) (.getCharacterEncoding response))
+   response)
+  ([^ServletResponse response body content-type]
+   (.setContentType response content-type)
+   (write body (.getOutputStream response) (.getCharacterEncoding response))
+   response)
+  ([^ServletResponse response body content-type character-encoding]
+   (.setContentType response content-type)
+   (.setCharacterEncoding response character-encoding)
+   (write body (.getOutputStream response) (.getCharacterEncoding response))
+   response))
