@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.core
-  (:refer-clojure :exclude [map when]))
+  (:refer-clojure :exclude [map when])
+  (:import [jakarta.servlet FilterChain]))
 
 ;; Processors
 
@@ -72,7 +73,7 @@
 ;; Handlers
 
 (defn response
-  "Set the response status, body, content-type, and character encoding."
+  "Sets response status, body, content-type, and character-encoding."
   ([ctx status]
    {:pre [(int? status)]}
    (assoc ctx :serval.response/status status))
@@ -91,3 +92,21 @@
               :serval.response/body               body
               :serval.response/content-type       content-type
               :serval.response/character-encoding character-encoding)))
+
+(defn do-filter-chain
+  "Sets do-filter-chain, which is processed when the filter completes.
+  Since do-filter-chain is processed after filter completion,
+  this only allows for filter pre-processing."
+  ([ctx]
+   (assoc ctx :serval.filter/do-filter-chain true))
+  ([ctx do-chain]
+   (assoc ctx :serval.filter/do-filter-chain do-chain)))
+
+(defn do-filter-chain!
+  "Does the filter chain immediately. Allows for filter post-processing."
+  ([{:serval.context/keys [request response ^FilterChain filter-chain] :as ctx}]
+   (.doFilter filter-chain request response)
+   ctx)
+  ([{:serval.context/keys [^FilterChain filter-chain] :as ctx} request response]
+   (.doFilter filter-chain request response)
+   ctx))
