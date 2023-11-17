@@ -1,4 +1,5 @@
 (ns dev.onionpancakes.serval.jetty.impl.server
+  (:require [dev.onionpancakes.serval.jetty.impl.protocols :as p])
   (:import [org.eclipse.jetty.server
             Server Handler ServerConnector
             HttpConnectionFactory HttpConfiguration
@@ -63,6 +64,26 @@
       (.setIdleTimeout conn (:idle-timeout config)))
     conn))
 
+;; ServerHandler
+
+(def ^:dynamic *server-handler*
+  'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)
+
+(defn as-server-handler
+  [config]
+  (let [server-handler (requiring-resolve *server-handler*)]
+    (server-handler config)))
+
+(extend-protocol p/ServerHandler
+  Handler
+  (as-server-handler [this] this)
+  Object
+  (as-server-handler [this]
+    (as-server-handler this))
+  nil
+  (as-server-handler [this]
+    (as-server-handler nil)))
+
 ;; Server
 
 (defn configure-server
@@ -73,7 +94,7 @@
          (into-array ServerConnector)
          (.setConnectors server)))
   (when (contains? config :handler)
-    (.setHandler server ^Handler (:handler config)))
+    (.setHandler server (p/as-server-handler (:handler config))))
   (when (contains? config :request-log)
     (.setRequestLog server (:request-log config)))
   server)

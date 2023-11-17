@@ -15,19 +15,9 @@
 
 ;; Server
 
-(def as-server-handler-fn
-  (delay
-    (require '[dev.onionpancakes.serval.jetty.impl.ee10.servlet])
-    (resolve 'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)))
-
-(defn server-config
-  [config]
-  (cond-> config
-    (contains? config :handler) (update :handler @as-server-handler-fn)))
-
 (defn configure-server
   [server config]
-  (impl.server/configure-server server (server-config config)))
+  (impl.server/configure-server server config))
 
 (def default-server-config
   {:request-log (CustomRequestLog.)})

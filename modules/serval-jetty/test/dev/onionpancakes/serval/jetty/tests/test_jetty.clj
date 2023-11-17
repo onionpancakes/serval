@@ -47,7 +47,7 @@
 
 (deftest test-gzip-handler
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:servlets     (constantly {:serval.response/body "foo"})
+                :handler    {:routes       [["/*" (constantly {:serval.response/body "foo"})]]
                              :gzip-handler {:min-gzip-size 0}}}
     (let [req  {:uri     "http://localhost:42000"
                 :headers {:accept-encoding "gzip"}}
