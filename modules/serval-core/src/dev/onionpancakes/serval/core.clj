@@ -74,20 +74,25 @@
 
 ;; Handlers
 
+(defn headers
+  "Sets the response headers."
+  [ctx headers]
+  (assoc ctx :serval.response/headers headers))
+
 (defn body
-  "Sets the body, content-type, and character-encoding."
+  "Sets the response body, content-type, and character-encoding."
   ([ctx body]
    (assoc ctx :serval.response/body body))
   ([ctx body content-type]
    (assoc ctx :serval.response/body         body
-              :serval.response/content-type content-type))
+          :serval.response/content-type content-type))
   ([ctx body content-type character-encoding]
    (assoc ctx :serval.response/body               body
-              :serval.response/content-type       content-type
-              :serval.response/character-encoding character-encoding)))
+          :serval.response/content-type       content-type
+          :serval.response/character-encoding character-encoding)))
 
 (defn response
-  "Sets response status, body, content-type, and character-encoding."
+  "Sets the response status, body, content-type, and character-encoding."
   ([ctx status]
    {:pre [(int? status)]}
    (assoc ctx :serval.response/status status))
@@ -108,7 +113,8 @@
               :serval.response/character-encoding character-encoding)))
 
 (defn set-response-kv!
-  "Sets the response immediately given response key value pairs,
+  "Sets the response immediately given key value pairs.
+
   Context is unchanged."
   [{:serval.context/keys [response] :as ctx} & {:as m}]
   (response.http/set-response response m)
@@ -125,6 +131,7 @@
 
 (defn do-filter-chain!
   "Does the filter chain immediately. Allows for filter post-processing.
+
   Context is unchanged."
   ([{:serval.context/keys [request response ^FilterChain filter-chain] :as ctx}]
    (.doFilter filter-chain request response)
