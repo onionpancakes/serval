@@ -16,10 +16,10 @@
         (service-fn this request response)))))
 
 (extend-protocol p/ErrorHandler
-  clojure.lang.APersistentMap
+  clojure.lang.IPersistentMap
   (as-error-handler [this]
     (error-handler this))
-  clojure.lang.AFunction
+  clojure.lang.Fn
   (as-error-handler [this]
     (error-handler {:handler this}))
   clojure.lang.Var
@@ -70,7 +70,7 @@
     gzhandler))
 
 (extend-protocol p/GzipHandler
-  clojure.lang.APersistentMap
+  clojure.lang.IPersistentMap
   (as-gzip-handler [this]
     (gzip-handler this))
   Boolean

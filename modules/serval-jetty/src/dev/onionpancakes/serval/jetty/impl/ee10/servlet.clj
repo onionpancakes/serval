@@ -22,10 +22,10 @@
     sch))
 
 (extend-protocol ee10.p/ServletContextHandler
-  clojure.lang.APersistentMap
+  clojure.lang.IPersistentMap
   (as-servlet-context-handler [this]
     (servlet-context-handler this))
-  clojure.lang.APersistentVector
+  clojure.lang.IPersistentVector
   (as-servlet-context-handler [this]
     (servlet-context-handler {:routes this}))
   Object

@@ -14,7 +14,7 @@
   (get-dispatch-types [this]))
 
 (extend-protocol RouteServlet
-  clojure.lang.AFunction
+  clojure.lang.Fn
   (get-servlet-name [this url-pattern]
     (str "serval.servlet.route/servlet:" (hash this) ":" url-pattern))
   (add-servlet [this ^ServletContext servlet-ctx ^String servlet-name]
@@ -30,7 +30,7 @@
       (.addServlet servlet-ctx servlet-name (srv.servlet/servlet this)))))
 
 (extend-protocol RouteFilter
-  clojure.lang.AFunction
+  clojure.lang.Fn
   (get-filter-name [this url-pattern]
     (str "serval.servlet.route/filter:" (hash this) ":" url-pattern))
   (add-filter [this ^ServletContext servlet-ctx ^String filter-name]
