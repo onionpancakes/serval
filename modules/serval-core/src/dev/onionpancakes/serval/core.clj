@@ -1,5 +1,7 @@
 (ns dev.onionpancakes.serval.core
   (:refer-clojure :exclude [map when])
+  (:require [dev.onionpancakes.serval.response.http
+             :as response.http])
   (:import [jakarta.servlet FilterChain]))
 
 ;; Processors
@@ -72,6 +74,18 @@
 
 ;; Handlers
 
+(defn body
+  "Sets the body, content-type, and character-encoding."
+  ([ctx body]
+   (assoc ctx :serval.response/body body))
+  ([ctx body content-type]
+   (assoc ctx :serval.response/body         body
+              :serval.response/content-type content-type))
+  ([ctx body content-type character-encoding]
+   (assoc ctx :serval.response/body               body
+              :serval.response/content-type       content-type
+              :serval.response/character-encoding character-encoding)))
+
 (defn response
   "Sets response status, body, content-type, and character-encoding."
   ([ctx status]
@@ -93,6 +107,13 @@
               :serval.response/content-type       content-type
               :serval.response/character-encoding character-encoding)))
 
+(defn set-response-kv!
+  "Sets the response immediately given response key value pairs,
+  Context is unchanged."
+  [{:serval.context/keys [response] :as ctx} & {:as m}]
+  (response.http/set-response response m)
+  ctx)
+
 (defn do-filter-chain
   "Sets do-filter-chain, which is processed when the filter completes.
   Since do-filter-chain is processed after filter completion,
@@ -103,7 +124,8 @@
    (assoc ctx :serval.filter/do-filter-chain do-chain)))
 
 (defn do-filter-chain!
-  "Does the filter chain immediately. Allows for filter post-processing."
+  "Does the filter chain immediately. Allows for filter post-processing.
+  Context is unchanged."
   ([{:serval.context/keys [request response ^FilterChain filter-chain] :as ctx}]
    (.doFilter filter-chain request response)
    ctx)
