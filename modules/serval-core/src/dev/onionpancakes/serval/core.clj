@@ -84,10 +84,12 @@
   ([ctx body]
    (assoc ctx :serval.response/body body))
   ([ctx body content-type]
-   (assoc ctx :serval.response/body         body
+   (assoc ctx
+          :serval.response/body         body
           :serval.response/content-type content-type))
   ([ctx body content-type character-encoding]
-   (assoc ctx :serval.response/body               body
+   (assoc ctx
+          :serval.response/body               body
           :serval.response/content-type       content-type
           :serval.response/character-encoding character-encoding)))
 
@@ -98,19 +100,22 @@
    (assoc ctx :serval.response/status status))
   ([ctx status body]
    {:pre [(int? status)]}
-   (assoc ctx :serval.response/status status
-              :serval.response/body   body))
+   (assoc ctx
+          :serval.response/status status
+          :serval.response/body   body))
   ([ctx status body content-type]
    {:pre [(int? status)]}
-   (assoc ctx :serval.response/status       status
-              :serval.response/body         body
-              :serval.response/content-type content-type))
+   (assoc ctx
+          :serval.response/status       status
+          :serval.response/body         body
+          :serval.response/content-type content-type))
   ([ctx status body content-type character-encoding]
    {:pre [(int? status)]}
-   (assoc ctx :serval.response/status             status
-              :serval.response/body               body
-              :serval.response/content-type       content-type
-              :serval.response/character-encoding character-encoding)))
+   (assoc ctx
+          :serval.response/status             status
+          :serval.response/body               body
+          :serval.response/content-type       content-type
+          :serval.response/character-encoding character-encoding)))
 
 (defn set-response-kv!
   "Sets the response immediately given key value pairs.
