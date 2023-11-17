@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.service.body
+(ns dev.onionpancakes.serval.response.body
   (:import [jakarta.servlet ServletResponse ServletOutputStream]
            [java.nio.file Files]
            [java.util.concurrent CompletionStage CompletableFuture]

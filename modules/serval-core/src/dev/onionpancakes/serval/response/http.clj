@@ -1,6 +1,6 @@
-(ns dev.onionpancakes.serval.service.http
-  (:require [dev.onionpancakes.serval.service.body
-             :as service.body])
+(ns dev.onionpancakes.serval.response.http
+  (:require [dev.onionpancakes.serval.response.body
+             :as response.body])
   (:import [java.util.concurrent CompletionStage CompletableFuture]
            [java.util.function Function BiConsumer Supplier]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
@@ -101,5 +101,5 @@
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
   ;; Body
   (when (contains? m :serval.response/body)
-    (service.body/set-body response (:serval.response/body m)))
+    (response.body/set-body response (:serval.response/body m)))
   response)

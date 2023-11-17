@@ -1,6 +1,7 @@
 (ns dev.onionpancakes.serval.impl.http.filter
   (:refer-clojure :exclude [filter])
-  (:require [dev.onionpancakes.serval.service.http :as service.http])
+  (:require [dev.onionpancakes.serval.response.http
+             :as response.http])
   (:import [jakarta.servlet GenericFilter FilterChain]))
 
 (defn context
@@ -22,7 +23,7 @@
   (fn [servlet request response ^FilterChain filter-chain]
     (let [ctx (context servlet request response filter-chain)
           ret (handler ctx)]
-      (service.http/set-response response ret)
+      (response.http/set-response response ret)
       (-> (:serval.filter/do-filter-chain ret)
           (do-filter-chain filter-chain request response)))))
 
