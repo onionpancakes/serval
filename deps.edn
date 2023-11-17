@@ -1,6 +1,5 @@
 {:deps {org.clojure/clojure                 {:mvn/version "1.11.1"}
         dev.onionpancakes/serval-core       {:local/root "./modules/serval-core"}
-        dev.onionpancakes/serval-core-async {:local/root "./modules/serval-core-async"}
         dev.onionpancakes/serval-jetty      {:local/root "./modules/serval-jetty"}
         dev.onionpancakes/serval-jetty-test {:local/root "./modules/serval-jetty-test"}
         dev.onionpancakes/serval-jsonista   {:local/root "./modules/serval-jsonista"}
@@ -12,7 +11,6 @@
   {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.9"}}
    :extra-paths ["dev"
                  "./modules/serval-core/test"
-                 "./modules/serval-core-async/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jetty-test/test"
                  "./modules/serval-jsonista/test"
@@ -23,7 +21,6 @@
   {:extra-deps  {io.github.cognitect-labs/test-runner          {:git/tag "v0.5.1" :git/sha "dfb30dd"}
                  dev.onionpancakes/serval-examples-hello-world {:local/root "./examples/hello-world"}}
    :extra-paths ["./modules/serval-core/test"
-                 "./modules/serval-core-async/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jetty-test/test"
                  "./modules/serval-jsonista/test"
@@ -32,7 +29,6 @@
                  "./examples/hello-world/test"]
    :exec-fn     cognitect.test-runner.api/test
    :exec-args   {:dirs     ["./modules/serval-core/test"
-                            "./modules/serval-core-async/test"
                             "./modules/serval-jetty/test"
                             "./modules/serval-jetty-test/test"
                             "./modules/serval-jsonista/test"
