@@ -194,7 +194,7 @@
    ctx))
 
 (defn log
-  "Log a message using ServletContext.
+  "Logs the message and throwable using ServletContext.
 
   Context is unchanged."
   ([{:serval.context/keys [^ServletRequest request] :as ctx} msg]
