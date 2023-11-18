@@ -15,22 +15,3 @@
   ^jakarta.servlet.GenericFilter
   [handler]
   (impl.http.filter/filter handler))
-
-(defn as-dispatcher-type
-  ^DispatcherType
-  [k]
-  (case k
-    :async   DispatcherType/ASYNC
-    :error   DispatcherType/ERROR
-    :forward DispatcherType/FORWARD
-    :include DispatcherType/INCLUDE
-    :request DispatcherType/REQUEST
-    (if (instance? DispatcherType k)
-      k
-      (throw (ex-info "Neither valid keyword or DispatcherType." {:arg k})))))
-
-(defn dispatcher-type-enum-set
-  ^EnumSet
-  [types]
-  (doto (EnumSet/noneOf DispatcherType)
-    (.addAll (mapv as-dispatcher-type types))))

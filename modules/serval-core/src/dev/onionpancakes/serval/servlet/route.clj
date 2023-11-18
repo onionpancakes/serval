@@ -1,8 +1,36 @@
 (ns dev.onionpancakes.serval.servlet.route
-  (:require [dev.onionpancakes.serval.servlet :as srv.servlet])
-  (:import [jakarta.servlet ServletContext
-            ServletRegistration
-            FilterRegistration]))
+  (:require [dev.onionpancakes.serval.impl.http.filter
+             :as impl.http.filter]
+            [dev.onionpancakes.serval.impl.http.servlet
+             :as impl.http.servlet])
+  (:import [java.util EnumSet]
+           [jakarta.servlet
+            DispatcherType
+            ServletContext
+            ServletRegistration FilterRegistration]))
+
+;; Filter DispatcherType
+
+(defn as-dispatcher-type
+  ^DispatcherType
+  [k]
+  (case k
+    :async   DispatcherType/ASYNC
+    :error   DispatcherType/ERROR
+    :forward DispatcherType/FORWARD
+    :include DispatcherType/INCLUDE
+    :request DispatcherType/REQUEST
+    (if (instance? DispatcherType k)
+      k
+      (throw (ex-info "Neither valid keyword or DispatcherType." {:arg k})))))
+
+(defn dispatcher-type-enum-set
+  ^EnumSet
+  [types]
+  (doto (EnumSet/noneOf DispatcherType)
+    (.addAll (mapv as-dispatcher-type types))))
+
+;; Route
 
 (defprotocol RouteServlet
   (get-servlet-name [this url-pattern])
@@ -20,14 +48,14 @@
   (add-servlet [this ^ServletContext servlet-ctx ^String servlet-name]
     (if-some [reg (.getServletRegistration servlet-ctx servlet-name)]
       reg
-      (.addServlet servlet-ctx servlet-name (srv.servlet/servlet this))))
+      (.addServlet servlet-ctx servlet-name (impl.http.servlet/servlet this))))
   clojure.lang.Var
   (get-servlet-name [this url-pattern]
     (str "serval.servlet.route/servlet:" (hash this) ":" url-pattern))
   (add-servlet [this ^ServletContext servlet-ctx ^String servlet-name]
     (if-some [reg (.getServletRegistration servlet-ctx servlet-name)]
       reg
-      (.addServlet servlet-ctx servlet-name (srv.servlet/servlet this)))))
+      (.addServlet servlet-ctx servlet-name (impl.http.servlet/servlet this)))))
 
 (extend-protocol RouteFilter
   clojure.lang.Fn
@@ -36,7 +64,7 @@
   (add-filter [this ^ServletContext servlet-ctx ^String filter-name]
     (if-some [reg (.getFilterRegistration servlet-ctx filter-name)]
       reg
-      (.addFilter servlet-ctx filter-name (srv.servlet/filter this))))
+      (.addFilter servlet-ctx filter-name (impl.http.filter/filter this))))
   (get-dispatch-types [this] nil)
   clojure.lang.Var
   (get-filter-name [this url-pattern]
@@ -44,7 +72,7 @@
   (add-filter [this ^ServletContext servlet-ctx ^String filter-name]
     (if-some [reg (.getFilterRegistration servlet-ctx filter-name)]
       reg
-      (.addFilter servlet-ctx filter-name (srv.servlet/filter this))))
+      (.addFilter servlet-ctx filter-name (impl.http.filter/filter this))))
   (get-dispatch-types [this] nil))
 
 (defn add-route
