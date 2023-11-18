@@ -179,8 +179,8 @@
   this only allows for filter pre-processing."
   ([ctx]
    (assoc ctx :serval.filter/do-filter-chain true))
-  ([ctx do-chain]
-   (assoc ctx :serval.filter/do-filter-chain do-chain)))
+  ([ctx request response]
+   (assoc ctx :serval.filter/do-filter-chain [request response])))
 
 (defn do-filter-chain!
   "Does the filter chain immediately. Allows for filter post-processing.
