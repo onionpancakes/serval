@@ -5,8 +5,8 @@
   (:import [jakarta.servlet GenericFilter FilterChain]))
 
 (defn context
-  [servlet request response filter-chain]
-  {:serval.context/servlet      servlet
+  [filter request response filter-chain]
+  {:serval.context/filter       filter
    :serval.context/request      request
    :serval.context/response     response
    :serval.context/filter-chain filter-chain})

@@ -4,7 +4,7 @@
              :as response.body]
             [dev.onionpancakes.serval.response.http
              :as response.http])
-  (:import [jakarta.servlet FilterChain]))
+  (:import [jakarta.servlet FilterChain ServletRequest]))
 
 ;; Processors
 
@@ -191,4 +191,19 @@
    ctx)
   ([{:serval.context/keys [^FilterChain filter-chain] :as ctx} request response]
    (.doFilter filter-chain request response)
+   ctx))
+
+(defn log
+  "Log a message using ServletContext.
+
+  Context is unchanged."
+  ([{:serval.context/keys [^ServletRequest request] :as ctx} msg]
+   (.. request
+       (getServletContext)
+       (log msg))
+   ctx)
+  ([{:serval.context/keys [^ServletRequest request] :as ctx} msg throwable]
+   (.. request
+       (getServletContext)
+       (log msg throwable))
    ctx))
