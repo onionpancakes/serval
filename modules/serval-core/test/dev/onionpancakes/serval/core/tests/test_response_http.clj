@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.core.tests.test-http-response
+(ns dev.onionpancakes.serval.core.tests.test-response-http
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.jetty.test
              :refer [with-response send]]
