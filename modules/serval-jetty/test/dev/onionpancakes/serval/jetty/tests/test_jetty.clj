@@ -4,7 +4,9 @@
              :refer [with-config send]]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             [clojure.test :refer [is deftest]])
-  (:import [java.util.zip GZIPInputStream]))
+  (:import [java.util.zip GZIPInputStream]
+           [org.eclipse.jetty.server Handler$Abstract Request Response]
+           [org.eclipse.jetty.util Callback]))
 
 (deftest test-minimal
   (with-config {:connectors [{:port 42000}]
@@ -55,7 +57,7 @@
       (is (= (:status resp) 200))
       (is (= (slurp (GZIPInputStream. (:body resp))) "foo")))))
 
-(deftest test-servlet-context-spec
+(deftest test-routes-handler
   (with-config {:connectors [{:protocol :http :port 42000}]
                 :handler    [["/foo" (constantly {:serval.response/body "foo"})]
                              ["/bar" (constantly {:serval.response/body "bar"})]
@@ -77,6 +79,22 @@
 (deftest test-var-handler
   (with-config {:connectors [{:protocol :http :port 42000}]
                 :handler    #'example-var-handler}
+    (let [resp (send "http://localhost:42000")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(def example-handler-instance
+  ;; https://eclipse.dev/jetty/javadoc/jetty-12/org/eclipse/jetty/server/Request.html
+  (proxy [Handler$Abstract] []
+    (handle [request ^Response response ^Callback callback]
+      (.setStatus response 200)
+      (.write response true (java.nio.ByteBuffer/wrap (.getBytes "foo")) callback)
+      (.succeeded callback)
+      true)))
+
+(deftest test-handler-instance
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    example-handler-instance}
     (let [resp (send "http://localhost:42000")]
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
