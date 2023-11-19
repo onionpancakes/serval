@@ -7,6 +7,7 @@
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             [clojure.test :refer [is deftest]])
   (:import [jakarta.servlet.http HttpServletResponse]
+           [java.net.http HttpClient$Version]
            [java.util.zip GZIPInputStream]
            [org.eclipse.jetty.server Handler$Abstract Request Response]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
@@ -16,7 +17,7 @@
   (with-config {:connectors [{:port 42000}]
                 :handler    (constantly {:serval.response/body "foo"})}
     (let [resp (send "http://localhost:42000")]
-      (is (= (str (:version resp)) "HTTP_1_1"))
+      (is (= (:version resp) HttpClient$Version/HTTP_1_1))
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
 
@@ -24,7 +25,7 @@
   (with-config {:connectors [{:protocol :http :port 42000}]
                 :handler    (constantly {:serval.response/body "foo"})}
     (let [resp (send "http://localhost:42000")]
-      (is (= (str (:version resp)) "HTTP_1_1"))
+      (is (= (:version resp) HttpClient$Version/HTTP_1_1))
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
 
@@ -32,7 +33,7 @@
   (with-config {:connectors [{:protocol :http2c :port 42000}]
                 :handler    (constantly {:serval.response/body "foo"})}
     (let [resp (send "http://localhost:42000")]
-      (is (= (str (:version resp)) "HTTP_2"))
+      (is (= (:version resp) HttpClient$Version/HTTP_2))
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
 
@@ -43,11 +44,11 @@
                                42000 {:serval.response/body "foo"}
                                42001 {:serval.response/body "bar"})}
     (let [resp (send "http://localhost:42000")]
-      (is (= (str (:version resp)) "HTTP_1_1"))
+      (is (= (:version resp) HttpClient$Version/HTTP_1_1))
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))
     (let [resp (send "http://localhost:42001")]
-      (is (= (str (:version resp)) "HTTP_2"))
+      (is (= (:version resp) HttpClient$Version/HTTP_2))
       (is (= (:status resp) 200))
       (is (= (:body resp) "bar")))))
 
