@@ -3,36 +3,7 @@
   (:require [dev.onionpancakes.serval.impl.http.servlet
              :as srv.impl.http.servlet]
             [dev.onionpancakes.serval.jetty.impl.protocols :as p])
-  (:import [org.eclipse.jetty.server.handler ErrorHandler]
-           [org.eclipse.jetty.server.handler.gzip GzipHandler]))
-
-;; ErrorHandler
-
-(defn error-handler
-  [{:keys [handler]}]
-  (let [service-fn (srv.impl.http.servlet/service-fn handler)]
-    (proxy [ErrorHandler] []
-      (handler [_ _ request response]
-        (service-fn this request response)))))
-
-(extend-protocol p/ErrorHandler
-  clojure.lang.IPersistentMap
-  (as-error-handler [this]
-    (error-handler this))
-  clojure.lang.Fn
-  (as-error-handler [this]
-    (error-handler {:handler this}))
-  clojure.lang.Var
-  (as-error-handler [this]
-    (error-handler {:handler this}))
-  ErrorHandler
-  (as-error-handler [this] this)
-  nil
-  (as-error-handler [_] nil))
-
-(defn as-error-handler
-  [this]
-  (p/as-error-handler this))
+  (:import [org.eclipse.jetty.server.handler.gzip GzipHandler]))
 
 ;; GzipHandler
 

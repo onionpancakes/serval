@@ -1,5 +1,6 @@
 (ns user
-  (:require [dev.onionpancakes.serval.core :as srv]
+  (:require [dev.onionpancakes.serval.core :as srv
+             :refer [response]]
             [dev.onionpancakes.serval.servlet :as srv.servlet]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             [dev.onionpancakes.serval.jetty.test :as srv.jetty.test]
@@ -9,8 +10,6 @@
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 
-(set! *warn-on-reflection* true)
-
 (defn my-handler
   [ctx]
   (merge ctx {:serval.response/status             200
@@ -18,6 +17,14 @@
               :serval.response/body               "Hello world!!"
               :serval.response/content-type       "text/plain"
               :serval.response/character-encoding "utf-8"}))
+
+(defn my-throw-handler
+  [ctx]
+  (throw (ex-info "foooo" {})))
+
+(defn my-error-handler
+  [ctx]
+  (response ctx 400 "It's foobar."))
 
 (defn my-filter
   [ctx]
@@ -27,12 +34,16 @@
     (srv/set-response-kv! :serval.response/body "bar")))
 
 (def routes
-  [["/foobar" #'my-filter #'my-handler]
+  [["/filtered" #'my-filter #'my-handler]
+   ["/throw" #'my-throw-handler]
+   ["/error" #'my-error-handler]
    ["/*" #'my-handler]])
 
 (def server-config
   {:connectors [{:protocol :http :port 3000}]
-   :handler    routes})
+   :handler    {:routes      routes
+                :error-pages {400                        "/error"
+                              clojure.lang.ExceptionInfo "/error"}}})
 
 (defonce server
   (srv.jetty/server server-config))
