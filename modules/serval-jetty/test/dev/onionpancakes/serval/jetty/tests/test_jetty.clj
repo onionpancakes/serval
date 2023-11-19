@@ -147,25 +147,53 @@
       (is (= (:status resp) 500))
       (is (= (:body resp) "handled-throwable")))))
 
+(def example-gzip-body
+  (->> (repeat "foobarbaz")
+       (take 10)
+       (apply str)))
+
+(defn example-gzip-route-handler
+  [ctx]
+  (response ctx 200 example-gzip-body))
+
 (deftest test-gzip-handler
+  ;; With true
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:routes       [["/*" (constantly {:serval.response/body "foo"})]]
+                :handler    {:routes       [["/*" example-gzip-route-handler]]
+                             :gzip-handler true}}
+    (let [req  {:uri     "http://localhost:42000"
+                :headers {:accept-encoding "gzip"}}
+          resp (send req :input-stream)]
+      (is (= (:status resp) 200))
+      (is (= (slurp (GZIPInputStream. (:body resp))) example-gzip-body))))
+  ;; With false
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    {:routes       [["/*" example-gzip-route-handler]]
+                             :gzip-handler false}}
+    (let [req  {:uri     "http://localhost:42000"
+                :headers {:accept-encoding "gzip"}}
+          resp (send req :input-stream)]
+      (is (= (:status resp) 200))
+      (is (= (slurp (:body resp)) example-gzip-body))))
+  ;; With config map
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    {:routes       [["/*" example-gzip-route-handler]]
                              :gzip-handler {:min-gzip-size 0}}}
     (let [req  {:uri     "http://localhost:42000"
                 :headers {:accept-encoding "gzip"}}
           resp (send req :input-stream)]
       (is (= (:status resp) 200))
-      (is (= (slurp (GZIPInputStream. (:body resp))) "foo"))))
+      (is (= (slurp (GZIPInputStream. (:body resp))) example-gzip-body))))
   ;; With direct GzipHandler instance.
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:routes       [["/*" (constantly {:serval.response/body "foo"})]]
+                :handler    {:routes       [["/*" example-gzip-route-handler]]
                              :gzip-handler (doto (GzipHandler.)
                                              (.setMinGzipSize 0))}}
     (let [req  {:uri     "http://localhost:42000"
                 :headers {:accept-encoding "gzip"}}
           resp (send req :input-stream)]
       (is (= (:status resp) 200))
-      (is (= (slurp (GZIPInputStream. (:body resp))) "foo")))))
+      (is (= (slurp (GZIPInputStream. (:body resp))) example-gzip-body)))))
 
 (def example-handler-instance
   ;; https://eclipse.dev/jetty/javadoc/jetty-12/org/eclipse/jetty/server/Request.html

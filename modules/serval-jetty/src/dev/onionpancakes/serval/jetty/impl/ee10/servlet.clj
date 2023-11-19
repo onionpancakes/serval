@@ -44,7 +44,7 @@
     (when (contains? config :gzip-handler)
       (let [gz-config (:gzip-handler config)]
         (cond
-          (true? gz-config)  (.insertHandler handler (impl.handlers/gzip-handler))
+          (true? gz-config)  (.insertHandler handler (impl.handlers/gzip-handler nil))
           (false? gz-config) nil
           :else              (.insertHandler handler (impl.handlers/as-gzip-handler gz-config)))))
     handler))
