@@ -9,7 +9,7 @@
   (:import [jakarta.servlet.http HttpServletResponse]
            [java.net.http HttpClient$Version]
            [java.util.zip GZIPInputStream]
-           [org.eclipse.jetty.server Handler$Abstract Request Response]
+           [org.eclipse.jetty.server Handler$Abstract Response]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util Callback]))
 
