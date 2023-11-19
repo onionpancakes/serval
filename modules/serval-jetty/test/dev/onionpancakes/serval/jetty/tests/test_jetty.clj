@@ -9,6 +9,7 @@
   (:import [jakarta.servlet.http HttpServletResponse]
            [java.util.zip GZIPInputStream]
            [org.eclipse.jetty.server Handler$Abstract Request Response]
+           [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util Callback]))
 
 (deftest test-minimal
@@ -129,15 +130,25 @@
       (is (= (:status resp) 500))
       (is (= (:body resp) "handled-throwable")))))
 
-#_(deftest test-gzip-handler
-    (with-config {:connectors [{:protocol :http :port 42000}]
-                  :handler    {:routes       [["/*" (constantly {:serval.response/body "foo"})]]
-                               :gzip-handler {:min-gzip-size 0}}}
-      (let [req  {:uri     "http://localhost:42000"
-                  :headers {:accept-encoding "gzip"}}
-            resp (send req :input-stream)]
-        (is (= (:status resp) 200))
-        (is (= (slurp (GZIPInputStream. (:body resp))) "foo")))))
+(deftest test-gzip-handler
+  (with-config {:connectors   [{:protocol :http :port 42000}]
+                :handler      {:routes [["/*" (constantly {:serval.response/body "foo"})]]}
+                :gzip-handler {:min-gzip-size 0}}
+    (let [req  {:uri     "http://localhost:42000"
+                :headers {:accept-encoding "gzip"}}
+          resp (send req :input-stream)]
+      (is (= (:status resp) 200))
+      (is (= (slurp (GZIPInputStream. (:body resp))) "foo"))))
+  ;; With direct GzipHandler instance.
+  (with-config {:connectors   [{:protocol :http :port 42000}]
+                :handler      {:routes [["/*" (constantly {:serval.response/body "foo"})]]}
+                :gzip-handler (doto (GzipHandler.)
+                                (.setMinGzipSize 0))}
+    (let [req  {:uri     "http://localhost:42000"
+                :headers {:accept-encoding "gzip"}}
+          resp (send req :input-stream)]
+      (is (= (:status resp) 200))
+      (is (= (slurp (GZIPInputStream. (:body resp))) "foo")))))
 
 (def example-handler-instance
   ;; https://eclipse.dev/jetty/javadoc/jetty-12/org/eclipse/jetty/server/Request.html
