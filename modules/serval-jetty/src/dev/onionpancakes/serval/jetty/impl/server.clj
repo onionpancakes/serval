@@ -13,15 +13,15 @@
 (defn http-configuration
   [config]
   (let [hconf (HttpConfiguration.)]
-    (if (contains? config :send-date-header?)
+    (when (contains? config :send-date-header?)
       (.setSendDateHeader hconf (:send-date-header? config)))
-    (if (contains? config :send-server-version?)
+    (when (contains? config :send-server-version?)
       (.setSendServerVersion hconf (:send-server-version? config)))
-    (if (contains? config :request-header-size)
+    (when (contains? config :request-header-size)
       (.setRequestHeaderSize hconf (:request-header-size config)))
-    (if (contains? config :response-header-size)
+    (when (contains? config :response-header-size)
       (.setResponseHeaderSize hconf (:response-header-size config)))
-    (if (contains? config :output-buffer-size)
+    (when (contains? config :output-buffer-size)
       (.setOutputBufferSize hconf (:output-buffer-size config)))
     hconf))
 
@@ -55,13 +55,13 @@
 (defn server-connector
   [server config]
   (let [conn (ServerConnector. server)]
-    (if (contains? config :protocol)
+    (when (contains? config :protocol)
       (.setConnectionFactories conn (connection-factories config)))
-    (if (contains? config :port)
+    (when (contains? config :port)
       (.setPort conn (:port config)))
-    (if (contains? config :host)
+    (when (contains? config :host)
       (.setHost conn (:host config)))
-    (if (contains? config :idle-timeout)
+    (when (contains? config :idle-timeout)
       (.setIdleTimeout conn (:idle-timeout config)))
     conn))
 

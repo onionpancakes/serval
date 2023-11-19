@@ -7,10 +7,10 @@
   ^QueuedThreadPool
   [config]
   (let [pool (QueuedThreadPool.)]
-    (if (contains? config :min-threads)
+    (when (contains? config :min-threads)
       (.setMinThreads pool (:min-threads config)))
-    (if (contains? config :max-threads)
+    (when (contains? config :max-threads)
       (.setMaxThreads pool (:max-threads config)))
-    (if (contains? config :idle-timeout)
+    (when (contains? config :idle-timeout)
       (.setIdleTimeout pool (:idle-timeout config)))
     pool))
