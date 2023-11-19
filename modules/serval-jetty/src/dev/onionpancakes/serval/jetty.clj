@@ -23,6 +23,8 @@
   {:request-log (CustomRequestLog.)})
 
 (defn server
+  (^Server []
+   (impl.server/server))
   (^Server [config]
    (doto (impl.server/server)
      (configure-server (merge default-server-config config))))
