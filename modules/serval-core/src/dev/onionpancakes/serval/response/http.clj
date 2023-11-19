@@ -52,14 +52,14 @@
   {:add-header-to-response add-random-access-header-to-response
    :set-header-to-response add-random-access-header-to-response})
 
-(defn set-header-value
+(defn set-header
   [response header-name value]
   (set-header-to-response value response header-name)
   response)
 
 (defn set-headers
   [response headers]
-  (reduce-kv set-header-value response headers))
+  (reduce-kv set-header response headers))
 
 ;; Trailers
 
