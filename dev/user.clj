@@ -37,7 +37,7 @@
   [["/filtered" #'my-filter #'my-handler]
    ["/throw" #'my-throw-handler]
    ["/error" #'my-error-handler]
-   ["/*" #'my-handler]])
+   ["" #'my-handler]])
 
 (def server-config
   {:connectors [{:protocol :http :port 3000}]
