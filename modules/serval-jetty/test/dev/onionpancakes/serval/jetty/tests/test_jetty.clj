@@ -92,40 +92,57 @@
       (is (= (:body resp) "default")))))
 
 (defn example-route-send-error-code-handler
-  [{:serval.context/keys [^HttpServletResponse response] :as ctx}]
-  (.sendError response 500)
+  [{:serval.context/keys [request ^HttpServletResponse response] :as ctx}]
+  (let [error-code (-> (:path-info request)
+                       (subs 1)
+                       (parse-long))]
+    (.sendError response error-code))
   ctx)
 
 (defn example-route-throw-handler
   [ctx]
-  (throw (ex-info "foobar" {}))
-  ctx)
+  (throw (ex-info "foobar" {})))
 
 (defn example-route-error-code-handler
   [ctx]
   (response ctx 500 "handled-error-code"))
+
+(defn example-route-error-code-range-handler
+  [ctx]
+  (response ctx 500 "handled-error-code-range"))
 
 (defn example-route-throwable-handler
   [ctx]
   (response ctx 500 "handled-throwable"))
 
 (def example-error-routes
-  [["/send-error-code" example-route-send-error-code-handler]
+  [["/send-error-code/*" example-route-send-error-code-handler]
    ["/throw" example-route-throw-handler]
    ["/error-code" example-route-error-code-handler]
+   ["/error-code-range" example-route-error-code-range-handler]
    ["/error-throwable" example-route-throwable-handler]])
 
 (def example-error-pages
   {500                        "/error-code"
+   [400 499]                  "/error-code-range"
    clojure.lang.ExceptionInfo "/error-throwable"})
 
 (deftest test-error-pages
   (with-config {:connectors [{:protocol :http :port 42000}]
                 :handler    {:routes      example-error-routes
                              :error-pages example-error-pages}}
-    (let [resp (send "http://localhost:42000/send-error-code")]
+    (let [resp (send "http://localhost:42000/send-error-code/500")]
       (is (= (:status resp) 500))
       (is (= (:body resp) "handled-error-code")))
+    (let [resp (send "http://localhost:42000/send-error-code/400")]
+      (is (= (:status resp) 500))
+      (is (= (:body resp) "handled-error-code-range")))
+    (let [resp (send "http://localhost:42000/send-error-code/404")]
+      (is (= (:status resp) 500))
+      (is (= (:body resp) "handled-error-code-range")))
+    (let [resp (send "http://localhost:42000/send-error-code/499")]
+      (is (= (:status resp) 500))
+      (is (= (:body resp) "handled-error-code-range")))
     (let [resp (send "http://localhost:42000/throw")]
       (is (= (:status resp) 500))
       (is (= (:body resp) "handled-throwable")))))
