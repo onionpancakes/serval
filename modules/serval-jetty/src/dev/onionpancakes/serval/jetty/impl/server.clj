@@ -96,12 +96,6 @@
          (.setConnectors server)))
   (when (contains? config :handler)
     (.setHandler server (p/as-server-handler (:handler config))))
-  (when (contains? config :gzip-handler)
-    (let [gz-config (:gzip-handler config)]
-      (cond
-        (true? gz-config)  (.insertHandler server (impl.handlers/gzip-handler))
-        (false? gz-config) nil
-        :else              (.insertHandler server (impl.handlers/as-gzip-handler gz-config)))))
   (when (contains? config :request-log)
     (.setRequestLog server (:request-log config)))
   server)

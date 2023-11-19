@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.jetty.impl.ee10.servlet
   (:require [dev.onionpancakes.serval.servlet.route :as srv.servlet.route]
+            [dev.onionpancakes.serval.jetty.impl.handlers :as impl.handlers]
             [dev.onionpancakes.serval.jetty.impl.ee10.protocols :as ee10.p])
   (:import [org.eclipse.jetty.ee10.servlet ErrorPageErrorHandler ServletContextHandler]))
 
@@ -40,6 +41,12 @@
         (.setErrorHandler handler error-handler)))
     (when (contains? config :session-handler)
       (.setSessionHandler handler (:session-handler config)))
+    (when (contains? config :gzip-handler)
+      (let [gz-config (:gzip-handler config)]
+        (cond
+          (true? gz-config)  (.insertHandler handler (impl.handlers/gzip-handler))
+          (false? gz-config) nil
+          :else              (.insertHandler handler (impl.handlers/as-gzip-handler gz-config)))))
     handler))
 
 (extend-protocol ee10.p/ServletContextHandler

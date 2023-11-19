@@ -148,19 +148,19 @@
       (is (= (:body resp) "handled-throwable")))))
 
 (deftest test-gzip-handler
-  (with-config {:connectors   [{:protocol :http :port 42000}]
-                :handler      {:routes [["/*" (constantly {:serval.response/body "foo"})]]}
-                :gzip-handler {:min-gzip-size 0}}
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    {:routes       [["/*" (constantly {:serval.response/body "foo"})]]
+                             :gzip-handler {:min-gzip-size 0}}}
     (let [req  {:uri     "http://localhost:42000"
                 :headers {:accept-encoding "gzip"}}
           resp (send req :input-stream)]
       (is (= (:status resp) 200))
       (is (= (slurp (GZIPInputStream. (:body resp))) "foo"))))
   ;; With direct GzipHandler instance.
-  (with-config {:connectors   [{:protocol :http :port 42000}]
-                :handler      {:routes [["/*" (constantly {:serval.response/body "foo"})]]}
-                :gzip-handler (doto (GzipHandler.)
-                                (.setMinGzipSize 0))}
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    {:routes       [["/*" (constantly {:serval.response/body "foo"})]]
+                             :gzip-handler (doto (GzipHandler.)
+                                             (.setMinGzipSize 0))}}
     (let [req  {:uri     "http://localhost:42000"
                 :headers {:accept-encoding "gzip"}}
           resp (send req :input-stream)]
