@@ -20,7 +20,8 @@
 
 (deftest test-routes
   (with-handler [["/filtered" example-filter-handler example-servlet-handler]
-                 ["/servlet" example-servlet-handler]]
+                 ["/servlet" example-servlet-handler]
+                 ["/method" #{:GET} example-servlet-handler]]
     (let [ret (send "http://localhost:42000/filtered")]
       (is (= (:status ret) 200))
       (is (= (get-in ret [:headers "foo1" 0]) "bar1"))
@@ -28,4 +29,9 @@
       (is (= (:body ret) "pre-body:main-body:post-body")))
     (let [ret (send "http://localhost:42000/servlet")]
       (is (= (:status ret) 200))
-      (is (= (:body ret) "main-body")))))
+      (is (= (:body ret) "main-body")))
+    (let [ret (send "http://localhost:42000/method")]
+      (is (= (:status ret) 200)))
+    (let [ret (send {:method :POST
+                     :uri    "http://localhost:42000/method"})]
+      (is (= (:status ret) 405)))))
