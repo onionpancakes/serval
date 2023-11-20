@@ -34,6 +34,11 @@
    (filter pred-filter-handler pred code message)))
 
 (defn http-method-filter
-  [allowed-method?]
-  (let [pred (comp allowed-method? :method :serval.context/request)]
-    (pred-filter pred 405)))
+  ([allowed-method?]
+   (http-method-filter allowed-method? 405))
+  ([allowed-method? code]
+   (-> (comp allowed-method? :method :serval.context/request)
+       (pred-filter code)))
+  ([allowed-method? code message]
+   (-> (comp allowed-method? :method :serval.context/request)
+       (pred-filter code message))))
