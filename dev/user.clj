@@ -14,7 +14,7 @@
   [ctx]
   (merge ctx {:serval.response/status             200
               :serval.response/headers            {}
-              :serval.response/body               "Hello world!!"
+              :serval.response/body               "Hello world!"
               :serval.response/content-type       "text/plain"
               :serval.response/character-encoding "utf-8"}))
 
@@ -40,11 +40,17 @@
    ["/post" #{:POST} #'my-handler]
    ["" #'my-handler]])
 
+(def error-pages
+  {400                        "/error"
+   clojure.lang.ExceptionInfo "/error"})
+
 (def server-config
   {:connectors [{:protocol :http :port 3000}]
-   :handler    {:routes      routes
-                :error-pages {400                        "/error"
-                              clojure.lang.ExceptionInfo "/error"}}})
+   :handler    (srv.jetty/server-handler
+                {:context-path "/app"
+                 :routes       [["/*" (srv.servlet/servlet srv/response 200 "Hello app!")]]}
+                {:routes      routes
+                 :error-pages error-pages})})
 
 (defonce server
   (srv.jetty/server server-config))
