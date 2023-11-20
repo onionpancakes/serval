@@ -80,6 +80,14 @@
   (doto response
     (.setTrailerFields (as-trailer-fields-supplier trailers))))
 
+;; Error
+
+(defn send-error
+  [^HttpServletResponse response err]
+  (cond
+    (int? err)    (.sendError response err)
+    (vector? err) (.sendError response (nth err 0) (nth err 1))))
+
 ;; Response
 
 (defn set-response
@@ -109,4 +117,6 @@
   ;; Body
   (when (contains? m :serval.response/body)
     (response.body/set-body response (:serval.response/body m)))
+  (when (contains? m :serval.response/send-error)
+    (send-error response (:serval.response/send-error m)))
   response)

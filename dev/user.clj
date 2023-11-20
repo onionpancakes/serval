@@ -37,6 +37,7 @@
   [["/filtered" #'my-filter #'my-handler]
    ["/throw" #'my-throw-handler]
    ["/error" #'my-error-handler]
+   ["/post" #{:POST} #'my-handler]
    ["" #'my-handler]])
 
 (def server-config

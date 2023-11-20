@@ -4,7 +4,8 @@
              :as response.body]
             [dev.onionpancakes.serval.response.http
              :as response.http])
-  (:import [jakarta.servlet FilterChain ServletRequest]))
+  (:import [jakarta.servlet FilterChain ServletRequest]
+           [jakarta.servlet.http HttpServletResponse]))
 
 ;; Processors
 
@@ -172,6 +173,24 @@
   [{:serval.context/keys [response] :as ctx} & {:as m}]
   (response.http/set-response response m)
   ctx)
+
+(defn send-error
+  "Sets send-error with code and message."
+  ([ctx code]
+   (assoc ctx :serval.response/send-error code))
+  ([ctx code message]
+   (assoc ctx :serval.response/send-error [code message])))
+
+(defn send-error!
+  "Sends error immediately.
+
+  Context is unchanged."
+  ([{:serval.context/keys [^HttpServletResponse response] :as ctx} code]
+   (.sendError response code)
+   ctx)
+  ([{:serval.context/keys [^HttpServletResponse response] :as ctx} code message]
+   (.sendError response code message)
+   ctx))
 
 (defn do-filter-chain
   "Sets do-filter-chain, which is processed when the filter completes.

@@ -1,13 +1,15 @@
 (ns dev.onionpancakes.serval.impl.http.filter
   (:refer-clojure :exclude [filter])
-  (:require [dev.onionpancakes.serval.response.http
+  (:require [dev.onionpancakes.serval.impl.http.servlet-request
+             :as impl.http.request]
+            [dev.onionpancakes.serval.response.http
              :as response.http])
   (:import [jakarta.servlet GenericFilter FilterChain]))
 
 (defn context
   [filter request response filter-chain]
   {:serval.context/filter       filter
-   :serval.context/request      request
+   :serval.context/request      (impl.http.request/servlet-request-proxy request)
    :serval.context/response     response
    :serval.context/filter-chain filter-chain})
 
