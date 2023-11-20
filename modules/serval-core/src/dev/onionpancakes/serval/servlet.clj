@@ -17,19 +17,21 @@
 
 ;; Filters
 
+(defn pred-filter-handler
+  ([ctx pred code]
+   (if (pred ctx)
+     (srv/do-filter-chain! ctx)
+     (srv/send-error! ctx code)))
+  ([ctx pred code message]
+   (if (pred ctx)
+     (srv/do-filter-chain! ctx)
+     (srv/send-error! ctx code message))))
+
 (defn pred-filter
   ([pred code]
-   (filter (fn [ctx]
-             (if (pred ctx)
-               (srv/do-filter-chain! ctx)
-               (srv/send-error! ctx code))
-             nil)))
+   (filter pred-filter-handler pred code))
   ([pred code message]
-   (filter (fn [ctx]
-             (if (pred ctx)
-               (srv/do-filter-chain! ctx)
-               (srv/send-error! ctx code message))
-             nil))))
+   (filter pred-filter-handler pred code message)))
 
 (defn http-method-filter
   [allowed-method?]
