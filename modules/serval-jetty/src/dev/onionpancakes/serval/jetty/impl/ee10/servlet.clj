@@ -32,6 +32,10 @@
   ^ServletContextHandler
   [config]
   (let [handler (ServletContextHandler.)]
+    (when (contains? config :display-name)
+      (.setDisplayName handler (:display-name config)))
+    (when (contains? config :context-path)
+      (.setContextPath handler (:context-path config)))
     (when (contains? config :routes)
       (-> (.getServletContext handler)
           (srv.servlet.route/add-routes (:routes config))))

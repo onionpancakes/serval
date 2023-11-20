@@ -3,7 +3,19 @@
   (:require [dev.onionpancakes.serval.impl.http.servlet
              :as srv.impl.http.servlet]
             [dev.onionpancakes.serval.jetty.impl.protocols :as p])
-  (:import [org.eclipse.jetty.server.handler.gzip GzipHandler]))
+  (:import [org.eclipse.jetty.server.handler ContextHandler ContextHandlerCollection]
+           [org.eclipse.jetty.server.handler.gzip GzipHandler]))
+
+;; ContextHandlerCollection
+
+(defn context-handler-collection
+  [config]
+  (let [dynamic    (:dynamic config false)
+        contexts   (into-array ContextHandler [])
+        collection (ContextHandlerCollection. dynamic contexts)]
+    (when (contains? config :handlers)
+      (.setHandlers collection (:handlers config)))
+    collection))
 
 ;; GzipHandler
 

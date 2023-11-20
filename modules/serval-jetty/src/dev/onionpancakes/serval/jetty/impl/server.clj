@@ -70,20 +70,26 @@
 (def ^:dynamic *server-handler*
   'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)
 
-(defn as-server-handler
-  [config]
-  (let [server-handler (requiring-resolve *server-handler*)]
-    (server-handler config)))
-
 (extend-protocol p/ServerHandler
   Handler
   (as-server-handler [this] this)
   Object
   (as-server-handler [this]
-    (as-server-handler this))
+    (let [handler-fn (requiring-resolve *server-handler*)]
+      (handler-fn this)))
   nil
   (as-server-handler [this]
-    (as-server-handler nil)))
+    (let [handler-fn (requiring-resolve *server-handler*)]
+      (handler-fn this))))
+
+(defn server-handler
+  [handler]
+  (p/as-server-handler handler))
+
+(defn server-handler*
+  [handlers]
+  (let [config {:handlers (mapv p/as-server-handler handlers)}]
+    (impl.handlers/context-handler-collection config)))
 
 ;; Server
 

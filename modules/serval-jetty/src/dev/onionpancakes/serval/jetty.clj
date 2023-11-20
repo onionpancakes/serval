@@ -13,6 +13,15 @@
   [config]
   (impl.thread-pools/queued-thread-pool config))
 
+;; Handler
+
+(defn server-handler
+  ([this]
+   (impl.server/as-server-handler this))
+  ([this & others]
+   (->> (list* this others)
+        (impl.server/server-handler*))))
+
 ;; Server
 
 (defn configure-server
