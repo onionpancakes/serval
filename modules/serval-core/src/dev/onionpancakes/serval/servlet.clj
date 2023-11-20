@@ -7,13 +7,13 @@
 (defn servlet
   "Creates a Servlet which services a http response from the handler function."
   ^jakarta.servlet.GenericServlet
-  [handler]
-  (impl.http.servlet/servlet handler))
+  [handler & args]
+  (apply impl.http.servlet/servlet handler args))
 
 (defn filter
   ^jakarta.servlet.GenericFilter
-  [handler]
-  (impl.http.filter/filter handler))
+  [handler & args]
+  (apply impl.http.filter/filter handler args))
 
 ;; Filters
 

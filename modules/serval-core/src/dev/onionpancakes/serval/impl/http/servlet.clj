@@ -16,14 +16,14 @@
    :serval.context/response response})
 
 (defn service-fn
-  [handler]
+  [handler & args]
   (fn [servlet request response]
-    (->> (context servlet request response)
-         (handler)
-         (response.http/set-response response))))
+    (let [ctx (context servlet request response)
+          ret (apply handler ctx args)]
+      (response.http/set-response response ret))))
 
 (defn servlet
   ^GenericServlet
-  [handler]
+  [handler & args]
   (-> (proxy [GenericServlet] [])
-      (init-proxy {"service" (service-fn handler)})))
+      (init-proxy {"service" (apply service-fn handler args)})))

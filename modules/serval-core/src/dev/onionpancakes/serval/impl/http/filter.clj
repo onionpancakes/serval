@@ -14,23 +14,23 @@
    :serval.context/filter-chain filter-chain})
 
 (defn do-filter-chain
-  [do-chain ^FilterChain filter-chain default-request default-response]
+  [^FilterChain filter-chain do-chain default-request default-response]
   (if do-chain
     (if (vector? do-chain)
       (.doFilter filter-chain (nth do-chain 0) (nth do-chain 1))
       (.doFilter filter-chain default-request default-response))))
 
 (defn service-fn
-  [handler]
+  [handler & args]
   (fn [filter request response ^FilterChain filter-chain]
     (let [ctx (context filter request response filter-chain)
-          ret (handler ctx)]
+          ret (apply handler ctx args)]
       (response.http/set-response response ret)
-      (-> (:serval.filter/do-filter-chain ret)
-          (do-filter-chain filter-chain request response)))))
+      (let [do-chain (:serval.filter/do-filter-chain ret)]
+        (do-filter-chain filter-chain do-chain request response)))))
 
 (defn filter
   ^GenericFilter
-  [handler]
+  [handler & args]
   (-> (proxy [GenericFilter] [])
-      (init-proxy {"doFilter" (service-fn handler)})))
+      (init-proxy {"doFilter" (apply service-fn handler args)})))
