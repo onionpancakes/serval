@@ -17,7 +17,7 @@
 
 (defn server-handler
   ([this]
-   (impl.server/as-server-handler this))
+   (impl.server/server-handler this))
   ([this & others]
    (->> (list* this others)
         (impl.server/server-handler*))))
