@@ -20,8 +20,8 @@
 
 (defn service-fn
   [handler]
-  (fn [servlet request response ^FilterChain filter-chain]
-    (let [ctx (context servlet request response filter-chain)
+  (fn [filter request response ^FilterChain filter-chain]
+    (let [ctx (context filter request response filter-chain)
           ret (handler ctx)]
       (response.http/set-response response ret)
       (-> (:serval.filter/do-filter-chain ret)
