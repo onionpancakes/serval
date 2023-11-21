@@ -2,6 +2,38 @@
   (:require [dev.onionpancakes.serval.core :as srv]
             [clojure.test :refer [deftest are]]))
 
+(deftest test-map-sum-args
+  (are [args expected] (let [handler (srv/handler (apply srv/map + args))]
+                         (= (handler 0) expected))
+    []          0
+    [1]         1
+    [1 2]       3
+    [1 2 3]     6
+    [1 2 3 4]   10
+    [1 2 3 4 5] 15))
+
+(deftest test-terminate-sum-args
+  (are [args expected] (let [pred    (constantly true)
+                             handler (srv/handler (apply srv/terminate pred + args))]
+                         (= (handler 0) expected))
+    []          0
+    [1]         1
+    [1 2]       3
+    [1 2 3]     6
+    [1 2 3 4]   10
+    [1 2 3 4 5] 15))
+
+(deftest test-when-sum-args
+  (are [args expected] (let [pred    (constantly true)
+                             handler (srv/handler (apply srv/when pred + args))]
+                         (= (handler 0) expected))
+    []          0
+    [1]         1
+    [1 2]       3
+    [1 2 3]     6
+    [1 2 3 4]   10
+    [1 2 3 4 5] 15))
+
 (def example-map-identity
   (srv/handler (srv/map identity)))
 

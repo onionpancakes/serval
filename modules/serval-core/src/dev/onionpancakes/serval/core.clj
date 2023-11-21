@@ -27,10 +27,30 @@
   "Returns a process step function, applying
   handler f with input and the supplied args, and
   passing the result to the next process step."
-  [f & args]
-  (fn [handler]
-    (fn [input]
-      (handler (apply f input args)))))
+  ([f]
+   (fn [handler]
+     (fn [input]
+       (handler (f input)))))
+  ([f a]
+   (fn [handler]
+     (fn [input]
+       (handler (f input a)))))
+  ([f a b]
+   (fn [handler]
+     (fn [input]
+       (handler (f input a b)))))
+  ([f a b c]
+   (fn [handler]
+     (fn [input]
+       (handler (f input a b c)))))
+  ([f a b c d]
+   (fn [handler]
+     (fn [input]
+       (handler (f input a b c d)))))
+  ([f a b c d & args]
+   (fn [handler]
+     (fn [input]
+       (handler (apply f input a b c d args))))))
 
 (defn terminate
   "Returns a process step function, applying
@@ -41,12 +61,42 @@
   terminating the input as this process step. If
   pred returns logical false, the input is passed
   untouched to the next process step."
-  [pred f & args]
-  (fn [handler]
-    (fn [input]
-      (if (pred input)
-        (apply f input args)
-        (handler input)))))
+  ([pred f]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (f input)
+         (handler input)))))
+  ([pred f a]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (f input a)
+         (handler input)))))
+  ([pred f a b]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (f input a b)
+         (handler input)))))
+  ([pred f a b c]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (f input a b c)
+         (handler input)))))
+  ([pred f a b c d]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (f input a b c d)
+         (handler input)))))
+  ([pred f a b c d & args]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (apply f input a b c d args)
+         (handler input))))))
 
 (defn when
   "Returns a process step function, applying
@@ -55,12 +105,42 @@
   passing the result to the next process step. If
   the pred returns logical false, the input is passed
   untouched to the next process step."
-  [pred f & args]
-  (fn [handler]
-    (fn [input]
-      (if (pred input)
-        (handler (apply f input args))
-        (handler input)))))
+  ([pred f]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (handler (f input))
+         (handler input)))))
+  ([pred f a]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (handler (f input a))
+         (handler input)))))
+  ([pred f a b]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (handler (f input a b))
+         (handler input)))))
+  ([pred f a b c]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (handler (f input a b c))
+         (handler input)))))
+  ([pred f a b c d]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (handler (f input a b c d))
+         (handler input)))))
+  ([pred f a b c d & args]
+   (fn [handler]
+     (fn [input]
+       (if (pred input)
+         (handler (apply f input a b c d args))
+         (handler input))))))
 
 ;; Handler
 
