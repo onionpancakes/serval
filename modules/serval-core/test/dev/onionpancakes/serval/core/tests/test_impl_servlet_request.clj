@@ -9,7 +9,7 @@
 
 (def mock-http-servlet-request
   (reify HttpServletRequest
-    (getAttribute [_ _] "foo")
+    (getAttribute [_ k] (if (= k "foo") "foo"))
     (getAttributeNames [_]
       (Collections/enumeration ["foo"]))
     (getRemoteAddr [_] "foo")
@@ -31,6 +31,7 @@
                            (.put "foo" (into-array String ["bar"]))))
     (getProtocol [_] "foo")
     (getMethod [_] "foo")
+    (getHeader [_ k] (if (= k "foo") "foo"))
     (getHeaders [_ _] (Collections/enumeration ["foo"]))
     (getHeaderNames [_] (Collections/enumeration ["foo"]))
     (getContentLengthLong [_] 0)
@@ -73,3 +74,12 @@
     [:locales]            [(Locale. "en")])
 
   (is (instance? ServletInputStream (:body example-servlet-request-proxy))))
+
+(deftest test-servlet-request-proxy-lookup-not-found
+  (is (= (get example-servlet-request-proxy ::foo :not-found) :not-found)))
+
+(deftest test-attributes-proxy-lookup-not-found
+  (is (= (get-in example-servlet-request-proxy [:attributes "NO_FOO"] :not-found) :not-found)))
+
+(deftest test-headers-proxy-lookup-not-found
+  (is (= (get-in example-servlet-request-proxy [:headers "NO_FOO"] :not-found) :not-found)))

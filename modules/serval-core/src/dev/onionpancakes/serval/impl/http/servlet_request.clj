@@ -6,6 +6,13 @@
 ;; Attributes
 
 (deftype AttributesProxy [^HttpServletRequest request]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.get this k))
+  (valAt [this k not-found]
+    (if (.containsKey this k)
+      (.get this k)
+      not-found))
   java.util.Map
   (clear [this]
     (throw (UnsupportedOperationException.)))
@@ -60,6 +67,13 @@
 ;; Headers
 
 (deftype HeadersProxy [^HttpServletRequest request]
+  clojure.lang.ILookup
+  (valAt [this k]
+    (.get this k))
+  (valAt [this k not-found]
+    (if (.containsKey this k)
+      (.get this k)
+      not-found))
   java.util.Map
   (clear [this]
     (throw (UnsupportedOperationException.)))
@@ -130,7 +144,16 @@
 
 (defn servlet-request-proxy
   [^HttpServletRequest request]
-  (proxy [HttpServletRequestWrapper java.util.Map] [request]
+  (proxy [HttpServletRequestWrapper clojure.lang.ILookup java.util.Map] [request]
+    ;; clojure.lang.ILookup
+    (valAt
+      ([k]
+       (.get ^java.util.Map this k))
+      ([k not-found]
+       (if (.containsKey ^java.util.Map this k)
+         (.get ^java.util.Map this k)
+         not-found)))
+    ;; java.util.Map
     (clear []
       (throw (UnsupportedOperationException.)))
     (containsKey [k]
