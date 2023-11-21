@@ -40,17 +40,28 @@
   (set-header-to-response [this ^HttpServletResponse response header-name]
     (.setHeader response header-name (.toString this))))
 
-(defn add-random-access-header-to-response
-  [^java.util.List this response header-name]
-  (loop [i 0 size (.size this)]
-    (when (< i size)
-      (add-header-to-response (.get this i) response header-name)
-      (recur (inc i) size))))
+(defn add-header-to-response-from-indexed
+  [this response header-name]
+  (loop [i 0 cnt (count this)]
+    (when (< i cnt)
+      (-> (nth this i)
+          (add-header-to-response response header-name))
+      (recur (inc i) cnt))))
 
-(extend java.util.RandomAccess
+(defn add-header-to-response-from-seqable
+  [this response header-name]
+  (doseq [value this]
+    (add-header-to-response value response header-name)))
+
+(extend clojure.lang.Indexed
   HeaderValue
-  {:add-header-to-response add-random-access-header-to-response
-   :set-header-to-response add-random-access-header-to-response})
+  {:add-header-to-response add-header-to-response-from-indexed
+   :set-header-to-response add-header-to-response-from-indexed})
+
+(extend clojure.lang.Seqable
+  HeaderValue
+  {:add-header-to-response add-header-to-response-from-seqable
+   :set-header-to-response add-header-to-response-from-seqable})
 
 (defn set-header
   [response header-name value]
