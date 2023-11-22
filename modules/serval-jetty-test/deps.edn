@@ -1,5 +1,5 @@
 {:deps  {org.clojure/clojure            {:mvn/version "1.11.1"}
          dev.onionpancakes/serval-jetty {:local/root "../serval-jetty"}
          dev.onionpancakes/hop          {:git/url "https://github.com/onionpancakes/hop"
-                                         :git/sha "ba35cdd90b4da26e2ae3421ec6c203035e8b3699"}}
+                                         :git/sha "d682d9e546f12b9a13363e49b96975503d5d21a5"}}
  :paths ["src"]}
