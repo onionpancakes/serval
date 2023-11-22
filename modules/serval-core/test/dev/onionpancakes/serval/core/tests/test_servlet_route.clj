@@ -35,3 +35,22 @@
     (let [ret (send {:method :POST
                      :uri    "http://localhost:42000/method"})]
       (is (= (:status ret) 405)))))
+
+(deftest test-routes-with-url-filters
+  (with-handler [["/filtered/*" example-filter-handler nil]
+                 ["/filtered" example-servlet-handler]
+                 ["/filtered/foo" example-servlet-handler]
+                 ["/not-filtered" example-servlet-handler]]
+    (let [ret (send "http://localhost:42000/filtered")]
+      (is (= (:status ret) 200))
+      (is (= (get-in ret [:headers "foo1" 0]) "bar1"))
+      (is (= (get-in ret [:headers "foo2" 0]) "bar2"))
+      (is (= (:body ret) "pre-body:main-body:post-body")))
+    (let [ret (send "http://localhost:42000/filtered/foo")]
+      (is (= (:status ret) 200))
+      (is (= (get-in ret [:headers "foo1" 0]) "bar1"))
+      (is (= (get-in ret [:headers "foo2" 0]) "bar2"))
+      (is (= (:body ret) "pre-body:main-body:post-body")))
+    (let [ret (send "http://localhost:42000/not-filtered")]
+      (is (= (:status ret) 200))
+      (is (= (:body ret) "main-body")))))
