@@ -9,9 +9,10 @@
 ;; Thread pool
 
 (defn queued-thread-pool
-  ^QueuedThreadPool
-  [config]
-  (impl.thread-pools/queued-thread-pool config))
+  (^QueuedThreadPool []
+   (impl.thread-pools/queued-thread-pool))
+  (^QueuedThreadPool [config]
+   (impl.thread-pools/queued-thread-pool config)))
 
 ;; Handler
 

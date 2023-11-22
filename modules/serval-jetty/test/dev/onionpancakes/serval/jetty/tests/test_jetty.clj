@@ -11,7 +11,7 @@
            [java.util.zip GZIPInputStream]
            [org.eclipse.jetty.server Handler$Abstract Response]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]
-           [org.eclipse.jetty.util Callback]))
+           [org.eclipse.jetty.util Callback VirtualThreads]))
 
 (deftest test-minimal
   (with-config {:connectors [{:port 42000}]
@@ -227,3 +227,31 @@
     (let [resp (send "http://localhost:42000/bar")]
       (is (= (:status resp) 200))
       (is (= (:body resp) "bar")))))
+
+(deftest test-queued-thread-pool
+  (let [config {:min-threads     1
+                :max-threads     2
+                :idle-timeout    1000}
+        pool   (srv.jetty/queued-thread-pool config)]
+    (is (= (.getMinThreads pool) 1))
+    (is (= (.getMaxThreads pool) 2))
+    (is (= (.getIdleTimeout pool) 1000))))
+
+(deftest test-queued-thread-pool-virtual-threads
+  (let [config {:virtual-threads true}
+        pool   (srv.jetty/queued-thread-pool config)]
+    (if (VirtualThreads/areSupported)
+      (is (some? (.getVirtualThreadsExecutor pool)))))
+  (let [config {:virtual-threads (if (VirtualThreads/areSupported)
+                                   (VirtualThreads/getDefaultVirtualThreadsExecutor))}
+        pool   (srv.jetty/queued-thread-pool config)]
+    (if (VirtualThreads/areSupported)
+      (is (some? (.getVirtualThreadsExecutor pool)))))
+  (let [config {:virtual-threads false}
+        pool   (srv.jetty/queued-thread-pool config)]
+    (if (VirtualThreads/areSupported)
+      (is (nil? (.getVirtualThreadsExecutor pool)))))
+  (let [config {:virtual-threads nil}
+        pool   (srv.jetty/queued-thread-pool config)]
+    (if (VirtualThreads/areSupported)
+      (is (nil? (.getVirtualThreadsExecutor pool))))))
