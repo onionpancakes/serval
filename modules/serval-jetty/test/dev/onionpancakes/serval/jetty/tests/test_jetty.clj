@@ -238,20 +238,16 @@
     (is (= (.getIdleTimeout pool) 1000))))
 
 (deftest test-queued-thread-pool-virtual-threads
-  (let [config {:virtual-threads true}
-        pool   (srv.jetty/queued-thread-pool config)]
-    (if (VirtualThreads/areSupported)
-      (is (some? (.getVirtualThreadsExecutor pool)))))
-  (let [config {:virtual-threads (if (VirtualThreads/areSupported)
-                                   (VirtualThreads/getDefaultVirtualThreadsExecutor))}
-        pool   (srv.jetty/queued-thread-pool config)]
-    (if (VirtualThreads/areSupported)
-      (is (some? (.getVirtualThreadsExecutor pool)))))
-  (let [config {:virtual-threads false}
-        pool   (srv.jetty/queued-thread-pool config)]
-    (if (VirtualThreads/areSupported)
-      (is (nil? (.getVirtualThreadsExecutor pool)))))
-  (let [config {:virtual-threads nil}
-        pool   (srv.jetty/queued-thread-pool config)]
-    (if (VirtualThreads/areSupported)
+  (when (VirtualThreads/areSupported)
+    (let [config {:virtual-threads true}
+          pool   (srv.jetty/queued-thread-pool config)]
+      (is (some? (.getVirtualThreadsExecutor pool))))
+    (let [config {:virtual-threads (VirtualThreads/getDefaultVirtualThreadsExecutor)}
+          pool   (srv.jetty/queued-thread-pool config)]
+      (is (some? (.getVirtualThreadsExecutor pool))))
+    (let [config {:virtual-threads false}
+          pool   (srv.jetty/queued-thread-pool config)]
+      (is (nil? (.getVirtualThreadsExecutor pool))))
+    (let [config {:virtual-threads nil}
+          pool   (srv.jetty/queued-thread-pool config)]
       (is (nil? (.getVirtualThreadsExecutor pool))))))
