@@ -73,7 +73,7 @@
   (srv/response ctx 200 "main-body"))
 
 (deftest test-do-filter-chain!
-  (with-handler [["/*" example-filter-handler example-servlet-handler]]
+  (with-handler {:routes [["/*" example-filter-handler example-servlet-handler]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (get-in ret [:headers "foo1" 0]) "bar1"))

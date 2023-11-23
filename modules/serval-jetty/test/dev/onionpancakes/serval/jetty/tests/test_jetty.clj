@@ -70,7 +70,7 @@
 
 (deftest test-routes-handler
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    example-routes}
+                :handler    {:routes example-routes}}
     (let [resp (send "http://localhost:42000/foo")]
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))
@@ -212,7 +212,20 @@
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
 
-(deftest test-multiple-context
+(deftest test-context-routes
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    [["/foo" {:routes [["/*" (constantly {:serval.response/status 200
+                                                                  :serval.response/body   "foo"})]]}]
+                             ["/bar" {:routes [["/*" (constantly {:serval.response/status 200
+                                                                  :serval.response/body   "bar"})]]}]]}
+    (let [resp (send "http://localhost:42000/foo")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))
+    (let [resp (send "http://localhost:42000/bar")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "bar")))))
+
+(deftest test-server-handler-multiple-context
   (with-config {:connectors [{:protocol :http :port 42000}]
                 :handler    (srv.jetty/server-handler
                              {:context-path "/foo"

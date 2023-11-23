@@ -19,9 +19,9 @@
   (srv/response ctx 200 "main-body"))
 
 (deftest test-routes
-  (with-handler [["/filtered" example-filter-handler example-servlet-handler]
-                 ["/servlet" example-servlet-handler]
-                 ["/method" #{:GET} example-servlet-handler]]
+  (with-handler {:routes [["/filtered" example-filter-handler example-servlet-handler]
+                          ["/servlet" example-servlet-handler]
+                          ["/method" #{:GET} example-servlet-handler]]}
     (let [ret (send "http://localhost:42000/filtered")]
       (is (= (:status ret) 200))
       (is (= (get-in ret [:headers "foo1" 0]) "bar1"))
@@ -37,10 +37,10 @@
       (is (= (:status ret) 405)))))
 
 (deftest test-routes-with-url-filters
-  (with-handler [["/filtered/*" example-filter-handler nil]
-                 ["/filtered" example-servlet-handler]
-                 ["/filtered/foo" example-servlet-handler]
-                 ["/not-filtered" example-servlet-handler]]
+  (with-handler {:routes [["/filtered/*" example-filter-handler nil]
+                          ["/filtered" example-servlet-handler]
+                          ["/filtered/foo" example-servlet-handler]
+                          ["/not-filtered" example-servlet-handler]]}
     (let [ret (send "http://localhost:42000/filtered")]
       (is (= (:status ret) 200))
       (is (= (get-in ret [:headers "foo1" 0]) "bar1"))

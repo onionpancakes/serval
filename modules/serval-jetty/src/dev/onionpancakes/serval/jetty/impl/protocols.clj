@@ -1,8 +1,10 @@
-(ns dev.onionpancakes.serval.jetty.impl.protocols
-  (:import [org.eclipse.jetty.server Handler]))
+(ns dev.onionpancakes.serval.jetty.impl.protocols)
 
 (defprotocol ServerHandler
-  (as-server-handler ^Handler [this]))
+  (^org.eclipse.jetty.server.Handler as-server-handler [this]))
+
+(defprotocol ContextHandler
+  (^org.eclipse.jetty.server.handler.ContextHandler as-context-handler [this]))
 
 (defprotocol GzipHandler
   (as-gzip-handler [this]))

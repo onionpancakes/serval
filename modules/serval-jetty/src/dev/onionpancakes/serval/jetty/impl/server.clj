@@ -67,20 +67,18 @@
 
 ;; ServerHandler
 
-(def ^:dynamic *server-handler*
-  'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)
-
 (extend-protocol p/ServerHandler
+  clojure.lang.IPersistentVector
+  (as-server-handler [this]
+    (impl.handlers/context-handler-collection-from-context-routes this))
   Handler
   (as-server-handler [this] this)
   Object
   (as-server-handler [this]
-    (let [handler-fn (requiring-resolve *server-handler*)]
-      (handler-fn this)))
+    (impl.handlers/as-context-handler this))
   nil
   (as-server-handler [this]
-    (let [handler-fn (requiring-resolve *server-handler*)]
-      (handler-fn this))))
+    (impl.handlers/as-context-handler this)))
 
 (defn server-handler
   [handler]

@@ -47,39 +47,39 @@
       (is (= (:body ret) "12345")))))
 
 (deftest test-filter
-  (with-handler [["/*"
-                  (srv.servlet/filter args-handler)
-                  (srv.servlet/servlet srv/response 400 "foo")]]
+  (with-handler {:routes [["/*"
+                           (srv.servlet/filter args-handler)
+                           (srv.servlet/servlet srv/response 400 "foo")]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) ""))))
-  (with-handler [["/*"
-                  (srv.servlet/filter args-handler "1")
-                  (srv.servlet/servlet srv/response 400 "foo")]]
+  (with-handler {:routes [["/*"
+                           (srv.servlet/filter args-handler "1")
+                           (srv.servlet/servlet srv/response 400 "foo")]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "1"))))
-  (with-handler [["/*"
-                  (srv.servlet/filter args-handler "1" "2")
-                  (srv.servlet/servlet srv/response 400 "foo")]]
+  (with-handler {:routes [["/*"
+                           (srv.servlet/filter args-handler "1" "2")
+                           (srv.servlet/servlet srv/response 400 "foo")]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "12"))))
-  (with-handler [["/*"
-                  (srv.servlet/filter args-handler "1" "2" "3")
-                  (srv.servlet/servlet srv/response 400 "foo")]]
+  (with-handler {:routes [["/*"
+                           (srv.servlet/filter args-handler "1" "2" "3")
+                           (srv.servlet/servlet srv/response 400 "foo")]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "123"))))
-  (with-handler [["/*"
-                  (srv.servlet/filter args-handler "1" "2" "3" "4")
-                  (srv.servlet/servlet srv/response 400 "foo")]]
+  (with-handler {:routes [["/*"
+                           (srv.servlet/filter args-handler "1" "2" "3" "4")
+                           (srv.servlet/servlet srv/response 400 "foo")]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "1234"))))
-  (with-handler [["/*"
-                  (srv.servlet/filter args-handler "1" "2" "3" "4" "5")
-                  (srv.servlet/servlet srv/response 400 "foo")]]
+  (with-handler {:routes [["/*"
+                           (srv.servlet/filter args-handler "1" "2" "3" "4" "5")
+                           (srv.servlet/servlet srv/response 400 "foo")]]}
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "12345")))))
