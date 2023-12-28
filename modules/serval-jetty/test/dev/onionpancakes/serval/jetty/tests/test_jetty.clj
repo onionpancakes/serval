@@ -217,13 +217,19 @@
                 :handler    [["/foo" {:routes [["/*" (constantly {:serval.response/status 200
                                                                   :serval.response/body   "foo"})]]}]
                              ["/bar" {:routes [["/*" (constantly {:serval.response/status 200
-                                                                  :serval.response/body   "bar"})]]}]]}
+                                                                  :serval.response/body   "bar"})]]}]
+                             ["/empty" {}]
+                             ["/nil" nil]]}
     (let [resp (send "http://localhost:42000/foo")]
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))
     (let [resp (send "http://localhost:42000/bar")]
       (is (= (:status resp) 200))
-      (is (= (:body resp) "bar")))))
+      (is (= (:body resp) "bar")))
+    (let [resp (send "http://localhost:42000/empty")]
+      (is (= (:status resp) 404)))
+    (let [resp (send "http://localhost:42000/nil")]
+      (is (= (:status resp) 404)))))
 
 (deftest test-server-handler-multiple-context
   (with-config {:connectors [{:protocol :http :port 42000}]

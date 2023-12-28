@@ -61,7 +61,8 @@
   (as-servlet-context-handler [this]
     (servlet-context-handler {:routes [["/*" this]]}))
   nil
-  (as-servlet-context-handler [this] nil))
+  (as-servlet-context-handler [this]
+    (servlet-context-handler this)))
 
 (defn as-servlet-context-handler
   [this]
