@@ -28,17 +28,22 @@
      (srv/send-error! ctx code message))))
 
 (defn pred-filter
-  ([pred code]
+  (^jakarta.servlet.GenericFilter
+   [pred code]
    (filter pred-filter-handler pred code))
-  ([pred code message]
+  (^jakarta.servlet.GenericFilter
+   [pred code message]
    (filter pred-filter-handler pred code message)))
 
 (defn http-method-filter
-  ([allowed-method?]
+  (^jakarta.servlet.GenericFilter
+   [allowed-method?]
    (http-method-filter allowed-method? 405))
-  ([allowed-method? code]
+  (^jakarta.servlet.GenericFilter
+   [allowed-method? code]
    (-> (comp allowed-method? :method :serval.context/request)
        (pred-filter code)))
-  ([allowed-method? code message]
+  (^jakarta.servlet.GenericFilter
+   [allowed-method? code message]
    (-> (comp allowed-method? :method :serval.context/request)
        (pred-filter code message))))
