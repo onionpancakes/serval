@@ -12,19 +12,20 @@
       (is (= (get-in ret-headers ["foo" 0]) "bar"))
       (is (= (get-in ret-headers ["baz"]) ["1" "2" "3"])))))
 
-(deftest test-set-body!
-  (with-handler #(srv/set-body! % "foo")
+(deftest test-write-body!
+  (with-handler #(srv/write-body! % "foo")
     (let [ret (send)]
       (is (= (:body ret) "foo"))))
-  (with-handler #(srv/set-body! % "foo" "text/plain")
+  (with-handler #(srv/write-body! % "foo" "text/plain")
     (let [ret (send)]
       (is (= (:body ret) "foo"))
-      (is (= (:content-type ret) "text/plain"))))
-  (with-handler #(srv/set-body! % "foo" "text/plain" "utf-8")
+      (is (= (:media-type ret) "text/plain"))))
+  (with-handler #(srv/write-body! % "foo" "text/plain" "utf-8")
     (let [ret (send)]
       (is (= (:body ret) "foo"))
-      (is (= (:content-type ret) "text/plain;charset=utf-8"))
-      (is (= (:character-encoding ret) "utf-8")))))
+      (is (= (:media-type ret) "text/plain"))
+      (is (= (:character-encoding ret) "utf-8"))
+      (is (= (:content-type ret) "text/plain;charset=utf-8")))))
 
 (deftest test-set-response!
   (with-handler #(srv/set-response! % 200)
@@ -38,13 +39,14 @@
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "foo"))
-      (is (= (:content-type ret) "text/plain"))))
+      (is (= (:media-type ret) "text/plain"))))
   (with-handler #(srv/set-response! % 200 "foo" "text/plain" "utf-8")
     (let [ret (send)]
       (is (= (:status ret) 200))
       (is (= (:body ret) "foo"))
-      (is (= (:content-type ret) "text/plain;charset=utf-8"))
-      (is (= (:character-encoding ret) "utf-8")))))
+      (is (= (:media-type ret) "text/plain"))
+      (is (= (:character-encoding ret) "utf-8"))
+      (is (= (:content-type ret) "text/plain;charset=utf-8")))))
 
 (deftest test-set-response-kv!
   (with-handler #(srv/set-response-kv! %
@@ -63,10 +65,10 @@
 (defn example-filter-handler
   [ctx]
   (-> (srv/set-headers! ctx {"foo1" "bar1"})
-      (srv/set-body! "pre-body:")
+      (srv/write-body! "pre-body:")
       (srv/do-filter-chain!)
       (srv/set-headers! {"foo2" "bar2"})
-      (srv/set-body! ":post-body")))
+      (srv/write-body! ":post-body")))
 
 (defn example-servlet-handler
   [ctx]

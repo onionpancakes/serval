@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.transit
   (:require [dev.onionpancakes.serval.response.body
              :as response.body]
-            [cognitect.transit :as transit]))
+            [cognitect.transit :as transit])
+  (:import [jakarta.servlet ServletResponse]))
 
 ;; Read
 
@@ -21,11 +22,14 @@
 
 ;; Write
 
-(defrecord TransitValue [value type options]
-  response.body/Writable
-  (write [_ out _]
+(deftype TransitValue [value type options]
+  response.body/WritableToOutputStream
+  (write-to-output-stream [_ out]
     (-> (transit/writer out type options)
-        (transit/write value))))
+        (transit/write value)))
+  response.body/Body
+  (write-body-to-response [this response]
+    (.write-to-output-stream this (.getOutputStream ^ServletResponse response))))
 
 (defn transit-value
   ([value type]

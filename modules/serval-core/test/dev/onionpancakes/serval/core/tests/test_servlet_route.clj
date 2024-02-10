@@ -9,10 +9,10 @@
 (defn example-filter-handler
   [ctx]
   (-> (srv/set-headers! ctx {"foo1" "bar1"})
-      (srv/set-body! "pre-body:")
+      (srv/write-body! "pre-body:")
       (srv/do-filter-chain!)
       (srv/set-headers! {"foo2" "bar2"})
-      (srv/set-body! ":post-body")))
+      (srv/write-body! ":post-body")))
 
 (defn example-servlet-handler
   [ctx]

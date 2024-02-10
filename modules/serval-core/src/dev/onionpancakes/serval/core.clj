@@ -184,18 +184,18 @@
           :serval.response/content-type       content-type
           :serval.response/character-encoding character-encoding)))
 
-(defn set-body!
-  "Sets the response body immediately.
+(defn write-body!
+  "Writes a response body immediately.
 
   Context is unchanged."
   ([{:serval.context/keys [response] :as ctx} body]
-   (response.body/set-body response body)
+   (response.body/write-body response body)
    ctx)
   ([{:serval.context/keys [response] :as ctx} body content-type]
-   (response.body/set-body response body content-type)
+   (response.body/write-body response body content-type)
    ctx)
   ([{:serval.context/keys [response] :as ctx} body content-type character-encoding]
-   (response.body/set-body response body content-type character-encoding)
+   (response.body/write-body response body content-type character-encoding)
    ctx))
 
 (defn response
@@ -233,17 +233,17 @@
   ([{:serval.context/keys [response] :as ctx} status body]
    {:pre [(int? status)]}
    (response.http/set-status response status)
-   (response.body/set-body response body)
+   (response.body/write-body response body)
    ctx)
   ([{:serval.context/keys [response] :as ctx} status body content-type]
    {:pre [(int? status)]}
    (response.http/set-status response status)
-   (response.body/set-body response body content-type)
+   (response.body/write-body response body content-type)
    ctx)
   ([{:serval.context/keys [response] :as ctx} status body content-type character-encoding]
    {:pre [(int? status)]}
    (response.http/set-status response status)
-   (response.body/set-body response body content-type character-encoding)
+   (response.body/write-body response body content-type character-encoding)
    ctx))
 
 (defn set-response-kv!

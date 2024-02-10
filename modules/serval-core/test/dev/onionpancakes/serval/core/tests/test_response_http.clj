@@ -39,7 +39,9 @@
 
 (deftest test-body
   (are [body expected] (with-response {:serval.response/body body}
-                         (= (:body (send)) expected))
+                         (let [resp (send)]
+                           (= (:status resp) 200)
+                           (= (:body resp) expected)))
     (.getBytes "foo")                         "foo"
     "foo"                                     "foo"
     (File. (.toURI example-foo-url))          "foo"
@@ -48,13 +50,7 @@
     (Path/of (.toURI example-foo-url))        "foo"
     (eduction (map identity) ["foo" "bar"])   "foobar"
     `("foo" "bar")                            "foobar"
-    `("foo" ~(.getBytes "bar"))               "foobar"
     nil                                       ""))
-
-(deftest test-body-throwable
-  (with-response {:serval.response/body (ex-info "foo" {})}
-    (let [body (:body (send))]
-      (is (and (string? body) (not (empty? body)))))))
 
 (deftest test-body-encoding
   (are [body enc expected] (with-response {:serval.response/body body

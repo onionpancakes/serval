@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.jsonista
   (:require [dev.onionpancakes.serval.response.body
              :as response.body]
-            [jsonista.core :as json]))
+            [jsonista.core :as json])
+  (:import [jakarta.servlet ServletResponse]))
 
 (def default-object-mapper
   json/default-object-mapper)
@@ -28,10 +29,13 @@
 
 ;; Write
 
-(defrecord JsonValue [value object-mapper]
-  response.body/Writable
-  (write [_ out _]
-    (json/write-value out value object-mapper)))
+(deftype JsonValue [value object-mapper]
+  response.body/WritableToWriter
+  (write-to-writer [_ writer]
+    (json/write-value writer value object-mapper))
+  response.body/Body
+  (write-body-to-response [this response]
+    (.write-to-writer this (.getWriter ^ServletResponse response))))
 
 (defn json-value
   ([value]
