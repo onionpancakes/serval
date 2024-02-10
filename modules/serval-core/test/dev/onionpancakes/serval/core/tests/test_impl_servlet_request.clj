@@ -71,9 +71,7 @@
     [:content-length]     0
     [:content-type]       "foo"
     [:character-encoding] "foo"
-    [:locales]            [(Locale. "en")])
-
-  (is (instance? ServletInputStream (:body example-servlet-request-proxy))))
+    [:locales]            [(Locale. "en")]))
 
 (deftest test-servlet-request-proxy-lookup-not-found
   (is (= (get example-servlet-request-proxy ::foo :not-found) :not-found)))

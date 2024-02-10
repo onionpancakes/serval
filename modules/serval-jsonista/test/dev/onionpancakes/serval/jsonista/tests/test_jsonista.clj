@@ -5,44 +5,58 @@
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [clojure.test :refer [deftest is]]
             [jsonista.core :as json])
-  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
+  (:import [jakarta.servlet ServletRequest]
+           [java.io BufferedReader CharArrayReader CharArrayWriter]))
 
-(defn json-bytes
+(defn json-reader
   [value]
-  (let [out (ByteArrayOutputStream.)
-        _   (json/write-value out value)]
-    (.toByteArray out)))
+  (with-open [wtr (doto (CharArrayWriter.)
+                    (json/write-value value))]
+    (-> (CharArrayReader. (.toCharArray wtr))
+        (BufferedReader.))))
+
+(defn context-with-json
+  [value]
+  {:serval.context/request (reify ServletRequest
+                             (getReader [this]
+                               (json-reader value)))})
 
 (deftest test-read-json
   (let [value {"foo" "bar"}
-        in    (ByteArrayInputStream. (json-bytes value))
-        ctx   {:serval.context/request {:body in}}
+        ctx   (context-with-json value)
         ret   (srv.json/read-json ctx)]
     (is (= (:serval.jsonista/value ret) value)))
 
   ;; Custom value key
   (let [value {"foo" "bar"}
-        in    (ByteArrayInputStream. (json-bytes value))
-        ctx   {:serval.context/request {:body in}}
+        ctx   (context-with-json value)
         ret   (srv.json/read-json ctx {:value-key :value})]
     (is (= (:value ret) value)))
 
   ;; Keyword keys object mapper
   (let [value {:foo "bar"}
-        in    (ByteArrayInputStream. (json-bytes value))
-        ctx   {:serval.context/request {:body in}}
+        ctx   (context-with-json value)
         ret   (srv.json/read-json ctx {:object-mapper srv.json/keyword-keys-object-mapper})]
     (is (= (:serval.jsonista/value ret) value))))
 
+(defn string-reader
+  [^String value]
+  (-> (CharArrayReader. (.toCharArray value))
+      (BufferedReader.)))
+
+(defn context-with-string
+  [value]
+  {:serval.context/request (reify ServletRequest
+                             (getReader [this]
+                               (string-reader value)))})
+
 (deftest test-read-json-error
-  (let [in  (ByteArrayInputStream. (.getBytes "{foo"))
-        ctx {:serval.context/request {:body in}}
+  (let [ctx (context-with-string "{foo")
         ret (srv.json/read-json ctx)]
     (is (:serval.jsonista/error ret)))
 
   ;; Custom error key
-  (let [in  (ByteArrayInputStream. (.getBytes "{foo"))
-        ctx {:serval.context/request {:body in}}
+  (let [ctx (context-with-string "{foo")
         ret (srv.json/read-json ctx {:error-key :error})]
     (is (:error ret))))
 

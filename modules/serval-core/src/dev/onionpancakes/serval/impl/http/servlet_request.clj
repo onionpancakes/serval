@@ -207,6 +207,10 @@
         :locale              (.getLocale request)
         :locales             (enumeration-seq (.getLocales request))
         ;; Body
+        ;; https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletrequest#getInputStream()
+        ;; Calling  getInputStream or getReader is a side-effect.
+        ;; Use core helper methods or direct method calls instead.
+        #_#_
         :body                (.getInputStream request)
         ;; Default nil
         nil))

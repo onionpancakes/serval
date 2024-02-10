@@ -2,7 +2,7 @@
   (:require [dev.onionpancakes.serval.response.body
              :as response.body]
             [jsonista.core :as json])
-  (:import [jakarta.servlet ServletResponse]))
+  (:import [jakarta.servlet ServletRequest ServletResponse]))
 
 (def default-object-mapper
   json/default-object-mapper)
@@ -20,8 +20,8 @@
                 value-key     :serval.jsonista/value
                 error-key     :serval.jsonista/error}}]
    (try
-     (let [value (-> (:serval.context/request ctx)
-                     (:body)
+     (let [value (-> ^ServletRequest (:serval.context/request ctx)
+                     (.getReader)
                      (json/read-value object-mapper))]
        (assoc ctx value-key value))
      (catch Throwable ex
