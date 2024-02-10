@@ -62,7 +62,7 @@
 
 (deftest test-json-body
   (let [value {"foo" "bar"}]
-    (with-response {:serval.response/body (srv.json/json-value value)}
+    (with-response {:serval.response/body (srv.json/json-body value)}
       (let [resp       (send)
             resp-value (json/read-value (:body resp))]
         (is (= resp-value value))))))

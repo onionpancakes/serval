@@ -13,7 +13,7 @@
 (defn hello-world-json
   [ctx]
   (let [data {:message "Hello World!"}]
-    (response ctx 200 (srv.json/json-value data) "application/json")))
+    (response ctx 200 (srv.json/json-body data) "application/json")))
 
 ;; Example POST handler
 
@@ -22,14 +22,14 @@
   (let [value (:serval.jsonista/value ctx)
         data  {:message "Json received!"
                :value   value}]
-    (response ctx 200 (srv.json/json-value data) "application/json")))
+    (response ctx 200 (srv.json/json-body data) "application/json")))
 
 (defn echo-json-error
   [ctx]
   (let [error (.getMessage (:serval.jsonista/error ctx))
         data  {:message "Bad Json."
                :error   error}]
-    (response ctx 400 (srv.json/json-value data) "application/json")))
+    (response ctx 400 (srv.json/json-body data) "application/json")))
 
 (def echo-json
   (srv/handler (comp (srv/map srv.json/read-json)

@@ -29,7 +29,7 @@
 
 ;; Write
 
-(deftype JsonValue [value object-mapper]
+(deftype JsonBody [value object-mapper]
   response.body/WritableToWriter
   (write-to-writer [_ writer]
     (json/write-value writer value object-mapper))
@@ -37,8 +37,8 @@
   (write-body-to-response [this response]
     (.write-to-writer this (.getWriter ^ServletResponse response))))
 
-(defn json-value
+(defn json-body
   ([value]
-   (JsonValue. value default-object-mapper))
+   (JsonBody. value default-object-mapper))
   ([value object-mapper]
-   (JsonValue. value object-mapper)))
+   (JsonBody. value object-mapper)))
