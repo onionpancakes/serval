@@ -22,7 +22,7 @@
 
 ;; Write
 
-(deftype TransitValue [value type options]
+(deftype TransitBody [value type options]
   response.body/WritableToOutputStream
   (write-to-output-stream [_ out]
     (-> (transit/writer out type options)
@@ -31,8 +31,8 @@
   (write-body-to-response [this response]
     (.write-to-output-stream this (.getOutputStream ^ServletResponse response))))
 
-(defn transit-value
+(defn transit-body
   ([value type]
-   (TransitValue. value type nil))
+   (TransitBody. value type nil))
   ([value type options]
-   (TransitValue. value type options)))
+   (TransitBody. value type options)))
