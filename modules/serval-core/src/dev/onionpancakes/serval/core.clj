@@ -4,7 +4,8 @@
              :as response.body]
             [dev.onionpancakes.serval.response.http
              :as response.http])
-  (:import [jakarta.servlet FilterChain ServletRequest]
+  (:import [jakarta.servlet FilterChain ServletRequest ServletResponse
+            ServletInputStream ServletOutputStream]
            [jakarta.servlet.http HttpServletResponse]))
 
 ;; Processors
@@ -306,3 +307,41 @@
        (getServletContext)
        (log msg throwable))
    ctx))
+
+;; Context Utils
+
+;; https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletrequest
+
+(defn get-request-input-stream
+  "Returns the request input-stream.
+
+  As per servlet spec, after this is called, get-request-reader may not be called."
+  {:tag ServletInputStream}
+  [{:serval.context/keys [^ServletRequest request]}]
+  (.getInputStream request))
+
+(defn get-request-reader
+  "Returns the request reader.
+
+  As per servlet spec, after this is called, get-request-output-stream may not be called."
+  {:tag java.io.BufferedReader}
+  [{:serval.context/keys [^ServletRequest request]}]
+  (.getReader request))
+
+;; https://jakarta.ee/specifications/servlet/6.0/apidocs/jakarta.servlet/jakarta/servlet/servletresponse
+
+(defn get-response-output-stream
+  "Returns the response output-stream.
+
+  As per servlet spec, after this is called, get-response-writer may not be called."
+  {:tag ServletOutputStream}
+  [{:serval.context/keys [^ServletResponse response]}]
+  (.getOutputStream response))
+
+(defn get-response-writer
+  "Returns the response writer.
+
+  As per servlet spec, after this is called, get-response-output-stream may not be called."
+  {:tag java.io.PrintWriter}
+  [{:serval.context/keys [^ServletResponse response]}]
+  (.getWriter response))
