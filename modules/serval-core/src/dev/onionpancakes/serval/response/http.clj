@@ -127,7 +127,7 @@
     (.setCharacterEncoding response (:serval.response/character-encoding m)))
   ;; Body
   (when (contains? m :serval.response/body)
-    (response.body/write-body response (:serval.response/body m)))
+    (response.body/write-response-body response (:serval.response/body m)))
   (when (contains? m :serval.response/send-error)
     (send-error response (:serval.response/send-error m)))
   response)

@@ -31,11 +31,11 @@
 
 (deftype JsonBody [value object-mapper]
   response.body/WritableToWriter
-  (write-to-writer [_ writer]
+  (value-write-to-writer [_ writer]
     (json/write-value writer value object-mapper))
   response.body/Body
-  (write-body-to-response [this response]
-    (.write-to-writer this (.getWriter ^ServletResponse response))))
+  (body-write-to-response [this response]
+    (.value-write-to-writer this (.getWriter ^ServletResponse response))))
 
 (defn json-body
   ([value]

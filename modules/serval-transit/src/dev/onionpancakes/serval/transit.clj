@@ -24,12 +24,12 @@
 
 (deftype TransitBody [value type options]
   response.body/WritableToOutputStream
-  (write-to-output-stream [_ out]
+  (value-write-to-output-stream [_ out]
     (-> (transit/writer out type options)
         (transit/write value)))
   response.body/Body
-  (write-body-to-response [this response]
-    (.write-to-output-stream this (.getOutputStream ^ServletResponse response))))
+  (body-write-to-response [this response]
+    (.value-write-to-output-stream this (.getOutputStream ^ServletResponse response))))
 
 (defn transit-body
   ([value type]
