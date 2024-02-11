@@ -114,8 +114,8 @@
 (def app
   {:routes      [["" #{:GET} index]
                  ["/submit" #{:POST} submit]                 
-                 ["/not-found" #{:GET} not-found]
-                 ["/error" #{:GET} error]]
+                 ["/not-found" not-found]
+                 ["/error" error]]
    :error-pages {404       "/not-found"
                  405       "/not-found"
                  Throwable "/error"}})
@@ -123,7 +123,7 @@
 (def app-dev
   {:routes      [["" #{:GET} #'index]
                  ["/submit" #{:POST} #'submit]
-                 ["/not-found" #{:GET} #'not-found]
-                 ["/error" #{:GET} error]]
-   :error-pages {404       "/not-found"
-                 405       "/not-found"}})
+                 ["/not-found" #'not-found]
+                 ["/error" #'error]]
+   :error-pages {404 "/not-found"
+                 405 "/not-found"}})
