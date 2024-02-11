@@ -109,7 +109,7 @@
 (defn error
   [ctx]
   (let [body (srv.html/html-writable (error-page nil))]
-    (srv/response ctx 404 body "text/html" "UTF-8")))
+    (srv/response ctx 500 body "text/html" "UTF-8")))
 
 (def app
   {:routes      [["" #{:GET} index]
