@@ -111,7 +111,7 @@
 
 (def app
   {:routes      [["" #{:GET} index]
-                 ["/submit" #{:POST} submit]                 
+                 ["/submit" #{:POST} submit]
                  ["/not-found" not-found]
                  ["/error" error]]
    :error-pages {404       "/not-found"
