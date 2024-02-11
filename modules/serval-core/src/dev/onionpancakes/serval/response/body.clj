@@ -49,7 +49,28 @@
        (write-fn writer value))
      Body
      (body-write-to-response [_ response]
-       (write-fn (.getWriter ^ServletResponse response) value)))))
+       (write-fn (.getWriter ^ServletResponse response) value))))
+  ([value write-fn a]
+   (reify WritableToWriter
+     (value-write-to-writer [_ writer]
+       (write-fn writer value a))
+     Body
+     (body-write-to-response [_ response]
+       (write-fn (.getWriter ^ServletResponse response) value a))))
+  ([value write-fn a b]
+   (reify WritableToWriter
+     (value-write-to-writer [_ writer]
+       (write-fn writer value a b))
+     Body
+     (body-write-to-response [_ response]
+       (write-fn (.getWriter ^ServletResponse response) value a b))))
+  ([value write-fn a b & more]
+   (reify WritableToWriter
+     (value-write-to-writer [_ writer]
+       (apply write-fn writer value a b more))
+     Body
+     (body-write-to-response [_ response]
+       (apply write-fn (.getWriter ^ServletResponse response) value a b more)))))
 
 (defn writable-to-output-stream
   ([value]
@@ -60,7 +81,28 @@
        (write-fn out value))
      Body
      (body-write-to-response [_ response]
-       (write-fn (.getOutputStream ^ServletResponse response) value)))))
+       (write-fn (.getOutputStream ^ServletResponse response) value))))
+  ([value write-fn a]
+   (reify WritableToOutputStream
+     (value-write-to-output-stream [_ out]
+       (write-fn out value a))
+     Body
+     (body-write-to-response [_ response]
+       (write-fn (.getOutputStream ^ServletResponse response) value a))))
+  ([value write-fn a b]
+   (reify WritableToOutputStream
+     (value-write-to-output-stream [_ out]
+       (write-fn out value a b))
+     Body
+     (body-write-to-response [_ response]
+       (write-fn (.getOutputStream ^ServletResponse response) value a b))))
+  ([value write-fn a b & more]
+   (reify WritableToOutputStream
+     (value-write-to-output-stream [_ out]
+       (apply write-fn out value a b more))
+     Body
+     (body-write-to-response [_ response]
+       (apply write-fn (.getOutputStream ^ServletResponse response) value a b more)))))
 
 ;; Impl
 
