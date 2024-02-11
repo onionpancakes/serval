@@ -26,14 +26,12 @@
                    :color     :grey}}
        "My Todo List Inc " current-year]]]]])
 
-(defn not-found-page
-  [_]
+(def not-found-page
   [::Layout
    [:p "Page not found."]
    [:p [:a {:href "/"} "Return to Home"]]])
 
-(defn error-page
-  [_]
+(def error-page
   [::Layout
    [:p "An error occured."]
    [:p [:a {:href "/"} "Return to Home"]]])
@@ -103,12 +101,12 @@
 
 (defn not-found
   [ctx]
-  (let [body (srv.html/html-writable (not-found-page nil))]
+  (let [body (srv.html/html-writable not-found-page)]
     (srv/response ctx 404 body "text/html" "UTF-8")))
 
 (defn error
   [ctx]
-  (let [body (srv.html/html-writable (error-page nil))]
+  (let [body (srv.html/html-writable error-page)]
     (srv/response ctx 500 body "text/html" "UTF-8")))
 
 (def app
