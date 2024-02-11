@@ -1,38 +1,20 @@
 (ns dev.onionpancakes.serval.transit
   (:require [dev.onionpancakes.serval.response.body
              :as response.body]
-            [cognitect.transit :as transit])
-  (:import [jakarta.servlet ServletResponse]))
+            [cognitect.transit :as transit]))
 
-;; Read
+(defn write-transit
+  "Writes transit value to an OutputStream."
+  ([out value type]
+   (-> (transit/writer out type)
+       (transit/write value)))
+  ([out value type opts]
+   (-> (transit/writer out type opts)
+       (transit/write value))))
 
-(defn read-transit
-  ([ctx type]
-   (read-transit ctx type nil))
-  ([ctx type {:keys [reader-opts value-key error-key]
-              :or   {value-key :serval.transit/value
-                     error-key :serval.transit/error}}]
-   (let [reader (-> (:serval.context/request ctx)
-                    (:body)
-                    (transit/reader type reader-opts))]
-     (try
-       (assoc ctx value-key (transit/read reader))
-       (catch Throwable ex
-         (assoc ctx error-key ex))))))
-
-;; Write
-
-(deftype TransitBody [value type options]
-  response.body/WritableToOutputStream
-  (value-write-to-output-stream [_ out]
-    (-> (transit/writer out type options)
-        (transit/write value)))
-  response.body/Body
-  (body-write-to-response [this response]
-    (.value-write-to-output-stream this (.getOutputStream ^ServletResponse response))))
-
-(defn transit-body
+(defn transit-writable
+  "Returns a response body writable instance for a transit value."
   ([value type]
-   (TransitBody. value type nil))
-  ([value type options]
-   (TransitBody. value type options)))
+   (response.body/writable-to-output-stream value write-transit type))
+  ([value type opts]
+   (response.body/writable-to-output-stream value write-transit type opts)))
