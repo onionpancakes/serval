@@ -345,3 +345,9 @@
   {:tag java.io.PrintWriter}
   [{:serval.context/keys [^ServletResponse response]}]
   (.getWriter response))
+
+(def writable-to-writer
+  response.body/writable-to-writer)
+
+(def writable-to-output-stream
+  response.body/writable-to-output-stream)
