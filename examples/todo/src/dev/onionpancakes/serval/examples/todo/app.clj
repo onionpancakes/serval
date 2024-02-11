@@ -43,8 +43,8 @@
     (for [[idx task] (map-indexed vector (:tasks data))]
       [:li {:style {:margin :4px}}
        [:form {:action "/submit" :method :POST}
-        [:span {:style {:text-decoration (if (:done? task)
-                                           :line-through)}}
+        [:span (if (:done? task)
+                 {:style {:text-decoration :line-through}})
          (:task task)]
         " - "
         [:span
