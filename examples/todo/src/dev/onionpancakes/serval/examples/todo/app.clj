@@ -63,7 +63,7 @@
     [:form {:action "/submit" :method :POST}
      [:input {:name :action :hidden true :value "clear"}]
      (let [some-done? (true? (some :done? (:tasks data)))]
-       [:button {:disabled (not some-done?)} "Clear tasks"])]]])
+       [:button {:disabled (not some-done?)} "Clear done"])]]])
 
 ;; Database
 
