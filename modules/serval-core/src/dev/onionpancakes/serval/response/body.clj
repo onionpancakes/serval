@@ -42,8 +42,8 @@
 
 (defn writable-to-writer
   ([value]
-   (writable-to-writer write-writer-value value))
-  ([write-fn value]
+   (writable-to-writer value write-writer-value))
+  ([value write-fn]
    (reify WritableToWriter
      (value-write-to-writer [_ writer]
        (write-fn writer value))
@@ -53,8 +53,8 @@
 
 (defn writable-to-output-stream
   ([value]
-   (writable-to-output-stream write-output-stream-value value))
-  ([write-fn value]
+   (writable-to-output-stream value write-output-stream-value))
+  ([value write-fn]
    (reify WritableToOutputStream
      (value-write-to-output-stream [_ out]
        (write-fn out value))
