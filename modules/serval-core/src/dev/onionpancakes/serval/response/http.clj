@@ -73,22 +73,10 @@
 
 ;; Trailers
 
-(defprotocol Trailers
-  (as-trailer-fields-supplier [this]))
-
-(extend-protocol Trailers
-  clojure.lang.IDeref
-  (as-trailer-fields-supplier [this]
-    (reify Supplier
-      (get [_]
-        (deref this))))
-  Supplier
-  (as-trailer-fields-supplier [this] this))
-
 (defn set-trailers
   [^HttpServletResponse response trailers]
   (doto response
-    (.setTrailerFields (as-trailer-fields-supplier trailers))))
+    (.setTrailerFields trailers)))
 
 ;; Error
 
