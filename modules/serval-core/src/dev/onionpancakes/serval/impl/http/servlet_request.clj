@@ -121,7 +121,7 @@
 ;; Request
 
 (def servlet-request-proxy-keys
-  [ ;; Attributes
+  [;; Attributes
    :attributes
    ;; Request Id
    :request-id :protocol-request-id
@@ -138,9 +138,7 @@
    :protocol :method
    ;; Headers
    :headers :content-length :content-type :character-encoding
-   :cookies :locale :locales
-   ;; Body
-   :body])
+   :cookies :locale :locales])
 
 (defn servlet-request-proxy
   [^HttpServletRequest request]
