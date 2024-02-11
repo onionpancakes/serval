@@ -1,9 +1,7 @@
 (ns dev.onionpancakes.serval.response.body
   (:import [jakarta.servlet ServletResponse ServletOutputStream]
            [java.io PrintWriter]
-           [java.nio.file Files]
-           [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function Function]))
+           [java.nio.file Files]))
 
 ;; Protocols
 

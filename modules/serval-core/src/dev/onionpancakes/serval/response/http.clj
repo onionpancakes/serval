@@ -1,8 +1,7 @@
 (ns dev.onionpancakes.serval.response.http
   (:require [dev.onionpancakes.serval.response.body
              :as response.body])
-  (:import [java.util.concurrent CompletionStage CompletableFuture]
-           [java.util.function Function BiConsumer Supplier]
+  (:import [java.util.function Function BiConsumer Supplier]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
 ;; Status
