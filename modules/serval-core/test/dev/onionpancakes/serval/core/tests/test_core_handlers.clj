@@ -9,12 +9,12 @@
          {:serval.response/headers {"Foo" "Bar"}})))
 
 (deftest test-body
-  (is (= (srv/body {} "Foo")
+  (is (= (srv/set-body {} "Foo")
          {:serval.response/body "Foo"}))
-  (is (= (srv/body {} "Foo" "text/plain")
+  (is (= (srv/set-body {} "Foo" "text/plain")
          {:serval.response/body         "Foo"
           :serval.response/content-type "text/plain"}))
-  (is (= (srv/body {} "Foo" "text/plain" "utf-8")
+  (is (= (srv/set-body {} "Foo" "text/plain" "utf-8")
          {:serval.response/body               "Foo"
           :serval.response/content-type       "text/plain"
           :serval.response/character-encoding "utf-8"})))

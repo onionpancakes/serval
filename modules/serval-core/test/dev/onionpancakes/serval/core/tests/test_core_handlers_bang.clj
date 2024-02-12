@@ -12,6 +12,40 @@
       (is (= (get-in ret-headers ["foo" 0]) "bar"))
       (is (= (get-in ret-headers ["baz"]) ["1" "2" "3"])))))
 
+(deftest test-set-body!
+  (with-handler #(srv/set-body! % "foo")
+    (let [ret (send)]
+      (is (= (:body ret) "foo"))))
+  (with-handler #(srv/set-body! % "foo" "text/plain")
+    (let [ret (send)]
+      (is (= (:body ret) "foo"))
+      (is (= (:media-type ret) "text/plain"))))
+  (with-handler #(srv/set-body! % "foo" "text/plain" "utf-8")
+    (let [ret (send)]
+      (is (= (:body ret) "foo"))
+      (is (= (:media-type ret) "text/plain"))
+      (is (= (:character-encoding ret) "utf-8"))
+      (is (= (:content-type ret) "text/plain;charset=utf-8"))))
+
+  ;; Resetting
+  (with-handler #(-> (srv/write-body! % "foo")
+                     (srv/set-body! "bar"))
+    (let [ret (send)]
+      (is (= (:body ret) "bar"))))
+  (with-handler #(-> (srv/write-body! % "foo" "text/plain")
+                     (srv/set-body! "bar" "text/html"))
+    (let [ret (send)]
+      (is (= (:body ret) "bar"))
+      (is (= (:media-type ret) "text/html"))))
+  (with-handler #(-> (srv/write-body! % "foo" "text/plain" "utf-8")
+                     (srv/set-body! "bar" "text/html" "utf-16"))
+    (let [ret (send)]
+      (is (= (:body ret) "bar"))
+      (is (= (:media-type ret) "text/html"))
+      ;; Can't change character encoding after writing.
+      (is (= (:character-encoding ret) "utf-8"))
+      (is (= (:content-type ret) "text/html;charset=utf-8")))))
+
 (deftest test-write-body!
   (with-handler #(srv/write-body! % "foo")
     (let [ret (send)]

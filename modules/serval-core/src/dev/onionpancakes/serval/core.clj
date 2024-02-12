@@ -171,7 +171,7 @@
   (response.http/set-headers response headers)
   ctx)
 
-(defn body
+(defn set-body
   "Sets the response body, content-type, and character-encoding."
   ([ctx body]
    (assoc ctx :serval.response/body body))
@@ -184,6 +184,23 @@
           :serval.response/body               body
           :serval.response/content-type       content-type
           :serval.response/character-encoding character-encoding)))
+
+(defn set-body!
+  "Reset the buffer, then write the response body immediately.
+
+  Context is unchanged."
+  ([{:serval.context/keys [^ServletResponse response] :as ctx} body]
+   (.resetBuffer response)
+   (response.body/write-response-body response body)
+   ctx)
+  ([{:serval.context/keys [^ServletResponse response] :as ctx} body content-type]
+   (.resetBuffer response)
+   (response.body/write-response-body response body content-type)
+   ctx)
+  ([{:serval.context/keys [^ServletResponse response] :as ctx} body content-type character-encoding]
+   (.resetBuffer response)
+   (response.body/write-response-body response body content-type character-encoding)
+   ctx))
 
 (defn write-body!
   "Writes a response body immediately.
