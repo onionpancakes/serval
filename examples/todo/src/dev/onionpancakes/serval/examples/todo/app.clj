@@ -6,7 +6,7 @@
 ;; Page
 
 (defn current-year []
-  (java.time.Year/now))
+  (.getValue (java.time.Year/now)))
 
 (defmethod html/resolve-alias ::Layout
   [_ _ attrs content]
@@ -55,9 +55,9 @@
     [:form {:action "/submit" :method :POST}
      [:input {:name :action :hidden true :value "add-task"}]
      [:input {:name :task :autofocus true :placeholder "Enter todo task"}]
-     " "
+     html/nbsp
      [:button "Add task"]]
-    (html/raw "&nbsp;")
+    html/nbsp
     [:form {:action "/submit" :method :POST}
      [:input {:name :action :hidden true :value "clear"}]
      (let [some-done? (true? (some :done? (:tasks data)))]
