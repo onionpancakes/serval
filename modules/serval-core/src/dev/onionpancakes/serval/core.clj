@@ -255,6 +255,15 @@
   (response.http/set-response response m)
   ctx)
 
+(defn send-redirect
+  [ctx location]
+  (assoc ctx :serval.response/send-redirect location))
+
+(defn send-redirect!
+  [{:serval.context/keys [^HttpServletResponse response] :as ctx} location]
+  (.sendRedirect response location)
+  ctx)
+
 (defn send-error
   "Sets send-error with code and message."
   ([ctx code]

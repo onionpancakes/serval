@@ -78,13 +78,22 @@
   (doto response
     (.setTrailerFields trailers)))
 
+;; Redirect
+
+(defn send-redirect
+  [^HttpServletResponse response location]
+  (doto response
+    (.sendRedirect location)))
+
 ;; Error
 
 (defn send-error
   [^HttpServletResponse response err]
   (cond
-    (int? err)    (.sendError response err)
-    (vector? err) (.sendError response (nth err 0) (nth err 1))))
+    (int? err)    (doto response
+                    (.sendError err))
+    (vector? err) (doto response
+                    (.sendError (nth err 0) (nth err 1)))))
 
 ;; Response
 
@@ -115,6 +124,12 @@
   ;; Body
   (when (contains? m :serval.response/body)
     (response.body/write-response-body response (:serval.response/body m)))
+  ;; For the send methods, the first one called is commited.
+  ;; Invoke sendError first so it has precedence over sendRedirect
+  ;; Error
   (when (contains? m :serval.response/send-error)
     (send-error response (:serval.response/send-error m)))
+  ;; Redirect
+  (when (contains? m :serval.response/send-redirect)
+    (send-redirect response (:serval.response/send-redirect m)))
   response)

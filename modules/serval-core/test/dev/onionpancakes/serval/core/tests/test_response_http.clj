@@ -62,6 +62,11 @@
     "foo"                      "utf-16" "foo"
     (.getBytes "foo" "utf-16") "utf-16" "foo"))
 
+(deftest test-send-redirect
+  (with-response {:serval.response/send-redirect "/"}
+    (let [ret (send)]
+      (is (= (:status ret) 302)))))
+
 (deftest test-send-error
   (with-response {:serval.response/send-error 400}
     (let [ret (send)]

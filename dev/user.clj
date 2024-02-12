@@ -17,6 +17,12 @@
               :serval.response/content-type       "text/plain"
               :serval.response/character-encoding "utf-8"}))
 
+(defn my-redirect-handler
+  [ctx]
+  (-> (srv/headers ctx {"foo" :bar})
+      (srv/send-redirect "/")
+      #_(srv/send-error 405 "FOOBAR")))
+
 (defn my-throw-handler
   [ctx]
   (throw (ex-info "foooo" {})))
@@ -32,24 +38,19 @@
     (srv/do-filter-chain!)
     (srv/set-response-kv! :serval.response/body "bar")))
 
-(def routes
-  [["/filtered" #'my-filter #'my-handler]
-   ["/throw" #'my-throw-handler]
-   ["/error" #'my-error-handler]
-   ["/post" #{:POST} #'my-handler]
-   ["" #'my-handler]])
-
-(def error-pages
-  {400                        "/error"
-   clojure.lang.ExceptionInfo "/error"})
+(def app
+  {:routes      [["" #'my-handler]
+                 ["/post" #{:POST} #'my-handler]
+                 ["/redirect" #'my-redirect-handler]
+                 ["/filtered" #'my-filter #'my-handler]
+                 ["/throw" #'my-throw-handler]
+                 ["/error" #'my-error-handler]]
+   :error-pages {400                        "/error"
+                 clojure.lang.ExceptionInfo "/error"}})
 
 (def server-config
   {:connectors [{:protocol :http :port 3000}]
-   :handler    (srv.jetty/server-handler
-                {:context-path "/app"
-                 :routes       [["/*" (srv.servlet/servlet srv/response 200 "Hello app!")]]}
-                {:routes      routes
-                 :error-pages error-pages})})
+   :handler    app})
 
 (defonce server
   (srv.jetty/server server-config))
