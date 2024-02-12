@@ -60,13 +60,5 @@
           :serval.response/character-encoding "utf-8"})))
 
 (deftest test-do-filter-chain
-  (let [ret (-> (srv/do-filter-chain {})
-                (:serval.filter/do-filter-chain))]
-    (is ret))
-  (let [req                        (Object.)
-        resp                       (Object.)
-        [ret-req ret-resp :as ret] (-> (srv/do-filter-chain {} req resp)
-                                       (:serval.filter/do-filter-chain))]
-    (is (vector? ret))
-    (is (identical? req ret-req))
-    (is (identical? resp ret-resp))))
+  (is (= (srv/do-filter-chain {})
+         {:serval.filter/do-filter-chain true})))

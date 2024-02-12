@@ -288,21 +288,16 @@
   "Sets do-filter-chain, which is processed when the filter completes.
   Since do-filter-chain is processed after filter completion,
   this only allows for filter pre-processing."
-  ([ctx]
-   (assoc ctx :serval.filter/do-filter-chain true))
-  ([ctx request response]
-   (assoc ctx :serval.filter/do-filter-chain [request response])))
+  [ctx]
+  (assoc ctx :serval.filter/do-filter-chain true))
 
 (defn do-filter-chain!
   "Does the filter chain immediately. Allows for filter post-processing.
 
   Context is unchanged."
-  ([{:serval.context/keys [request response ^FilterChain filter-chain] :as ctx}]
-   (.doFilter filter-chain request response)
-   ctx)
-  ([{:serval.context/keys [^FilterChain filter-chain] :as ctx} request response]
-   (.doFilter filter-chain request response)
-   ctx))
+  [{:serval.context/keys [request response ^FilterChain filter-chain] :as ctx}]
+  (.doFilter filter-chain request response)
+  ctx)
 
 (defn log
   "Logs the message and throwable using ServletContext.

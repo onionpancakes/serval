@@ -15,10 +15,9 @@
 
 (defn do-filter-chain
   [^FilterChain filter-chain m default-request default-response]
-  (if-let [do-chain (:serval.filter/do-filter-chain m)]
-    (if (vector? do-chain)
-      (.doFilter filter-chain (nth do-chain 0) (nth do-chain 1))
-      (.doFilter filter-chain default-request default-response))))
+  (if (:serval.filter/do-filter-chain m)
+    (.doFilter filter-chain default-request default-response))
+  filter-chain)
 
 (defn service-fn
   ([handler]
