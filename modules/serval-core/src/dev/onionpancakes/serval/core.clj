@@ -269,7 +269,9 @@
   ([ctx code]
    (assoc ctx :serval.response/send-error code))
   ([ctx code message]
-   (assoc ctx :serval.response/send-error [code message])))
+   (assoc ctx
+          :serval.response/send-error code
+          :serval.response/send-error-message message)))
 
 (defn send-error!
   "Sends error immediately.

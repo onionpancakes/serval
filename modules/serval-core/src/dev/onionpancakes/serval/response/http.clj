@@ -88,12 +88,12 @@
 ;; Error
 
 (defn send-error
-  [^HttpServletResponse response err]
-  (cond
-    (int? err)    (doto response
-                    (.sendError err))
-    (vector? err) (doto response
-                    (.sendError (nth err 0) (nth err 1)))))
+  ([^HttpServletResponse response code]
+   (doto response
+     (.sendError code)))
+  ([^HttpServletResponse response code message]
+   (doto response
+     (.sendError code message))))
 
 ;; Response
 
@@ -128,7 +128,10 @@
   ;; Invoke sendError first so it has precedence over sendRedirect
   ;; Error
   (when (contains? m :serval.response/send-error)
-    (send-error response (:serval.response/send-error m)))
+    (if (contains? m :serval.response/send-error-message)
+      (let [msg (:serval.response/send-error-message m)]
+        (send-error response (:serval.response/send-error m) msg))
+      (send-error response (:serval.response/send-error m))))
   ;; Redirect
   (when (contains? m :serval.response/send-redirect)
     (send-redirect response (:serval.response/send-redirect m)))

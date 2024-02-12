@@ -3,7 +3,8 @@
   (:require [dev.onionpancakes.serval.jetty.test
              :refer [with-response send]]
             [clojure.test :refer [deftest is are]]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.string])
   (:import [java.io ByteArrayInputStream File]
            [java.nio.file Path]
            [java.util.concurrent CompletableFuture]))
@@ -71,6 +72,9 @@
   (with-response {:serval.response/send-error 400}
     (let [ret (send)]
       (is (= (:status ret) 400))))
-  (with-response {:serval.response/send-error [400 "message"]}
-    (let [ret (send)]
-      (is (= (:status ret) 400)))))
+  (with-response {:serval.response/send-error         404
+                  :serval.response/send-error-message "foo"}
+    (let [ret  (send)
+          body (:body ret)]
+      (is (= (:status ret) 404))
+      (is (clojure.string/includes? body "foo")))))
