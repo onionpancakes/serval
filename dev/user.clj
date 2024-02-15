@@ -14,6 +14,9 @@
             [clojure.java.io :as io]))
 
 (defn my-handler []
+  #_
+  (srv/send-error 400 :headers {:FOO :bar})
+
   (-> "foobar"
       (srv/respond :content-type "text/html"
                    :character-encoding "UTF-8")))
@@ -25,7 +28,8 @@
   (throw (ex-info "foooo" {})))
 
 (defn my-error-handler []
-  )
+  (-> "error"
+      (srv/respond)))
 
 (defn my-filter []
   )

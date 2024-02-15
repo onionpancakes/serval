@@ -33,3 +33,33 @@
    (let [response *servlet-response*]
      (resp.http/set-response response http-opts)
      (resp.body/write-body response body))))
+
+(defn send-error-with
+  ([^HttpServletResponse response code]
+   (.sendError response code))
+  ([^HttpServletResponse response code & {message :message :as http-opts}]
+   (resp.http/set-response-for-send response http-opts)
+   (.sendError response code message)))
+
+(defn send-error
+  ([code]
+   (.sendError *servlet-response* code))
+  ([code & {message :message :as http-opts}]
+   (let [response *servlet-response*]
+     (resp.http/set-response-for-send response http-opts)
+     (.sendError response code message))))
+
+(defn send-redirect-with
+  ([^HttpServletResponse response location]
+   (.sendRedirect response location))
+  ([^HttpServletResponse response location & {:as http-opts}]
+   (resp.http/set-response-for-send response http-opts)
+   (.sendRedirect response location)))
+
+(defn send-redirect
+  ([location]
+   (.sendRedirect *servlet-response* location))
+  ([location & {:as http-opts}]
+   (let [response *servlet-response*]
+     (resp.http/set-response-for-send response http-opts)
+     (.sendRedirect response location))))

@@ -19,24 +19,38 @@
 (defn set-response
   [^HttpServletResponse response m]
   ;; Status
-  (when (contains? m :status)
-    (.setStatus response (:status m)))
+  (when-some [status (:status m)]
+    (.setStatus response status))
   ;; Headers
-  (when (contains? m :headers)
-    (set-headers response (:serval.response/headers m)))
+  (when-some [headers (:headers m)]
+    (set-headers response headers))
   ;; Trailers
-  (when (contains? m :trailers)
-    (.setTrailers response (:trailers m)))
+  (when-some [trailers (:trailers m)]
+    (.setTrailerFields response trailers))
   ;; Cookies
-  (when (contains? m :cookies)
-    (doseq [cookie (:cookies m)]
+  (when-some [cookies (:cookies m)]
+    (doseq [cookie cookies]
       (.addCookie response cookie)))
   ;; ContentType
-  (when (contains? m :content-type)
-    (.setContentType response (:content-type m)))
+  (when-some [content-type (:content-type m)]
+    (.setContentType response content-type))
   ;; CharacterEncoding
-  (when (contains? m :character-encoding)
-    (.setCharacterEncoding response (:character-encoding m)))
+  (when-some [character-encoding (:character-encoding m)]
+    (.setCharacterEncoding response character-encoding))
+  response)
+
+(defn set-response-for-send
+  [^HttpServletResponse response m]
+  ;; Headers
+  (when-some [headers (:headers m)]
+    (set-headers response headers))
+  ;; Trailers
+  (when-some [trailers (:trailers m)]
+    (.setTrailerFields response trailers))
+  ;; Cookies
+  (when-some [cookies (:cookies m)]
+    (doseq [cookie cookies]
+      (.addCookie response cookie)))
   response)
 
 ;; Impl
