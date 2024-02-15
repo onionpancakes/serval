@@ -1,5 +1,6 @@
 (ns dev.onionpancakes.serval.core
-  (:require [dev.onionpancakes.serval.response :as srv.response])
+  (:require [dev.onionpancakes.serval.response.body :as resp.body]
+            [dev.onionpancakes.serval.response.http :as resp.http])
   (:import [jakarta.servlet Servlet Filter FilterChain
             ServletInputStream ServletOutputStream]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
@@ -10,35 +11,25 @@
 (def ^:dynamic ^Filter *filter* nil)
 (def ^:dynamic ^FilterChain *filter-chain* nil)
 
-(defn respond*
-  ([response a]
-   (srv.response/respond response a))
-  ([response a & more]
-   (srv.response/respond response a)
-   (reduce srv.response/respond response more)))
+(defn set-response-with
+  [response & {:as http-opts}]
+  (resp.http/set-response response http-opts))
+
+(defn set-response
+  [& {:as http-opts}]
+  (resp.http/set-response *servlet-response* http-opts))
+
+(defn respond-with
+  ([response body]
+   (resp.body/write-body response body))
+  ([response body & {:as http-opts}]
+   (resp.http/set-response response http-opts)
+   (resp.body/write-body response body)))
 
 (defn respond
-  ([])
-  ([a]
-   (srv.response/respond *servlet-response* a))
-  ([a & more]
-   (let [resp *servlet-response*]
-     (srv.response/respond resp a)
-     (reduce srv.response/respond resp more))))
-
-(defn status
-  [code]
-  code)
-
-(defn headers
-  [headers]
-  headers)
-
-(def content-type
-  srv.response/content-type)
-
-(def charset
-  srv.response/charset)
-
-(def body
-  srv.response/body)
+  ([body]
+   (resp.body/write-body *servlet-response* body))
+  ([body & {:as http-opts}]
+   (let [response *servlet-response*]
+     (resp.http/set-response response http-opts)
+     (resp.body/write-body response body))))

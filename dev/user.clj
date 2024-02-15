@@ -14,11 +14,9 @@
             [clojure.java.io :as io]))
 
 (defn my-handler []
-  (println (:path *servlet-request*))
-  (srv/respond (srv/status 200)
-               (srv/headers {})
-               (srv/body "bar" "text/plain" "utf-8")
-               (srv/body (:parameters *servlet-request*))))
+  (-> "foobar"
+      (srv/respond :content-type "text/html"
+                   :character-encoding "UTF-8")))
 
 (defn my-redirect-handler []
   )
