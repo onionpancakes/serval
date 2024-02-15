@@ -40,20 +40,9 @@
   ;; CharacterEncoding
   (when-some [character-encoding (:character-encoding m)]
     (.setCharacterEncoding response character-encoding))
-  response)
-
-(defn set-http-for-send
-  [^HttpServletResponse response m]
-  ;; Headers
-  (when-some [headers (:headers m)]
-    (set-headers response headers))
-  ;; Trailers
-  (when-some [trailers (:trailers m)]
-    (.setTrailerFields response trailers))
-  ;; Cookies
-  (when-some [cookies (:cookies m)]
-    (doseq [cookie cookies]
-      (.addCookie response cookie)))
+  ;; BufferSize
+  (when-some [buffer-size (:buffer-size m)]
+    (.setBufferSize response buffer-size))
   response)
 
 ;; Impl

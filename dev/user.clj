@@ -16,10 +16,9 @@
 (defn my-handler []
   #_
   (srv/send-error 400 :headers {:FOO :bar})
-
-  (-> "foobar"
-      (srv/write-body :content-type "text/html"
-                      :character-encoding "UTF-8")))
+  (srv/set-http :content-type "text/html"
+                :character-encoding "utf-8")
+  (srv/write-body "foobar"))
 
 (defn my-redirect-handler []
   )
@@ -28,8 +27,7 @@
   (throw (ex-info "foooo" {})))
 
 (defn my-error-handler []
-  (-> "error"
-      (srv/respond)))
+  (srv/write-body "Foobar"))
 
 (defn my-filter []
   )
