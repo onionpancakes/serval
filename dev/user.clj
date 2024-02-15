@@ -1,46 +1,40 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as srv
-             :refer [response]]
+             :refer [*servlet* *servlet-request* *servlet-response*
+                     *filter* *filter-chain*]]
+            [dev.onionpancakes.serval.response :as srv.resp]
+            #_
             [dev.onionpancakes.serval.servlet :as srv.servlet]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
+            #_
             [dev.onionpancakes.serval.jetty.test :as srv.jetty.test]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 
-(defn my-handler
-  [ctx]
-  (merge ctx {:serval.response/status             200
-              :serval.response/headers            {}
-              :serval.response/body               "Hello world!"
-              :serval.response/content-type       "text/plain"
-              :serval.response/character-encoding "utf-8"}))
+(defn my-handler []
+  (println (:path *servlet-request*))
+  (srv/respond (srv/status 200)
+               (srv/headers {})
+               (srv/body "bar" "text/plain" "utf-8")
+               (srv/body (:parameters *servlet-request*))))
 
-(defn my-redirect-handler
-  [ctx]
-  (-> (srv/headers ctx {"foo" :bar})
-      (srv/send-redirect "/")
-      #_(srv/send-error 405 "FOOBAR")))
+(defn my-redirect-handler []
+  )
 
-(defn my-throw-handler
-  [ctx]
+(defn my-throw-handler []
   (throw (ex-info "foooo" {})))
 
-(defn my-error-handler
-  [ctx]
-  (response ctx 400 "It's foobar."))
+(defn my-error-handler []
+  )
 
-(defn my-filter
-  [ctx]
-  (doto ctx
-    (srv/set-response-kv! :serval.response/body "foo")
-    (srv/do-filter-chain!)
-    (srv/set-response-kv! :serval.response/body "bar")))
+(defn my-filter []
+  )
 
 (def app
   {:routes      [["" #'my-handler]
-                 ["/post" #{:POST} #'my-handler]
+                 ["/post" #_#{:POST} #'my-handler]
                  ["/redirect" #'my-redirect-handler]
                  ["/filtered" #'my-filter #'my-handler]
                  ["/throw" #'my-throw-handler]

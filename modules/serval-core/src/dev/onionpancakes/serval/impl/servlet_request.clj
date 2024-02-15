@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.impl.http.servlet-request
+(ns dev.onionpancakes.serval.impl.servlet-request
   (:import [jakarta.servlet.http
             HttpServletRequest
             HttpServletRequestWrapper]))

@@ -1,28 +1,30 @@
 (ns dev.onionpancakes.serval.servlet
   (:refer-clojure :exclude [filter])
-  (:require [dev.onionpancakes.serval.impl.http.servlet :as impl.http.servlet]
-            [dev.onionpancakes.serval.impl.http.filter :as impl.http.filter]
+  (:require [dev.onionpancakes.serval.impl.servlet :as impl.servlet]
+            [dev.onionpancakes.serval.impl.filter :as impl.filter]
             [dev.onionpancakes.serval.core :as srv]))
 
 (defn servlet
   "Creates a Servlet which services a http response from the handler function."
   ^jakarta.servlet.GenericServlet
   [handler & args]
-  (apply impl.http.servlet/servlet handler args))
+  (apply impl.servlet/servlet handler args))
 
 (defn filter
   ^jakarta.servlet.GenericFilter
   [handler & args]
-  (apply impl.http.filter/filter handler args))
+  (apply impl.filter/filter handler args))
 
 ;; Filters
 
 (defn pred-filter-handler
   ([ctx pred code]
+   #_
    (if (pred ctx)
      (srv/do-filter-chain! ctx)
      (srv/send-error! ctx code)))
   ([ctx pred code message]
+   #_
    (if (pred ctx)
      (srv/do-filter-chain! ctx)
      (srv/send-error! ctx code message))))

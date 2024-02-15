@@ -1,8 +1,6 @@
 (ns dev.onionpancakes.serval.jetty.impl.handlers
   (:refer-clojure :exclude [error-handler])
-  (:require [dev.onionpancakes.serval.impl.http.servlet
-             :as srv.impl.http.servlet]
-            [dev.onionpancakes.serval.jetty.impl.protocols :as p])
+  (:require [dev.onionpancakes.serval.jetty.impl.protocols :as p])
   (:import [org.eclipse.jetty.server.handler ContextHandler ContextHandlerCollection]
            [org.eclipse.jetty.server.handler.gzip GzipHandler]))
 

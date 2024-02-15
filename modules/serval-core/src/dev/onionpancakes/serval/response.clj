@@ -20,6 +20,13 @@
 (defprotocol ResponseValue
   (respond-with-value [this response]))
 
+;; Respond
+
+(defn respond
+  [response value]
+  (respond-with-value value response)
+  response)
+
 ;; Headers
 
 (defn set-response-header-kv
@@ -245,42 +252,7 @@
   nil
   (write-to-writer [_ _] nil))
 
-;; Respond
-
-(defn respond
-  [response value]
-  (respond-with-value value response)
-  response)
-
-(extend-protocol ResponseValue
-  ;; Composite
-  clojure.lang.IPersistentVector
-  (respond-with-value [this response]
-    (reduce respond response this))
-  ;; Status
-  Integer
-  (respond-with-value [this ^HttpServletResponse response]
-    (doto response
-      (.setStatus this)))
-  Long
-  (respond-with-value [this ^HttpServletResponse response]
-    (doto response
-      (.setStatus this)))
-  ;; Headers
-  clojure.lang.IPersistentMap
-  (respond-with-value [this ^HttpServletResponse response]
-    (set-response-headers this))
-  java.util.Locale
-  (respond-with-value [this  ^HttpServletResponse response]
-    (.setLocale response this))
-  ;; Body
-  Object
-  (respond-with-value [this response]
-    (write-body-to-response this response))
-  nil
-  (respond-with-value [_ response] response))
-
-;; ContentType
+;; ResponseValue
 
 (deftype ContentType [value]
   ResponseValue
@@ -291,8 +263,6 @@
   [value]
   (ContentType. value))
 
-;; Charset
-
 (deftype Charset [value]
   ResponseValue
   (respond-with-value [_ response]
@@ -301,8 +271,6 @@
 (defn charset
   [value]
   (Charset. value))
-
-;; Body
 
 (deftype Body [value content-type charset]
   ResponseValue
@@ -320,3 +288,32 @@
    (Body. value content-type nil))
   ([value content-type charset]
    (Body. value content-type charset)))
+
+(extend-protocol ResponseValue
+  ;; Composite
+  clojure.lang.IPersistentVector
+  (respond-with-value [this response]
+    (reduce respond response this))
+  ;; Status
+  Integer
+  (respond-with-value [this ^HttpServletResponse response]
+    (doto response
+      (.setStatus this)))
+  Long
+  (respond-with-value [this ^HttpServletResponse response]
+    (doto response
+      (.setStatus this)))
+  ;; Headers
+  clojure.lang.IPersistentMap
+  (respond-with-value [this response]
+    (set-response-headers response this))
+  java.util.Locale
+  (respond-with-value [this  ^HttpServletResponse response]
+    (.setLocale response this))
+  ;; Body
+  Object
+  (respond-with-value [this response]
+    (println :FOOBAR)
+    (write-body-to-response this response))
+  nil
+  (respond-with-value [_ response] response))
