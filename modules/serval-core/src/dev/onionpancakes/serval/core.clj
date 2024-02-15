@@ -11,55 +11,49 @@
 (def ^:dynamic ^Filter *filter* nil)
 (def ^:dynamic ^FilterChain *filter-chain* nil)
 
-(defn set-response-with
+(defn set-http-with
   [response & {:as http-opts}]
-  (resp.http/set-response response http-opts))
+  (resp.http/set-http response http-opts))
 
-(defn set-response
+(defn set-http
   [& {:as http-opts}]
-  (resp.http/set-response *servlet-response* http-opts))
+  (set-http-with *servlet-response* http-opts))
 
-(defn respond-with
+(defn write-body-with
   ([response body]
    (resp.body/write-body response body))
   ([response body & {:as http-opts}]
-   (resp.http/set-response response http-opts)
+   (resp.http/set-http response http-opts)
    (resp.body/write-body response body)))
 
-(defn respond
+(defn write-body
   ([body]
-   (resp.body/write-body *servlet-response* body))
+   (write-body-with *servlet-response* body))
   ([body & {:as http-opts}]
-   (let [response *servlet-response*]
-     (resp.http/set-response response http-opts)
-     (resp.body/write-body response body))))
+   (write-body-with *servlet-response* body http-opts)))
 
 (defn send-error-with
   ([^HttpServletResponse response code]
    (.sendError response code))
   ([^HttpServletResponse response code & {message :message :as http-opts}]
-   (resp.http/set-response-for-send response http-opts)
+   (resp.http/set-http-for-send response http-opts)
    (.sendError response code message)))
 
 (defn send-error
   ([code]
-   (.sendError *servlet-response* code))
-  ([code & {message :message :as http-opts}]
-   (let [response *servlet-response*]
-     (resp.http/set-response-for-send response http-opts)
-     (.sendError response code message))))
+   (send-error-with *servlet-response* code))
+  ([code & {:as http-opts}]
+   (send-error-with *servlet-response* code http-opts)))
 
 (defn send-redirect-with
   ([^HttpServletResponse response location]
    (.sendRedirect response location))
   ([^HttpServletResponse response location & {:as http-opts}]
-   (resp.http/set-response-for-send response http-opts)
+   (resp.http/set-http-for-send response http-opts)
    (.sendRedirect response location)))
 
 (defn send-redirect
   ([location]
-   (.sendRedirect *servlet-response* location))
+   (send-redirect-with *servlet-response* location))
   ([location & {:as http-opts}]
-   (let [response *servlet-response*]
-     (resp.http/set-response-for-send response http-opts)
-     (.sendRedirect response location))))
+   (send-redirect-with *servlet-response* http-opts)))

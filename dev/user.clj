@@ -18,8 +18,8 @@
   (srv/send-error 400 :headers {:FOO :bar})
 
   (-> "foobar"
-      (srv/respond :content-type "text/html"
-                   :character-encoding "UTF-8")))
+      (srv/write-body :content-type "text/html"
+                      :character-encoding "UTF-8")))
 
 (defn my-redirect-handler []
   )

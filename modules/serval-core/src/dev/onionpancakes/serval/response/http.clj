@@ -16,7 +16,7 @@
   [response headers]
   (reduce-kv set-header response headers))
 
-(defn set-response
+(defn set-http
   [^HttpServletResponse response m]
   ;; Status
   (when-some [status (:status m)]
@@ -31,6 +31,9 @@
   (when-some [cookies (:cookies m)]
     (doseq [cookie cookies]
       (.addCookie response cookie)))
+  ;; ContentLanguage
+  (when-some [locale (:locale m)]
+    (.setLocale response locale))
   ;; ContentType
   (when-some [content-type (:content-type m)]
     (.setContentType response content-type))
@@ -39,7 +42,7 @@
     (.setCharacterEncoding response character-encoding))
   response)
 
-(defn set-response-for-send
+(defn set-http-for-send
   [^HttpServletResponse response m]
   ;; Headers
   (when-some [headers (:headers m)]
