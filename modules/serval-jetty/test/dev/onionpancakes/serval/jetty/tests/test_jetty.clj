@@ -1,7 +1,6 @@
 (ns dev.onionpancakes.serval.jetty.tests.test-jetty
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.core
-             :refer [response]]
+  (:require [dev.onionpancakes.serval.core :as srv]
             [dev.onionpancakes.serval.jetty.test
              :refer [with-config send]]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
@@ -15,7 +14,8 @@
 
 (deftest test-minimal
   (with-config {:connectors [{:port 42000}]
-                :handler    (constantly {:serval.response/body "foo"})}
+                :handler    (fn [_ _ response]
+                              (srv/write-body response "foo"))}
     (let [resp (send "http://localhost:42000")]
       (is (= (:version resp) HttpClient$Version/HTTP_1_1))
       (is (= (:status resp) 200))
@@ -23,7 +23,8 @@
 
 (deftest test-http1
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    (constantly {:serval.response/body "foo"})}
+                :handler    (fn [_ _ response]
+                              (srv/write-body response "foo"))}
     (let [resp (send "http://localhost:42000")]
       (is (= (:version resp) HttpClient$Version/HTTP_1_1))
       (is (= (:status resp) 200))
@@ -31,7 +32,8 @@
 
 (deftest test-http2c
   (with-config {:connectors [{:protocol :http2c :port 42000}]
-                :handler    (constantly {:serval.response/body "foo"})}
+                :handler    (fn [_ _ response]
+                              (srv/write-body response "foo"))}
     (let [resp (send "http://localhost:42000")]
       (is (= (:version resp) HttpClient$Version/HTTP_2))
       (is (= (:status resp) 200))
@@ -40,9 +42,10 @@
 (deftest test-multiple-connectors
   (with-config {:connectors [{:protocol :http :port 42000}
                              {:protocol :http2c :port 42001}]
-                :handler    #(case (long (:server-port (:serval.context/request %)))
-                               42000 {:serval.response/body "foo"}
-                               42001 {:serval.response/body "bar"})}
+                :handler    (fn [_ request response]
+                              (case (long (:server-port request))
+                                42000 (srv/write-body response "foo")
+                                42001 (srv/write-body response "bar")))}
     (let [resp (send "http://localhost:42000")]
       (is (= (:version resp) HttpClient$Version/HTTP_1_1))
       (is (= (:status resp) 200))
@@ -53,8 +56,8 @@
       (is (= (:body resp) "bar")))))
 
 (defn example-var-handler
-  [ctx]
-  {:serval.response/body "foo"})
+  [_ _ response]
+  (srv/write-body response "foo"))
 
 (deftest test-var-handler
   (with-config {:connectors [{:protocol :http :port 42000}]
@@ -64,9 +67,12 @@
       (is (= (:body resp) "foo")))))
 
 (def example-routes
-  [["/foo" (constantly {:serval.response/body "foo"})]
-   ["/bar" (constantly {:serval.response/body "bar"})]
-   ["/*"   (constantly {:serval.response/body "default"})]])
+  [["/foo" (fn [_ _ response]
+             (srv/write-body response "foo"))]
+   ["/bar" (fn [_ _ response]
+             (srv/write-body response "bar"))]
+   ["/*"   (fn [_ _ response]
+             (srv/write-body response "default"))]])
 
 (deftest test-routes-handler
   (with-config {:connectors [{:protocol :http :port 42000}]
@@ -93,28 +99,33 @@
       (is (= (:body resp) "default")))))
 
 (defn example-route-send-error-code-handler
-  [{:serval.context/keys [request ^HttpServletResponse response] :as ctx}]
+  [_ request response]
   (let [error-code (-> (:path-info request)
                        (subs 1)
                        (parse-long))]
-    (.sendError response error-code))
-  ctx)
+    (srv/send-error response error-code)))
 
 (defn example-route-throw-handler
-  [ctx]
+  [_ _ _]
   (throw (ex-info "foobar" {})))
 
 (defn example-route-error-code-handler
-  [ctx]
-  (response ctx 500 "handled-error-code"))
+  [_ _ response]
+  (doto response
+    (srv/set-http :status 500)
+    (srv/write-body "handled-error-code")))
 
 (defn example-route-error-code-range-handler
-  [ctx]
-  (response ctx 500 "handled-error-code-range"))
+  [_ _ response]
+  (doto response
+    (srv/set-http :status 500)
+    (srv/write-body "handled-error-code-range")))
 
 (defn example-route-throwable-handler
-  [ctx]
-  (response ctx 500 "handled-throwable"))
+  [_ _ response]
+  (doto response
+    (srv/set-http :status 500)
+    (srv/write-body "handled-throwable")))
 
 (def example-error-routes
   [["/send-error-code/*" example-route-send-error-code-handler]
@@ -154,8 +165,9 @@
        (apply str)))
 
 (defn example-gzip-route-handler
-  [ctx]
-  (response ctx 200 example-gzip-body))
+  [_ _ response]
+  (doto response
+    (srv/write-body example-gzip-body)))
 
 (deftest test-gzip-handler
   ;; With true
@@ -214,10 +226,10 @@
 
 (deftest test-context-routes
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    [["/foo" {:routes [["/*" (constantly {:serval.response/status 200
-                                                                  :serval.response/body   "foo"})]]}]
-                             ["/bar" {:routes [["/*" (constantly {:serval.response/status 200
-                                                                  :serval.response/body   "bar"})]]}]
+                :handler    [["/foo" {:routes [["/*" (fn [_ _ response]
+                                                       (srv/write-body response "foo"))]]}]
+                             ["/bar" {:routes [["/*" (fn [_ _ response]
+                                                       (srv/write-body response "bar"))]]}]
                              ["/empty" {}]
                              ["/nil" nil]]}
     (let [resp (send "http://localhost:42000/foo")]
@@ -235,11 +247,11 @@
   (with-config {:connectors [{:protocol :http :port 42000}]
                 :handler    (srv.jetty/server-handler
                              {:context-path "/foo"
-                              :routes       [["/*" (constantly {:serval.response/status 200
-                                                                :serval.response/body   "foo"})]]}
+                              :routes       [["/*" (fn [_ _ response]
+                                                     (srv/write-body response "foo"))]]}
                              {:context-path "/bar"
-                              :routes       [["/*" (constantly {:serval.response/status 200
-                                                                :serval.response/body   "bar"})]]})}
+                              :routes       [["/*" (fn [_ _ response]
+                                                     (srv/write-body response "bar"))]]})}
     (let [resp (send "http://localhost:42000/foo")]
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))
