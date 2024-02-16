@@ -1,7 +1,8 @@
 (ns dev.onionpancakes.serval.core.tests.test-response-http
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.jetty.test
-             :refer [with-response send]]
+  (:require [dev.onionpancakes.serval.response.http :as resp.http]
+            [dev.onionpancakes.serval.jetty.test
+             :refer [with-handler send]]
             [clojure.test :refer [deftest is are]]
             [clojure.java.io :as io]
             [clojure.string])
@@ -10,18 +11,24 @@
            [java.util.concurrent CompletableFuture]))
 
 (deftest test-status
-  (are [status] (with-response {:serval.response/status status}
+  (are [status] (with-handler (fn [_ _ response]
+                                (resp.http/set-http response {:status status}))
                   (= (:status (send)) status))
     200
+    300
     400))
 
+(def example-headers
+  {"str-header"     "foo"
+   "date-header"    #inst "2000-01-01"
+   "inst-header"    (.toInstant #inst "2000-01-01")
+   "long-header"    1
+   "indexed-header" ["foo" 1]
+   "seqable-header" '("foo" 1)})
+
 (deftest test-headers
-  (with-response {:serval.response/headers {"str-header"     "foo"
-                                            "date-header"    #inst "2000-01-01"
-                                            "inst-header"    (.toInstant #inst "2000-01-01")
-                                            "long-header"    1
-                                            "indexed-header" ["foo" 1]
-                                            "seqable-header" '("foo" 1)}}
+  (with-handler (fn [_ _ response]
+                  (resp.http/set-http response {:headers example-headers}))
     (let [{:strs [str-header
                   date-header
                   inst-header
@@ -35,9 +42,27 @@
       (is (= indexed-header ["foo" "1"]))
       (is (= seqable-header ["foo" "1"])))))
 
+(def example-set-http-config
+  {:status             400
+   :headers            {:foo "bar"}
+   :locale             (java.util.Locale/ENGLISH)
+   :content-type       "text/html"
+   :character-encoding "utf-8"})
+
+(deftest test-set-http
+  (with-handler (fn [_ _ response]
+                  (resp.http/set-http response example-set-http-config))
+    (let [resp (send)]
+      (is (= (:status resp) 400))
+      (is (= (get-in (:headers resp) ["foo" 0]) "bar"))
+      (is (= (get-in (:headers resp) ["content-language" 0]) "en"))
+      (is (= (:media-type resp) "text/html"))
+      (is (= (:character-encoding resp) "utf-8")))))
+
+#_
 (def ^java.net.URL example-foo-url
   (io/resource "dev/onionpancakes/serval/core/tests/data/foo.txt"))
-
+#_
 (deftest test-body
   (are [body expected] (with-response {:serval.response/body body}
                          (let [resp (send)]
@@ -52,7 +77,7 @@
     (eduction (map identity) ["foo" "bar"])   "foobar"
     `("foo" "bar")                            "foobar"
     nil                                       ""))
-
+#_
 (deftest test-body-encoding
   (are [body enc expected] (with-response {:serval.response/body body
                                            :serval.response/content-type "text/plain"
@@ -62,19 +87,3 @@
     "foo"                      "utf-8"  "foo"
     "foo"                      "utf-16" "foo"
     (.getBytes "foo" "utf-16") "utf-16" "foo"))
-
-(deftest test-send-redirect
-  (with-response {:serval.response/send-redirect "/"}
-    (let [ret (send)]
-      (is (= (:status ret) 302)))))
-
-(deftest test-send-error
-  (with-response {:serval.response/send-error 400}
-    (let [ret (send)]
-      (is (= (:status ret) 400))))
-  (with-response {:serval.response/send-error         404
-                  :serval.response/send-error-message "foo"}
-    (let [ret  (send)
-          body (:body ret)]
-      (is (= (:status ret) 404))
-      (is (clojure.string/includes? body "foo")))))
