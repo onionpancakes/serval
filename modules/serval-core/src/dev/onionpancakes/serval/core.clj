@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.core
   (:require [dev.onionpancakes.serval.response.body :as resp.body]
             [dev.onionpancakes.serval.response.http :as resp.http])
-  (:import [jakarta.servlet ServletRequest ServletResponse
+  (:import [jakarta.servlet FilterChain ServletRequest ServletResponse
             ServletInputStream ServletOutputStream]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
@@ -27,6 +27,10 @@
 (defn send-redirect
   ([^HttpServletResponse response location]
    (.sendRedirect response location)))
+
+(defn do-filter
+  [^FilterChain chain request response]
+  (.doFilter chain request response))
 
 (defn get-input-stream
   {:tag ServletInputStream}

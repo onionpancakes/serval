@@ -7,16 +7,18 @@
             [clojure.test :refer [deftest is]]))
 
 (defn example-filter-handler
-  [ctx]
-  (-> (srv/set-headers! ctx {"foo1" "bar1"})
-      (srv/write-body! "pre-body:")
-      (srv/do-filter-chain!)
-      (srv/set-headers! {"foo2" "bar2"})
-      (srv/write-body! ":post-body")))
+  [_ request response chain]
+  (doto response
+    (srv/set-http :headers {"foo1" "bar1"})
+    (srv/write-body "pre-body:"))
+  (srv/do-filter chain request response)
+  (doto response
+    (srv/set-http :headers {"foo2" "bar2"})
+    (srv/write-body ":post-body")))
 
 (defn example-servlet-handler
-  [ctx]
-  (srv/response ctx 200 "main-body"))
+  [_ _ response]
+  (srv/write-body response "main-body"))
 
 (deftest test-routes
   (with-handler {:routes [["/filtered" example-filter-handler example-servlet-handler]
