@@ -62,6 +62,11 @@
                   (srv/send-redirect response "/"))
     (is (= (:status (send)) 302))))
 
+(deftest test-do-filter
+  (with-handler {:routes [["/*" (fn [_ req resp chain]
+                                  (srv/do-filter chain req resp)) (constantly nil)]]}
+    (is (= (:status (send)) 200))))
+
 (deftest test-get-input-stream
   (with-handler (fn [_ request response]
                   (srv/set-http response {:content-type       "text/plain"
