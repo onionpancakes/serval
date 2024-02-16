@@ -1,16 +1,11 @@
 # Serval
 
-[![Run tests](https://github.com/onionpancakes/serval/actions/workflows/run_tests.yml/badge.svg)](https://github.com/onionpancakes/serval/actions/workflows/run_tests.yml)
-
 Servlet oriented web framework for Clojure.
 
-## Motivations
-
-* Composable linear request processing flow, using transducer like *processors*.
-* Access to the latest servlet API developments with minimal maintenance.
-* Extensible request handling via protocols.
 
 # Status
+
+[![Run tests](https://github.com/onionpancakes/serval/actions/workflows/run_tests.yml/badge.svg)](https://github.com/onionpancakes/serval/actions/workflows/run_tests.yml)
 
 Currently for my personal use. Future breaking changes possible.
 
@@ -25,7 +20,7 @@ For **all** modules, add the following.
      :git/sha   "<GIT SHA>"}}}
 ```
 
-To specify specific modules, use `:deps/root`.
+For specific modules, use `:deps/root`.
 
 ```clojure
 {:deps
@@ -48,33 +43,62 @@ Require the namespaces.
 (require '[dev.onionpancakes.serval.jetty :as srv.jetty])
 ```
 
-Write a handler.
+Write servlet service functions.
 
 ```clojure
-(defn my-handler
-  [ctx]
-  ;; Set the response in the ctx map.
-  (merge ctx {:serval.response/status       200
-              :serval.response/body         "Hello world!"
-              :serval.response/context-type "text/plain"}))
+(defn hello-world
+  [_ _ response]
+  (doto response
+    (srv/set-http :status 200
+                  :content-type "text/plain"
+                  :character-encoding "utf-8")
+    (srv/write-body "Hello world!")))
+
+(defn not-found
+  [_ _ response]
+  (doto response
+    (srv/set-http :status 404
+                  :content-type "text/plain"
+                  :character-encoding "utf-8")
+    (srv/write-body "Not found.")))
+
+(defn error
+  [_ _ response]
+  (doto response
+    (srv/set-http :status 500
+                  :content-type "text/plain"
+                  :character-encoding "utf-8")
+    (srv/write-body "Error happened.")))
 ```
 
-Add the handler to server.
+In an app map, add the service fns to :routes and :error-pages.
+
+```clojure
+;; Note: :routes uses servlet url-pattern "routing"
+;; e.g. ""       - match root
+;;      "/*"     - match wildcard
+;;      "/foo"   - match prefix
+;;      "/foo/*" - match prefix with wildcard
+;;      "*.css"  - match extension
+;;      "/"      - match default
+(def app
+  {:routes      [["" hello-world]
+                 ["/not-found" not-found]
+                 ["/error" error]]
+   :error-pages {404       "/not-found"
+                 Throwable "/error"}})
+```
+
+Add the app to a server.
 
 ```clojure
 (defonce server
   (srv.jetty/server {:connectors [{:protocol :http
                                    :port     3000}]
-                     :handler    my-handler}))
+                     :handler    app}))
 
 (defn -main []
   (srv.jetty/start server))
-```
-
-Alternatively, create a `jakarta.servlet.Servlet` from handler. Use it in your favorite servlet container.
-
-```clojure
-(srv/servlet my-handler)
 ```
 
 See example directory for complete solution.
