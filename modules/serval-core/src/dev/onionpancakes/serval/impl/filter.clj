@@ -14,6 +14,18 @@
     (if (some? destroy-fn)
       (destroy-fn this))))
 
-(defn filter
+(defn wrapping-do-filter-fn
+  [do-filter-fn]
+  (fn [this request response chain]
+    (do-filter-fn this
+                  (impl.request/servlet-request-proxy request)
+                  response
+                  chain)))
+
+(defn filter*
   [do-filter-fn]
   (ServalFilter. nil do-filter-fn nil))
+
+(defn filter
+  [do-filter-fn]
+  (ServalFilter. nil (wrapping-do-filter-fn do-filter-fn) nil))

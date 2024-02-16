@@ -1,6 +1,5 @@
 (ns dev.onionpancakes.serval.impl.servlet
-  (:require [dev.onionpancakes.serval.core]
-            [dev.onionpancakes.serval.impl.servlet-request :as impl.request]))
+  (:require [dev.onionpancakes.serval.impl.servlet-request :as impl.request]))
 
 (deftype ServalServlet [^:volatile-mutable servlet-config
                         service-fn
@@ -16,6 +15,17 @@
     (if (some? destroy-fn)
       (destroy-fn this))))
 
-(defn servlet
+(defn wrapping-service-fn
+  [service-fn]
+  (fn [this request response]
+    (service-fn this
+                (impl.request/servlet-request-proxy request)
+                response)))
+
+(defn servlet*
   [service-fn]
   (ServalServlet. nil service-fn nil))
+
+(defn servlet
+  [service-fn]
+  (ServalServlet. nil (wrapping-service-fn service-fn) nil))

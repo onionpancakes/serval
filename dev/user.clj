@@ -15,8 +15,9 @@
 
 (defn my-handler [_ req resp]
   (doto resp
-    (srv/set-http)
-    (srv/write-body "foobar")))
+    (srv/set-http :headers {:FOO "bar"}
+                  :content-type "text/html")
+    (srv/write-body "foobar" (:path-info req))))
 
 (defn my-redirect-handler [_ _ resp]
   )
