@@ -1,23 +1,20 @@
 (ns dev.onionpancakes.serval.jetty.test
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.jetty :as srv.jetty]
-            [dev.onionpancakes.hop.client :as hop])
-  (:import [java.net URI]
-           [java.net.http HttpClient HttpRequest HttpResponse
-            HttpRequest$Builder HttpRequest$BodyPublishers
-            HttpResponse$BodyHandlers]))
+  (:require [dev.onionpancakes.serval.core :as srv]
+            [dev.onionpancakes.serval.jetty :as srv.jetty]
+            [dev.onionpancakes.hop.client :as hop]))
 
 ;; Server
 
 (def server-port 42000)
 
-(def server-response
-  {:serval.response/status 501
-   :serval.response/body   (ex-info "Server handler not set." {})})
+(defn handler-not-set
+  [_ _ response]
+  (srv/send-error response 501 "Server handler is not set."))
 
 (def server-config
   {:connectors [{:port server-port}]
-   :handler    (constantly server-response)})
+   :handler    handler-not-set})
 
 (defonce server
   (srv.jetty/server server-config))
@@ -34,10 +31,6 @@
 (defmacro with-handler
   [handler & body]
   `(with-config {:handler ~handler} ~@body))
-
-(defmacro with-response
-  [response & body]
-  `(with-config {:handler (constantly ~response)} ~@body))
 
 ;; Client
 
