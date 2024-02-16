@@ -4,7 +4,8 @@
             [dev.onionpancakes.serval.jetty.test
              :refer [with-handler send]]
             [clojure.test :refer [deftest is are]]
-            [clojure.string]))
+            [clojure.string])
+  (:import [jakarta.servlet.http HttpServletResponse]))
 
 (deftest test-set-http
   (with-handler (fn [_ _ response]
@@ -24,6 +25,12 @@
   (with-handler (fn [_ _ response]
                   (srv/set-http response))
     (let [resp (send)]
+      (is (= (:status resp) 200))))
+  ;; Return value
+  (with-handler (fn [_ _ response]
+                  (if-not (instance? HttpServletResponse (srv/set-http response))
+                    (throw (ex-info "Not HttpServletResponse" {}))))
+    (let [resp (send)]
       (is (= (:status resp) 200)))))
 
 (deftest test-write-body
@@ -32,7 +39,13 @@
                          (= (:body (send)) expected))
     []            ""
     ["foo"]       "foo"
-    ["foo" "bar"] "foobar"))
+    ["foo" "bar"] "foobar")
+  ;; Return value
+  (with-handler (fn [_ _ response]
+                  (if-not (instance? HttpServletResponse (srv/write-body response))
+                    (throw (ex-info "Not HttpServletResponse" {}))))
+    (let [resp (send)]
+      (is (= (:status resp) 200)))))
 
 (deftest test-send-error
   (with-handler (fn [_ _ response]
@@ -48,3 +61,69 @@
   (with-handler (fn [_ _ response]
                   (srv/send-redirect response "/"))
     (is (= (:status (send)) 302))))
+
+(deftest test-get-input-stream
+  (with-handler (fn [_ request response]
+                  (srv/set-http response {:content-type       "text/plain"
+                                          :character-encoding "utf-8"})
+                  (->> (srv/get-input-stream request)
+                       (slurp)
+                       (srv/write-body response)))
+    (let [resp (send {:method :POST
+                      :body   "foo"})]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-get-reader
+  (with-handler (fn [_ request response]
+                  (srv/set-http response {:content-type       "text/plain"
+                                          :character-encoding "utf-8"})
+                  (->> (srv/get-reader request)
+                       (slurp)
+                       (srv/write-body response)))
+    (let [resp (send {:method :POST
+                      :body   "foo"})]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-get-output-stream
+  (with-handler (fn [_ request response]
+                  (srv/set-http response {:content-type       "text/plain"
+                                          :character-encoding "utf-8"})
+                  (-> (srv/get-output-stream response)
+                      (spit "foo")))
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-get-writer
+  (with-handler (fn [_ request response]
+                  (srv/set-http response {:content-type       "text/plain"
+                                          :character-encoding "utf-8"})
+                  (-> (srv/get-writer response)
+                      (spit "foo")))
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-writable-to-output-stream
+  (with-handler (fn [_ request response]
+                  (let [body (srv/writable-to-output-stream (.getBytes "foo" "utf-8"))]
+                    (doto response
+                      (srv/set-http {:content-type       "text/plain"
+                                     :character-encoding "utf-8"})
+                      (srv/write-body body))))
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-writable-to-writer
+  (with-handler (fn [_ request response]
+                  (let [body (srv/writable-to-writer "foo")]
+                    (doto response
+                      (srv/set-http {:content-type       "text/plain"
+                                     :character-encoding "utf-8"})
+                      (srv/write-body body))))
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
