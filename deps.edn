@@ -15,20 +15,20 @@
                  "./modules/serval-jetty/test"
                  "./modules/serval-jetty-test/test"
                  "./modules/serval-jsonista/test"
-                 "./modules/serval-transit/test"]}
+                 "./modules/serval-transit/test"
+                 "./examples/todo/src"
+                 "./examples/todo/test"]}
 
   :run-tests
-  {:extra-deps  {io.github.cognitect-labs/test-runner          {:git/tag "v0.5.1" :git/sha "dfb30dd"}
-                 #_#_
-                 dev.onionpancakes/serval-examples-hello-world {:local/root "./examples/hello-world"}}
+  {:extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
    :extra-paths ["./modules/serval-chassis/test"
                  "./modules/serval-core/test"
                  "./modules/serval-jetty/test"
                  "./modules/serval-jetty-test/test"
                  "./modules/serval-jsonista/test"
                  "./modules/serval-transit/test"
-                 #_
-                 "./examples/hello-world/test"]
+                 "./examples/todo/src"
+                 "./examples/todo/test"]
    :exec-fn     cognitect.test-runner.api/test
    :exec-args   {:dirs     ["./modules/serval-chassis/test"
                             "./modules/serval-core/test"
@@ -36,6 +36,5 @@
                             "./modules/serval-jetty-test/test"
                             "./modules/serval-jsonista/test"
                             "./modules/serval-transit/test"
-                            #_
-                            "./examples/hello-world/test"]
+                            "./examples/todo/test"]
                  :patterns ["dev\\.onionpancakes\\.serval\\..+\\.tests\\..*"]}}}}

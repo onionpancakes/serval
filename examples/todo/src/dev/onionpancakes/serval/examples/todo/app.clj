@@ -90,24 +90,35 @@
 ;; Handlers
 
 (defn index
-  [ctx]
+  [_ _ response]
   (let [body (srv.html/html-writable (app-page @data))]
-    (srv/response ctx 200 body "text/html" "UTF-8")))
+    (doto response
+      (srv/set-http :content-type "text/html"
+                    :character-encoding "utf-8")
+      (srv/write-body body))))
 
 (defn submit
-  [{:serval.context/keys [request response]}]
+  [_ request response]
   (let [_ (do-submit-action (:parameters request))]
-    (.sendRedirect response "/")))
+    (srv/send-redirect response "/")))
 
 (defn not-found
-  [ctx]
+  [_ _ response]
   (let [body (srv.html/html-writable not-found-page)]
-    (srv/response ctx 404 body "text/html" "UTF-8")))
+    (doto response
+      (srv/set-http :status 404
+                    :content-type "text/html"
+                    :character-encoding "utf-8")
+      (srv/write-body body))))
 
 (defn error
-  [ctx]
+  [_ _ response]
   (let [body (srv.html/html-writable error-page)]
-    (srv/response ctx 500 body "text/html" "UTF-8")))
+    (doto response
+      (srv/set-http :status 500
+                    :content-type "text/html"
+                    :character-encoding "utf-8")
+      (srv/write-body body))))
 
 (def app
   {:routes      [["" #{:GET} index]

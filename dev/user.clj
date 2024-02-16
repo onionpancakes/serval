@@ -1,15 +1,13 @@
 (ns user
   (:require [dev.onionpancakes.serval.core :as srv]
-            #_
-            [dev.onionpancakes.serval.response :as srv.resp]
-            #_
             [dev.onionpancakes.serval.servlet :as srv.servlet]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
-            #_
             [dev.onionpancakes.serval.jetty.test :as srv.jetty.test]
-            #_#_#_#_
+            [dev.onionpancakes.serval.chassis :as srv.html]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]
+            [dev.onionpancakes.serval.examples.todo.server
+             :as examples.todo.server]
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 
