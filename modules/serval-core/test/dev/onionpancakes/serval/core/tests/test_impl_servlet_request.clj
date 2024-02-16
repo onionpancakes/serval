@@ -1,5 +1,5 @@
 (ns dev.onionpancakes.serval.core.tests.test-impl-servlet-request
-  (:require [dev.onionpancakes.serval.impl.http.servlet-request
+  (:require [dev.onionpancakes.serval.impl.servlet-request
              :refer [servlet-request-proxy]]
             [clojure.test :refer [deftest is are]])
   (:import [java.io StringReader BufferedReader]

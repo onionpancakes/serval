@@ -30,8 +30,7 @@
                  #_
                  "./examples/hello-world/test"]
    :exec-fn     cognitect.test-runner.api/test
-   :exec-args   {:dirs     [#_#_#_#_#_#_
-                            "./modules/serval-chassis/test"
+   :exec-args   {:dirs     ["./modules/serval-chassis/test"
                             "./modules/serval-core/test"
                             "./modules/serval-jetty/test"
                             "./modules/serval-jetty-test/test"
