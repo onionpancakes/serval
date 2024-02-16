@@ -1,35 +1,33 @@
 (ns user
-  (:require [dev.onionpancakes.serval.core :as srv
-             :refer [*servlet* *servlet-request* *servlet-response*
-                     *filter* *filter-chain*]]
+  (:require [dev.onionpancakes.serval.core :as srv]
+            #_
             [dev.onionpancakes.serval.response :as srv.resp]
             #_
             [dev.onionpancakes.serval.servlet :as srv.servlet]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             #_
             [dev.onionpancakes.serval.jetty.test :as srv.jetty.test]
+            #_#_#_#_
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 
-(defn my-handler []
-  #_
-  (srv/send-error 400 :headers {:FOO :bar})
-  (srv/set-http :content-type "text/html"
-                :character-encoding "utf-8")
-  (srv/write-body "foobar"))
+(defn my-handler [_ req resp]
+  (doto resp
+    (srv/set-http)
+    (srv/write-body "foobar")))
 
-(defn my-redirect-handler []
+(defn my-redirect-handler [_ _ resp]
   )
 
-(defn my-throw-handler []
+(defn my-throw-handler [_ _ _]
   (throw (ex-info "foooo" {})))
 
-(defn my-error-handler []
+(defn my-error-handler [_ _ _]
   (srv/write-body "Foobar"))
 
-(defn my-filter []
+(defn my-filter [_ _ _ _]
   )
 
 (def app

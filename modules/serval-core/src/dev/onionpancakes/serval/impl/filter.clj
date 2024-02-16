@@ -1,18 +1,6 @@
 (ns dev.onionpancakes.serval.impl.filter
   (:refer-clojure :exclude [filter])
-  (:require [dev.onionpancakes.serval.core
-             :refer [*filter* *servlet-request* *servlet-response*
-                     *filter-chain*]]
-            [dev.onionpancakes.serval.impl.servlet-request :as impl.request]))
-
-(defn binding-do-filter-fn
-  [handler]
-  (fn [this request response chain]
-    (binding [*filter*           this
-              *servlet-request*  (impl.request/servlet-request-proxy request)
-              *servlet-response* response
-              *filter-chain*     chain]
-      (handler))))
+  (:require [dev.onionpancakes.serval.impl.servlet-request :as impl.request]))
 
 (deftype ServalFilter [^:volatile-mutable filter-config
                         do-filter-fn
@@ -26,10 +14,6 @@
     (if (some? destroy-fn)
       (destroy-fn this))))
 
-(defn filter*
+(defn filter
   [do-filter-fn]
   (ServalFilter. nil do-filter-fn nil))
-
-(defn filter
-  [handler]
-  (filter* (binding-do-filter-fn handler)))
