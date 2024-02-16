@@ -1,14 +1,17 @@
 (ns dev.onionpancakes.serval.core
   (:require [dev.onionpancakes.serval.response.body :as resp.body]
             [dev.onionpancakes.serval.response.http :as resp.http])
-  (:import [jakarta.servlet ServletInputStream ServletOutputStream]
+  (:import [jakarta.servlet ServletRequest ServletResponse
+            ServletInputStream ServletOutputStream]
            [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
 
 (defn set-http
+  {:tag HttpServletResponse}
   [response & {:as http-opts}]
   (resp.http/set-http response http-opts))
 
 (defn write-body
+  {:tag HttpServletResponse}
   ([response body]
    (resp.body/write-body response body))
   ([response body & more]
@@ -24,3 +27,29 @@
 (defn send-redirect
   ([^HttpServletResponse response location]
    (.sendRedirect response location)))
+
+(defn get-input-stream
+  {:tag ServletInputStream}
+  [^ServletRequest request]
+  (.getInputStream request))
+
+(defn get-reader
+  {:tag java.io.BufferedReader}
+  [^ServletRequest request]
+  (.getReader request))
+
+(defn get-output-stream
+  {:tag ServletOutputStream}
+  [^ServletResponse response]
+  (.getOutputStream response))
+
+(defn get-writer
+  {:tag java.io.PrintWriter}
+  [^ServletResponse response]
+  (.getWriter response))
+
+(def writable-to-output-stream
+  resp.body/writable-to-output-stream)
+
+(def writable-to-writer
+  resp.body/writable-to-writer)
