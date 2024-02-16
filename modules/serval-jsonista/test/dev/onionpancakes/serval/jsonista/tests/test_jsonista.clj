@@ -1,16 +1,15 @@
 (ns dev.onionpancakes.serval.jsonista.tests.test-jsonista
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.jetty.test
-             :refer [with-response send]]
+  (:require [dev.onionpancakes.serval.core :as srv]
+            [dev.onionpancakes.serval.jetty.test
+             :refer [with-handler send]]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [clojure.test :refer [deftest is]]
             [jsonista.core :as json]))
 
 (deftest test-json-writable
-  (let [value {"foo" "bar"}
-        body  (srv.json/json-writable value)]
-    (with-response {:serval.response/body body}
-      (let [result (-> (send)
-                       (:body)
-                       (json/read-value))]
-        (is (= value result))))))
+  (with-handler (fn [_ _ response]
+                  (let [body (srv.json/json-writable {"foo" "bar"})]
+                    (srv/write-body response body)))
+    (let [resp (send)]
+      (is (= (json/read-value (:body resp)) {"foo" "bar"})))))
