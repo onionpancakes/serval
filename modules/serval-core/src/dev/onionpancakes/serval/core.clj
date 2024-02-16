@@ -12,6 +12,7 @@
 
 (defn write-body
   {:tag HttpServletResponse}
+  ([response] response)
   ([response body]
    (resp.body/write-body response body))
   ([response body & more]
