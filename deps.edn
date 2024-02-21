@@ -8,7 +8,7 @@
 
  :aliases
  {:dev
-  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.9"}}
+  {:extra-deps  {org.slf4j/slf4j-simple {:mvn/version "2.0.12"}}
    :extra-paths ["dev"
                  "./modules/serval-chassis/test"
                  "./modules/serval-core/test"
