@@ -1,4 +1,4 @@
 {:deps  {org.clojure/clojure       {:mvn/version "1.11.1"}
          dev.onionpancakes/chassis {:git/url "https://github.com/onionpancakes/chassis"
-                                    :git/sha "48be8655195121d942f3d5770d19efc6e166a6be"}}
+                                    :git/sha "b849fb7d60f38df96ee298097aa1620114542565"}}
  :paths ["src"]}
