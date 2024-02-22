@@ -9,7 +9,7 @@
   (.getValue (java.time.Year/now)))
 
 (defmethod html/resolve-alias ::Layout
-  [_ _ attrs content]
+  [_ attrs content]
   [html/doctype-html5
    [:html {:lang "en"}
     [:head
