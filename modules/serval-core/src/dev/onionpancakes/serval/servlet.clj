@@ -5,17 +5,15 @@
   (:import [jakarta.servlet FilterChain]
            [jakarta.servlet.http HttpServletResponse]))
 
-(def
-  ^{:tag      jakarta.servlet.Filter
-    :arglists (:arglists (meta #'impl.filter/filter))}
-  filter
-  impl.filter/filter)
+(defn filter
+  {:tag jakarta.servlet.Filter}
+  [do-filter-fn]
+  (impl.filter/filter do-filter-fn))
 
-(def
-  ^{:tag      jakarta.servlet.Servlet
-    :arglists (:arglists (meta #'impl.servlet/servlet))}
-  servlet
-  impl.servlet/servlet)
+(defn servlet
+  {:tag jakarta.servlet.Servlet}
+  [service-fn]
+  (impl.servlet/servlet service-fn))
 
 ;; Filters
 
