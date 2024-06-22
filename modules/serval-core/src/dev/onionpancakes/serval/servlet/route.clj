@@ -3,9 +3,10 @@
   (:import [java.util EnumSet]
            [jakarta.servlet
             Filter
+            FilterRegistration
             Servlet
             ServletContext
-            ServletRegistration FilterRegistration]))
+            ServletRegistration]))
 
 (defprotocol RouteFilter
   (get-filter-name [this url-pattern])
@@ -32,37 +33,35 @@
     (.. (add-filter filter servlet-ctx filter-name)
         (addMappingForUrlPatterns dispatch-types true url-pattern-arr))))
 
-(defn add-route-to-context-from-map
-  [{:keys [url-pattern filters servlet]} servlet-ctx]
-  (if (some? servlet)
-    ;; With servlet, add filters to servlet.
-    (let [servlet-name  (get-servlet-name servlet url-pattern)
-          servlet-names [servlet-name]]
-      (.. (add-servlet servlet servlet-ctx servlet-name)
-          (addMapping (into-array String [url-pattern])))
-      ;; Add filter
-      (doseq [filter filters
-              :let   [filter-name (get-filter-name filter url-pattern)]]
-        (add-filter-for-servlet-names servlet-ctx filter-name filter servlet-names)))
-    ;; No servlet, add filters to url patterns instead.
-    (let [url-patterns [url-pattern]]
-      (doseq [filter filters
-              :let   [filter-name (get-filter-name filter url-pattern)]]
-        (add-filter-for-url-patterns servlet-ctx filter-name filter url-patterns))))
-  servlet-ctx)
+(defn add-route-servlet
+  [servlet-ctx url-pattern servlet filters]
+  (let [servlet-name  (get-servlet-name servlet url-pattern)
+        servlet-names [servlet-name]]
+    (.. (add-servlet servlet servlet-ctx servlet-name)
+        (addMapping (into-array String [url-pattern])))
+    (doseq [filter filters
+            :let   [filter-name (get-filter-name filter url-pattern)]]
+      (add-filter-for-servlet-names servlet-ctx filter-name filter servlet-names))
+    servlet-ctx))
 
-(defn add-route-to-context-from-vec
-  [route servlet-ctx]
-  {:pre [(vector? route)
-         (>= (count route) 2)]}
-  (-> {:url-pattern (first route)
-       :filters     (next (pop route))
-       :servlet     (peek route)}
-      (add-route-to-context-from-map servlet-ctx)))
+(defn add-route-filters
+  [servlet-ctx url-pattern filters]
+  (let [url-patterns [url-pattern]]
+    (doseq [filter filters
+            :let   [filter-name (get-filter-name filter url-pattern)]]
+      (add-filter-for-url-patterns servlet-ctx filter-name filter url-patterns))
+    servlet-ctx))
 
 (defn add-route
   [servlet-ctx route]
-  (add-route-to-context-from-vec route servlet-ctx))
+  {:pre [(vector? route)
+         (>= (count route) 2)]}
+  (let [url-pattern (first route)
+        filters     (next (pop route))
+        servlet     (peek route)]
+    (if (some? servlet)
+      (add-route-servlet servlet-ctx url-pattern servlet filters)
+      (add-route-filters servlet-ctx url-pattern filters))))
 
 (defn add-routes
   [servlet-ctx routes]
