@@ -11,12 +11,12 @@
 
 (defprotocol RouteFilter
   (filter-name [this url-pattern])
-  (filter [this])
+  (^FilterRegistration add-filter-to [this ctx filter-name])
   (filter-dispatcher-types [this]))
 
 (defprotocol RouteServlet
   (servlet-name [this url-pattern])
-  (servlet [this]))
+  (^ServletRegistration add-servlet-to [this ctx servlet-nam]e))
 
 ;; Filters
 
@@ -38,44 +38,30 @@
   [types]
   (java.util.EnumSet/copyOf ^java.util.Collection (mapv as-dispatcher-type types)))
 
-(defn register-filter
-  {:tag FilterRegistration}
-  [^ServletContext ctx ^String filter-name ^Filter filter]
-  (if-some [reg (.getFilterRegistration ctx filter-name)]
-    reg
-    (.addFilter ctx filter-name filter)))
-
 (defn add-route-filters-for-url-pattern
-  [ctx url-pattern route-filters]
+  [ctx url-pattern filters]
   (let [url-pattern-arr (into-array String [url-pattern])]
-    (doseq [rf route-filters]
-      (.. (register-filter ctx (filter-name rf url-pattern) (filter rf))
-          (addMappingForUrlPatterns (filter-dispatcher-types rf) true url-pattern-arr))))
+    (doseq [filter filters]
+      (.. (add-filter-to filter ctx (filter-name filter url-pattern))
+          (addMappingForUrlPatterns (filter-dispatcher-types filter) true url-pattern-arr))))
   ctx)
 
 (defn add-route-filters-for-servlet-name
-  [ctx url-pattern route-filters servlet-name]
+  [ctx url-pattern filters servlet-name]
   (let [servlet-name-arr (into-array String [servlet-name])]
-    (doseq [rf route-filters]
-      (.. (register-filter ctx (filter-name rf url-pattern) (filter rf))
-          (addMappingForServletNames (filter-dispatcher-types rf) true servlet-name-arr))))
+    (doseq [filter filters]
+      (.. (add-filter-to filter ctx (filter-name filter url-pattern))
+          (addMappingForServletNames (filter-dispatcher-types filter) true servlet-name-arr))))
   ctx)
 
 ;; Servlet
 
-(defn register-servlet
-  {:tag ServletRegistration}
-  [^ServletContext ctx ^String servlet-name ^Servlet servlet]
-  (if-some [reg (.getServletRegistration ctx servlet-name)]
-    reg
-    (.addServlet ctx servlet-name servlet)))
-
 (defn add-route-servlet
-  [ctx url-pattern route-filters route-servlet]
-  (let [srv-name (servlet-name route-servlet url-pattern)]
-    (.. (register-servlet ctx srv-name (servlet route-servlet))
+  [ctx url-pattern filters servlet]
+  (let [srv-name (servlet-name servlet url-pattern)]
+    (.. (add-servlet-to servlet ctx srv-name)
         (addMapping (into-array String [url-pattern])))
-    (add-route-filters-for-servlet-name ctx url-pattern route-filters srv-name))
+    (add-route-filters-for-servlet-name ctx url-pattern filters srv-name))
   ctx)
 
 ;; Route
@@ -102,29 +88,30 @@
   clojure.lang.Fn
   (filter-name [this url-pattern]
     (str "serval.servlet.route/filter:" (hash this) ":" url-pattern))
-  (filter [this]
-    (servlet/filter this))
-  (filter-dispatcher-types [this] nil)
+  (add-filter-to [this ^ServletContext ctx ^String filter-name]
+    (.addFilter ctx filter-name (servlet/filter this)))
+  (filter-dispatcher-types [_] nil)
   ;; Var
   clojure.lang.Var
   (filter-name [this url-pattern]
     (str "serval.servlet.route/filter:" (hash this) ":" url-pattern))
-  (filter [this]
-    (servlet/filter this))
-  (filter-dispatcher-types [this] nil)
+  (add-filter-to [this ^ServletContext ctx ^String filter-name]
+    (.addFilter ctx filter-name (servlet/filter this)))
+  (filter-dispatcher-types [_] nil)
   ;; Http method set
   clojure.lang.IPersistentSet
   (filter-name [this url-pattern]
     (str "serval.servlet.route/filter:" (hash this) ":" url-pattern))
-  (filter [this]
-    (servlet/http-method-filter this))
-  (filter-dispatcher-types [this] nil)
+  (add-filter-to [this ^ServletContext ctx ^String filter-name]
+    (.addFilter ctx filter-name (servlet/http-method-filter this)))
+  (filter-dispatcher-types [_] nil)
   ;; Filter
   Filter
   (filter-name [this url-pattern]
     (str "serval.servlet.route/filter:" (hash this) ":" url-pattern))
-  (filter [this] this)
-  (filter-dispatcher-types [this] nil))
+  (add-filter-to [this ^ServletContext ctx ^String filter-name]
+    (.addFilter ctx filter-name this))
+  (filter-dispatcher-types [_] nil))
 
 ;; RouteServlet
 
@@ -133,16 +120,17 @@
   clojure.lang.Fn
   (servlet-name [this url-pattern]
     (str "serval.servlet.route/servlet:" (hash this) ":" url-pattern))
-  (servlet [this]
-    (servlet/servlet this))
+  (add-servlet-to [this ^ServletContext ctx ^String servlet-name]
+    (.addServlet ctx servlet-name (servlet/servlet this)))
   ;; Var
   clojure.lang.Var
   (servlet-name [this url-pattern]
     (str "serval.servlet.route/servlet:" (hash this) ":" url-pattern))
-  (servlet [this]
-    (servlet/servlet this))
+  (add-servlet-to [this ^ServletContext ctx ^String servlet-name]
+    (.addServlet ctx servlet-name (servlet/servlet this)))
   ;; Servlet
   Servlet
   (servlet-name [this url-pattern]
     (str "serval.servlet.route/servlet:" (hash this) ":" url-pattern))
-  (servlet [this] this))
+  (add-servlet-to [this ^ServletContext ctx ^String servlet-name]
+    (.addServlet ctx servlet-name this)))
