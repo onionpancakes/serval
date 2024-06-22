@@ -9,12 +9,12 @@
 
 (defprotocol RouteFilter
   (get-filter-name [this url-pattern])
-  (add-filter ^FilterRegistration [this servlet-ctx filter-name])
+  (^FilterRegistration add-filter [this servlet-ctx filter-name])
   (get-dispatch-types [this]))
 
 (defprotocol RouteServlet
   (get-servlet-name [this url-pattern])
-  (add-servlet ^ServletRegistration [this servlet-ctx servlet-name]))
+  (^ServletRegistration add-servlet [this servlet-ctx servlet-name]))
 
 ;; Route
 
