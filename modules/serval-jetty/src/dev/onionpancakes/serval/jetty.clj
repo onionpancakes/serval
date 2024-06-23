@@ -9,9 +9,10 @@
 ;; Thread pool
 
 (defn queued-thread-pool
-  (^QueuedThreadPool []
+  {:tag QueuedThreadPool}
+  ([]
    (impl.thread-pools/queued-thread-pool))
-  (^QueuedThreadPool [config]
+  ([config]
    (impl.thread-pools/queued-thread-pool config)))
 
 ;; Handler
@@ -33,37 +34,39 @@
   {:request-log (CustomRequestLog.)})
 
 (defn server
-  (^Server []
+  {:tag Server}
+  ([]
    (impl.server/server))
-  (^Server [config]
+  ([config]
    (doto (impl.server/server)
      (configure-server (merge default-server-config config))))
-  (^Server [pool config]
+  ([pool config]
    (doto (impl.server/server pool)
      (configure-server (merge default-server-config config)))))
 
 (defn start
-  ^Server
+  {:tag Server}
   [^Server server]
   (doto server
     (.start)))
 
 (defn stop
-  ^Server
+  {:tag Server}
   [^Server server]
   (doto server
     (.stop)))
 
 (defn join
-  ^Server
+  {:tag Server}
   [^Server server]
   (doto server
     (.join)))
 
 (defn restart
-  (^Server [^Server server]
+  {:tag Server}
+  ([^Server server]
    (restart server nil))
-  (^Server [^Server server config]
+  ([^Server server config]
    (doto server
      (stop)
      (configure-server config)
