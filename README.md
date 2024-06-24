@@ -93,11 +93,11 @@ Add the app to a server.
 
 ```clojure
 (defonce server
-  (srv.jetty/server {:connectors [{:protocol :http
-                                   :port     3000}]
-                     :handler    app}))
+  (srv.jetty/server))
 
 (defn -main []
+  (srv.jetty/configure server {:connectors [{:port 3000}]
+                               :handler    app})
   (srv.jetty/start server))
 ```
 
