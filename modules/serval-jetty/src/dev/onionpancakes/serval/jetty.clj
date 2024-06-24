@@ -26,21 +26,23 @@
 ;; Handlers
 
 (defn gzip-handler
-  [& {:as opts}]
-  (impl.handlers/gzip-handler opts))
+  [& {:as config}]
+  (impl.handlers/gzip-handler config))
 
 ;; Server
 
 (defn configure
-  [server config]
+  [server & {:as config}]
   (impl.server/configure server config))
 
 (defn server
   {:tag Server}
   ([]
    (impl.server/server))
-  ([pool]
-   (impl.server/server pool)))
+  ([thread-pool]
+   (impl.server/server thread-pool))
+  ([thread-pool scheduler buffer-pool]
+   (impl.server/server thread-pool scheduler buffer-pool)))
 
 (defn start
   {:tag Server}
@@ -64,7 +66,7 @@
   {:tag Server}
   ([^Server server]
    (restart server nil))
-  ([^Server server config]
+  ([^Server server & {:as config}]
    (doto server
      (stop)
      (configure config)

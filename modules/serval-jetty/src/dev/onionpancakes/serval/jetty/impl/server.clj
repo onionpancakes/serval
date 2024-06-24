@@ -112,5 +112,7 @@
 (defn server
   (^Server []
    (Server.))
-  (^Server [^ThreadPool pool]
-   (Server. pool)))
+  (^Server [^ThreadPool thread-pool]
+   (Server. thread-pool))
+  (^Server [^ThreadPool thread-pool scheduler buffer-pool]
+   (Server. thread-pool scheduler buffer-pool)))
