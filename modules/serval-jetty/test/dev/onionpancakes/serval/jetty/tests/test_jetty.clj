@@ -9,7 +9,6 @@
            [java.net.http HttpClient$Version]
            [java.util.zip GZIPInputStream]
            [org.eclipse.jetty.server Handler$Abstract Response]
-           [org.eclipse.jetty.server.handler.gzip GzipHandler]
            [org.eclipse.jetty.util Callback VirtualThreads]))
 
 (deftest test-minimal
@@ -170,38 +169,9 @@
     (srv/write-body example-gzip-body)))
 
 (deftest test-gzip-handler
-  ;; With true
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:routes       [["/*" example-gzip-route-handler]]
-                             :gzip-handler true}}
-    (let [req  {:uri     "http://localhost:42000"
-                :headers {:accept-encoding "gzip"}}
-          resp (send req :input-stream)]
-      (is (= (:status resp) 200))
-      (is (= (slurp (GZIPInputStream. (:body resp))) example-gzip-body))))
-  ;; With false
-  (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:routes       [["/*" example-gzip-route-handler]]
-                             :gzip-handler false}}
-    (let [req  {:uri     "http://localhost:42000"
-                :headers {:accept-encoding "gzip"}}
-          resp (send req :input-stream)]
-      (is (= (:status resp) 200))
-      (is (= (slurp (:body resp)) example-gzip-body))))
-  ;; With config map
-  (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:routes       [["/*" example-gzip-route-handler]]
-                             :gzip-handler {:min-gzip-size 0}}}
-    (let [req  {:uri     "http://localhost:42000"
-                :headers {:accept-encoding "gzip"}}
-          resp (send req :input-stream)]
-      (is (= (:status resp) 200))
-      (is (= (slurp (GZIPInputStream. (:body resp))) example-gzip-body))))
-  ;; With direct GzipHandler instance.
-  (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    {:routes       [["/*" example-gzip-route-handler]]
-                             :gzip-handler (doto (GzipHandler.)
-                                             (.setMinGzipSize 0))}}
+                :handler    {:routes   [["/*" example-gzip-route-handler]]
+                             :handlers [(srv.jetty/gzip-handler :min-gzip-size 0)]}}
     (let [req  {:uri     "http://localhost:42000"
                 :headers {:accept-encoding "gzip"}}
           resp (send req :input-stream)]
@@ -224,34 +194,14 @@
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
 
-(deftest test-context-routes
-  (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    [["/foo" {:routes [["/*" (fn [_ _ response]
-                                                       (srv/write-body response "foo"))]]}]
-                             ["/bar" {:routes [["/*" (fn [_ _ response]
-                                                       (srv/write-body response "bar"))]]}]
-                             ["/empty" {}]
-                             ["/nil" nil]]}
-    (let [resp (send "http://localhost:42000/foo")]
-      (is (= (:status resp) 200))
-      (is (= (:body resp) "foo")))
-    (let [resp (send "http://localhost:42000/bar")]
-      (is (= (:status resp) 200))
-      (is (= (:body resp) "bar")))
-    (let [resp (send "http://localhost:42000/empty")]
-      (is (= (:status resp) 404)))
-    (let [resp (send "http://localhost:42000/nil")]
-      (is (= (:status resp) 404)))))
-
 (deftest test-server-handler-multiple-context
   (with-config {:connectors [{:protocol :http :port 42000}]
-                :handler    (srv.jetty/server-handler
-                             {:context-path "/foo"
+                :handler    [{:context-path "/foo"
                               :routes       [["/*" (fn [_ _ response]
                                                      (srv/write-body response "foo"))]]}
                              {:context-path "/bar"
                               :routes       [["/*" (fn [_ _ response]
-                                                     (srv/write-body response "bar"))]]})}
+                                                     (srv/write-body response "bar"))]]}]}
     (let [resp (send "http://localhost:42000/foo")]
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))

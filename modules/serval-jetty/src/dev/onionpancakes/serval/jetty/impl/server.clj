@@ -1,12 +1,41 @@
 (ns dev.onionpancakes.serval.jetty.impl.server
-  (:require [dev.onionpancakes.serval.jetty.impl.handlers :as impl.handlers]
-            [dev.onionpancakes.serval.jetty.impl.protocols :as p])
+  (:require [dev.onionpancakes.serval.jetty.impl.handlers :as impl.handlers])
   (:import [org.eclipse.jetty.server
-            Server Handler ServerConnector
-            HttpConnectionFactory HttpConfiguration
-            CustomRequestLog]
+            CustomRequestLog
+            Handler
+            HttpConfiguration
+            HttpConnectionFactory
+            Server
+            ServerConnector]
+           [org.eclipse.jetty.server.handler ContextHandler]
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.util.thread ThreadPool]))
+
+(defprotocol ServerHandler
+  (^Handler as-server-handler [this]))
+
+(def ^:dynamic *default-as-context-handler*
+  'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)
+
+(defn as-context-handler
+  [this]
+  (if (instance? ContextHandler this)
+    this
+    (let [as-context-handler-fn (requiring-resolve *default-as-context-handler*)]
+      (as-context-handler-fn this))))
+
+(extend-protocol ServerHandler
+  clojure.lang.IPersistentVector
+  (as-server-handler [this]
+    (let [handlers (mapv as-context-handler this)]
+      (impl.handlers/context-handler-collection {:handlers handlers})))
+  Handler
+  (as-server-handler [this] this)
+  Object
+  (as-server-handler [this]
+    (as-context-handler this))
+  nil
+  (as-server-handler [_] nil))
 
 ;; ServerConnector
 
@@ -65,33 +94,9 @@
       (.setIdleTimeout conn (:idle-timeout config)))
     conn))
 
-;; ServerHandler
-
-(extend-protocol p/ServerHandler
-  clojure.lang.IPersistentVector
-  (as-server-handler [this]
-    (impl.handlers/context-handler-collection-from-context-routes this))
-  Handler
-  (as-server-handler [this] this)
-  Object
-  (as-server-handler [this]
-    (impl.handlers/as-context-handler this))
-  nil
-  (as-server-handler [this]
-    (impl.handlers/as-context-handler this)))
-
-(defn server-handler
-  [handler]
-  (p/as-server-handler handler))
-
-(defn server-handler*
-  [handlers]
-  (let [config {:handlers (mapv p/as-server-handler handlers)}]
-    (impl.handlers/context-handler-collection config)))
-
 ;; Server
 
-(defn configure-server
+(defn configure
   [^Server server config]
   (when (contains? config :connectors)
     (->> (:connectors config)
@@ -99,7 +104,7 @@
          (into-array ServerConnector)
          (.setConnectors server)))
   (when (contains? config :handler)
-    (.setHandler server (p/as-server-handler (:handler config))))
+    (.setHandler server (as-server-handler (:handler config))))
   (when (contains? config :request-log)
     (.setRequestLog server (:request-log config)))
   server)

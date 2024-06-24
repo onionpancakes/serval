@@ -6,18 +6,19 @@
 
 ;; Server
 
-(def server-port 42000)
+(def default-port 42000)
 
-(defn handler-not-set
+(defn default-handler
   [_ _ response]
   (srv/send-error response 501 "Server handler is not set."))
 
-(def server-config
-  {:connectors [{:port server-port}]
-   :handler    handler-not-set})
+(def default-config
+  {:connectors [{:port default-port}]
+   :handler    default-handler})
 
 (defonce server
-  (srv.jetty/server server-config))
+  (doto (srv.jetty/server)
+    (srv.jetty/configure default-config)))
 
 (defmacro with-config
   [config & body]
@@ -26,7 +27,7 @@
      ~@body
      (finally
        (srv.jetty/stop server)
-       (srv.jetty/configure-server server server-config))))
+       (srv.jetty/configure server default-config))))
 
 (defmacro with-handler
   [handler & body]
@@ -35,7 +36,7 @@
 ;; Client
 
 (def ^:dynamic *uri*
-  (str "http://localhost:" server-port))
+  (str "http://localhost:" default-port))
 
 (def ^:dynamic *body-handler*
   :string)
@@ -48,11 +49,9 @@
   (request-with-defaults [this]
     (merge {:uri *uri*} this))
   Object
-  (request-with-defaults [this]
-    this)
+  (request-with-defaults [this] this)
   nil
-  (request-with-defaults [this]
-    {:uri *uri*}))
+  (request-with-defaults [_] {:uri *uri*}))
 
 (defn send
   ([] (send nil))

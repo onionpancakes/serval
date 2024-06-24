@@ -1,5 +1,7 @@
 (ns dev.onionpancakes.serval.jetty
-  (:require [dev.onionpancakes.serval.jetty.impl.server
+  (:require [dev.onionpancakes.serval.jetty.impl.handlers
+             :as impl.handlers]
+            [dev.onionpancakes.serval.jetty.impl.server
              :as impl.server]
             [dev.onionpancakes.serval.jetty.impl.thread-pools
              :as impl.thread-pools])
@@ -15,34 +17,30 @@
   ([config]
    (impl.thread-pools/queued-thread-pool config)))
 
-;; Handler
+;; CustomRequestLog
 
-(defn server-handler
-  ([this]
-   (impl.server/server-handler this))
-  ([this & others]
-   (->> (list* this others)
-        (impl.server/server-handler*))))
+(defn custom-request-log
+  []
+  (CustomRequestLog.))
+
+;; Handlers
+
+(defn gzip-handler
+  [& {:as opts}]
+  (impl.handlers/gzip-handler opts))
 
 ;; Server
 
-(defn configure-server
+(defn configure
   [server config]
-  (impl.server/configure-server server config))
-
-(def default-server-config
-  {:request-log (CustomRequestLog.)})
+  (impl.server/configure server config))
 
 (defn server
   {:tag Server}
   ([]
    (impl.server/server))
-  ([config]
-   (doto (impl.server/server)
-     (configure-server (merge default-server-config config))))
-  ([pool config]
-   (doto (impl.server/server pool)
-     (configure-server (merge default-server-config config)))))
+  ([pool]
+   (impl.server/server pool)))
 
 (defn start
   {:tag Server}
@@ -69,5 +67,5 @@
   ([^Server server config]
    (doto server
      (stop)
-     (configure-server config)
+     (configure config)
      (start))))
