@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.transit.tests.test-transit
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.core :as srv]
-            [dev.onionpancakes.serval.jetty.test
+            [dev.onionpancakes.serval.jetty-test
              :refer [with-handler send]]
             [dev.onionpancakes.serval.transit :as srv.transit]
             [clojure.test :refer [deftest is]]

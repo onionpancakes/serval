@@ -2,7 +2,7 @@
   (:require [dev.onionpancakes.serval.core :as srv]
             [dev.onionpancakes.serval.servlet :as srv.servlet]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
-            [dev.onionpancakes.serval.jetty.test :as srv.jetty.test]
+            [dev.onionpancakes.serval.jetty-test :as srv.jetty-test]
             [dev.onionpancakes.serval.chassis :as srv.html]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [dev.onionpancakes.serval.transit :as srv.transit]

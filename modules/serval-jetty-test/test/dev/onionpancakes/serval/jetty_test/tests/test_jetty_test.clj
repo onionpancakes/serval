@@ -1,6 +1,6 @@
-(ns dev.onionpancakes.serval.jetty.tests.test-jetty-test
+(ns dev.onionpancakes.serval.jetty-test.tests.test-jetty-test
   (:refer-clojure :exclude [send])
-  (:require [dev.onionpancakes.serval.jetty.test
+  (:require [dev.onionpancakes.serval.jetty-test
              :refer [with-handler send]]
             [clojure.test :refer [deftest is]])
   (:import [jakarta.servlet.http HttpServletResponse]))

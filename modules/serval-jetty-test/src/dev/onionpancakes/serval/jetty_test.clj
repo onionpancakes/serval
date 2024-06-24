@@ -1,4 +1,4 @@
-(ns dev.onionpancakes.serval.jetty.test
+(ns dev.onionpancakes.serval.jetty-test
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.core :as srv]
             [dev.onionpancakes.serval.jetty :as srv.jetty]

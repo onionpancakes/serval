@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.chassis.tests.test-chassis
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.core :as srv]
-            [dev.onionpancakes.serval.jetty.test
+            [dev.onionpancakes.serval.jetty-test
              :refer [with-handler send]]
             [dev.onionpancakes.serval.chassis :as srv.html]
             [clojure.test :refer [deftest is]]))

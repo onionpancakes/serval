@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.jetty.tests.test-jetty
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.core :as srv]
-            [dev.onionpancakes.serval.jetty.test
+            [dev.onionpancakes.serval.jetty-test
              :refer [with-config send]]
             [dev.onionpancakes.serval.jetty :as srv.jetty]
             [clojure.test :refer [is deftest]])

@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.examples.todo.tests.test-app
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.examples.todo.app :as app]
-            [dev.onionpancakes.serval.jetty.test
+            [dev.onionpancakes.serval.jetty-test
              :refer [with-handler send *uri*]]
             [clojure.test :refer [deftest is]]))
 

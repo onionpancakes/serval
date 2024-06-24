@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.jsonista.tests.test-jsonista
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.core :as srv]
-            [dev.onionpancakes.serval.jetty.test
+            [dev.onionpancakes.serval.jetty-test
              :refer [with-handler send]]
             [dev.onionpancakes.serval.jsonista :as srv.json]
             [clojure.test :refer [deftest is]]

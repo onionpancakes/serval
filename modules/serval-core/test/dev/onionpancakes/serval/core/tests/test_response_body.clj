@@ -1,7 +1,7 @@
 (ns dev.onionpancakes.serval.core.tests.test-response-body
   (:refer-clojure :exclude [send])
   (:require [dev.onionpancakes.serval.response.body :as resp.body]
-            [dev.onionpancakes.serval.jetty.test
+            [dev.onionpancakes.serval.jetty-test
              :refer [with-handler send]]
             [clojure.test :refer [deftest are]]
             [clojure.java.io :as io])
