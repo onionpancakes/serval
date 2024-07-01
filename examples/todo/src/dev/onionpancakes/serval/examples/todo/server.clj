@@ -3,8 +3,7 @@
             [dev.onionpancakes.serval.jetty :as srv.jetty]))
 
 (defonce server
-  (srv.jetty/server {:connectors [{:protocol :http2c :port 3000}]
-                     :handler    app/app}))
+  (srv.jetty/server))
 
 (defn server-config
   [{:keys [dev? port] :or {port 3000}}]
@@ -14,7 +13,7 @@
 (defn configure
   [conf]
   (->> (server-config conf)
-       (srv.jetty/configure-server server)))
+       (srv.jetty/configure server)))
 
 (defn start []
   (srv.jetty/start server))

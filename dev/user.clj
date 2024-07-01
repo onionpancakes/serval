@@ -44,7 +44,8 @@
    :handler    app})
 
 (defonce server
-  (srv.jetty/server server-config))
+  (doto (srv.jetty/server)
+    (srv.jetty/configure server-config)))
 
 (defn start
   []
@@ -58,7 +59,7 @@
   ([]
    (configure server-config))
   ([config]
-   (srv.jetty/configure-server server config)))
+   (srv.jetty/configure server config)))
 
 (defn restart
   ([]
