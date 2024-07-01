@@ -6,11 +6,11 @@
  :aliases
  {:dev
   {:extra-deps  {dev.onionpancakes/serval-jetty-test {:local/root "../../modules/serval-jetty-test"}
-                 org.slf4j/slf4j-simple              {:mvn/version "2.0.12"}}
+                 org.slf4j/slf4j-simple              {:mvn/version "2.0.13"}}
    :extra-paths ["dev" "test"]}
 
   :start
-  {:extra-deps {org.slf4j/slf4j-simple {:mvn/version "2.0.12"}}
+  {:extra-deps {org.slf4j/slf4j-simple {:mvn/version "2.0.13"}}
    :main-opts  ["-m" "dev.onionpancakes.serval.examples.todo.main"]}
 
   :run-tests
