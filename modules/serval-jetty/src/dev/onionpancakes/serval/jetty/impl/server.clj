@@ -1,7 +1,6 @@
 (ns dev.onionpancakes.serval.jetty.impl.server
   (:require [dev.onionpancakes.serval.jetty.impl.handlers :as impl.handlers])
   (:import [org.eclipse.jetty.server
-            CustomRequestLog
             Handler
             HttpConfiguration
             HttpConnectionFactory
@@ -18,17 +17,29 @@
   'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)
 
 (defn as-context-handler
+  {:tag ContextHandler}
   [this]
   (if (instance? ContextHandler this)
     this
     (let [as-context-handler-fn (requiring-resolve *default-as-context-handler*)]
       (as-context-handler-fn this))))
 
+(defn make-handler-from-context-route
+  [[context-path handler :as this]]
+  {:pre [(== (count this) 2)
+         (string? context-path)]}
+  (doto (as-context-handler handler)
+    (.setContextPath context-path)))
+
+(defn make-handler-from-context-routes
+  [context-routes]
+  (let [handlers (mapv make-handler-from-context-route context-routes)]
+    (impl.handlers/context-handler-collection {:handlers handlers})))
+
 (extend-protocol ServerHandler
   clojure.lang.IPersistentVector
   (as-server-handler [this]
-    (let [handlers (mapv as-context-handler this)]
-      (impl.handlers/context-handler-collection {:handlers handlers})))
+    (make-handler-from-context-routes this))
   Handler
   (as-server-handler [this] this)
   Object
