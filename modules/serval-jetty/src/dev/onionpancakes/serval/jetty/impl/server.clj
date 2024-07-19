@@ -10,11 +10,11 @@
            [org.eclipse.jetty.http2.server HTTP2CServerConnectionFactory]
            [org.eclipse.jetty.util.thread ThreadPool]))
 
-(defprotocol ServerHandler
-  (^Handler as-handler [this]))
-
 (defprotocol ServerContextHandler
   (^ContextHandler as-context-handler [this]))
+
+(defprotocol ServerHandler
+  (^Handler as-handler [this]))
 
 (def ^:dynamic *default-context-handler-fn*
   'dev.onionpancakes.serval.jetty.impl.ee10.servlet/servlet-context-handler)
@@ -37,13 +37,13 @@
     (as-context-handler {:routes [["/*" this]]})))
 
 (extend-protocol ServerHandler
-  clojure.lang.IPersistentVector
-  (as-handler [this]
-    (let [handlers (mapv as-context-handler this)]
-      (impl.handlers/context-handler-collection {:handlers handlers})))
   clojure.lang.IPersistentMap
   (as-handler [this]
     (as-context-handler this))
+  java.util.List
+  (as-handler [this]
+    (let [handlers (mapv as-context-handler this)]
+      (impl.handlers/context-handler-collection {:handlers handlers})))
   Handler
   (as-handler [this] this)
   Object
