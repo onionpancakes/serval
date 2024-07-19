@@ -209,6 +209,44 @@
       (is (= (:status resp) 200))
       (is (= (:body resp) "bar")))))
 
+(deftest test-server-handler-context-routes
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    [["/foo" {:routes [["/*" (fn [_ _ response]
+                                                       (srv/write-body response "foo"))]]}]
+                             ["/bar" {:routes [["/*" (fn [_ _ response]
+                                                       (srv/write-body response "bar"))]]}]
+                             ["/baz" {:context-route "/foo"
+                                      :routes        [["/*" (fn [_ _ response]
+                                                              (srv/write-body response "baz"))]]}]]}
+    (let [resp (send "http://localhost:42000/foo")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))
+    (let [resp (send "http://localhost:42000/bar")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "bar")))
+    (let [resp (send "http://localhost:42000/baz")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "baz")))))
+
+(deftest test-server-handler-multiple-handlers-mixed
+  (with-config {:connectors [{:protocol :http :port 42000}]
+                :handler    [(fn [_ _ response]
+                               (srv/write-body response "foo"))
+                             {:context-path "/bar"
+                              :routes       [["/*" (fn [_ _ response]
+                                                     (srv/write-body response "bar"))]]}
+                             ["/baz" {:routes [["/*" (fn [_ _ response]
+                                                       (srv/write-body response "baz"))]]}]]}
+    (let [resp (send "http://localhost:42000")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))
+    (let [resp (send "http://localhost:42000/bar")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "bar")))
+    (let [resp (send "http://localhost:42000/baz")]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "baz")))))
+
 (deftest test-queued-thread-pool
   (let [config {:min-threads     1
                 :max-threads     2

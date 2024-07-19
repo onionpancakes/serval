@@ -46,10 +46,3 @@
       (doseq [h (:handlers config)]
         (.insertHandler handler h)))
     handler))
-
-(defn as-servlet-context-handler
-  {:tag ServletContextHandler}
-  [this]
-  (if (map? this)
-    (servlet-context-handler this)
-    (servlet-context-handler {:routes [["/*" this]]})))

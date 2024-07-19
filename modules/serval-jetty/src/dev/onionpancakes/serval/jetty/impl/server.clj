@@ -11,39 +11,43 @@
            [org.eclipse.jetty.util.thread ThreadPool]))
 
 (defprotocol ServerHandler
-  (^Handler as-server-handler [this]))
+  (^Handler as-handler [this]))
 
-(def ^:dynamic *default-as-context-handler*
-  'dev.onionpancakes.serval.jetty.impl.ee10.servlet/as-servlet-context-handler)
+(defprotocol ServerContextHandler
+  (^ContextHandler as-context-handler [this]))
 
-(defn as-context-handler
-  {:tag ContextHandler}
-  [this]
-  (if (instance? ContextHandler this)
-    this
-    (let [as-context-handler-fn (requiring-resolve *default-as-context-handler*)]
-      (as-context-handler-fn this))))
+(def ^:dynamic *default-context-handler-fn*
+  'dev.onionpancakes.serval.jetty.impl.ee10.servlet/servlet-context-handler)
 
-(defn make-handler-from-context-route
-  [[context-path handler :as this]]
-  {:pre [(== (count this) 2)
-         (string? context-path)]}
-  (doto (as-context-handler handler)
-    (.setContextPath context-path)))
-
-(defn make-handler-from-context-routes
-  [context-routes]
-  (let [handlers (mapv make-handler-from-context-route context-routes)]
-    (impl.handlers/context-handler-collection {:handlers handlers})))
+(extend-protocol ServerContextHandler
+  clojure.lang.IPersistentVector
+  (as-context-handler [[path handler :as this]]
+    (when-not (== (count this) 2)
+      (throw (IllegalArgumentException. "Context route vector must be [path handler] pair.")))
+    (doto (as-context-handler handler)
+      (.setContextPath path)))
+  clojure.lang.IPersistentMap
+  (as-context-handler [this]
+    (let [context-handler-fn (requiring-resolve *default-context-handler-fn*)]
+      (context-handler-fn this)))
+  ContextHandler
+  (as-context-handler [this] this)
+  Object
+  (as-context-handler [this]
+    (as-context-handler {:routes [["/*" this]]})))
 
 (extend-protocol ServerHandler
   clojure.lang.IPersistentVector
-  (as-server-handler [this]
-    (make-handler-from-context-routes this))
+  (as-handler [this]
+    (let [handlers (mapv as-context-handler this)]
+      (impl.handlers/context-handler-collection {:handlers handlers})))
+  clojure.lang.IPersistentMap
+  (as-handler [this]
+    (as-context-handler this))
   Handler
-  (as-server-handler [this] this)
+  (as-handler [this] this)
   Object
-  (as-server-handler [this]
+  (as-handler [this]
     (as-context-handler this))
   nil
   (as-server-handler [_] nil))
@@ -115,7 +119,7 @@
          (into-array ServerConnector)
          (.setConnectors server)))
   (when (contains? config :handler)
-    (.setHandler server (as-server-handler (:handler config))))
+    (.setHandler server (as-handler (:handler config))))
   (when (contains? config :request-log)
     (.setRequestLog server (:request-log config)))
   server)
