@@ -18,7 +18,7 @@
 
 (defonce server
   (doto (srv.jetty/server)
-    (srv.jetty/configure default-config)))
+    (srv.jetty/configure-server default-config)))
 
 (defmacro with-config
   [config & body]
@@ -27,7 +27,7 @@
      ~@body
      (finally
        (srv.jetty/stop server)
-       (srv.jetty/configure server default-config))))
+       (srv.jetty/configure-server server default-config))))
 
 (defmacro with-handler
   [handler & body]

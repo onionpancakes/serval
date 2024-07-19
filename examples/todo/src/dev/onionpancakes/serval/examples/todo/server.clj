@@ -13,7 +13,7 @@
 (defn configure
   [conf]
   (->> (server-config conf)
-       (srv.jetty/configure server)))
+       (srv.jetty/configure-server server)))
 
 (defn start []
   (srv.jetty/start server))

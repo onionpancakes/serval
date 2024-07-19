@@ -31,9 +31,9 @@
 
 ;; Server
 
-(defn configure
+(defn configure-server
   [server & {:as config}]
-  (impl.server/configure server config))
+  (impl.server/configure-server server config))
 
 (defn server
   {:tag Server}
@@ -69,5 +69,5 @@
   ([^Server server & {:as config}]
    (doto server
      (stop)
-     (configure config)
+     (configure-server config)
      (start))))

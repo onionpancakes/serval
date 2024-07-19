@@ -45,7 +45,7 @@
 
 (defonce server
   (doto (srv.jetty/server)
-    (srv.jetty/configure server-config)))
+    (srv.jetty/configure-server server-config)))
 
 (defn start
   []

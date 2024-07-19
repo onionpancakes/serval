@@ -111,7 +111,7 @@
 
 ;; Server
 
-(defn configure
+(defn configure-server
   [^Server server config]
   (when (contains? config :connectors)
     (->> (:connectors config)
