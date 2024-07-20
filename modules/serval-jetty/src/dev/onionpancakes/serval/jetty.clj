@@ -46,9 +46,13 @@
 
 (defn start
   {:tag Server}
-  [^Server server]
-  (doto server
-    (.start)))
+  ([^Server server]
+   (doto server
+     (.start)))
+  ([^Server server & {:as config}]
+   (doto server
+     (configure-server config)
+     (.start))))
 
 (defn stop
   {:tag Server}
@@ -65,9 +69,11 @@
 (defn restart
   {:tag Server}
   ([^Server server]
-   (restart server nil))
+   (doto server
+     (.stop)
+     (.start)))
   ([^Server server & {:as config}]
    (doto server
-     (stop)
+     (.stop)
      (configure-server config)
-     (start))))
+     (.start))))
