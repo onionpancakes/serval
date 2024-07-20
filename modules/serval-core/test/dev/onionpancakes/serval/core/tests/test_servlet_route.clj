@@ -23,7 +23,8 @@
 (deftest test-routes
   (with-handler {:routes [["/filtered" example-filter-handler example-servlet-handler]
                           ["/servlet" example-servlet-handler]
-                          ["/method" #{:GET} example-servlet-handler]]}
+                          ["/method-set" #{:GET} example-servlet-handler]
+                          ["/method-keyword" :GET example-servlet-handler]]}
     (let [ret (send "http://localhost:42000/filtered")]
       (is (= (:status ret) 200))
       (is (= (get-in ret [:headers "foo1" 0]) "bar1"))
@@ -32,10 +33,15 @@
     (let [ret (send "http://localhost:42000/servlet")]
       (is (= (:status ret) 200))
       (is (= (:body ret) "main-body")))
-    (let [ret (send "http://localhost:42000/method")]
+    (let [ret (send "http://localhost:42000/method-set")]
       (is (= (:status ret) 200)))
     (let [ret (send {:method :POST
-                     :uri    "http://localhost:42000/method"})]
+                     :uri    "http://localhost:42000/method-set"})]
+      (is (= (:status ret) 405)))
+    (let [ret (send "http://localhost:42000/method-keyword")]
+      (is (= (:status ret) 200)))
+    (let [ret (send {:method :POST
+                     :uri    "http://localhost:42000/method-keyword"})]
       (is (= (:status ret) 405)))))
 
 (deftest test-routes-with-url-filters

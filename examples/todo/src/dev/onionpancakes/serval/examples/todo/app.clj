@@ -121,8 +121,8 @@
       (srv/write-body body))))
 
 (def app
-  {:routes      [["" #{:GET} index]
-                 ["/submit" #{:POST} submit]
+  {:routes      [["" :GET index]
+                 ["/submit" :POST submit]
                  ["/not-found" not-found]
                  ["/error" error]]
    :error-pages {404       "/not-found"
@@ -130,8 +130,8 @@
                  Throwable "/error"}})
 
 (def app-dev
-  {:routes      [["" #{:GET} #'index]
-                 ["/submit" #{:POST} #'submit]
+  {:routes      [["" :GET #'index]
+                 ["/submit" :POST #'submit]
                  ["/not-found" #'not-found]
                  ["/error" #'error]]
    :error-pages {404 "/not-found"

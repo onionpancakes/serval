@@ -31,7 +31,7 @@
 
 (def app
   {:routes      [["" #'my-handler]
-                 ["/post" #_#{:POST} #'my-handler]
+                 ["/post" :POST #'my-handler]
                  ["/redirect" #'my-redirect-handler]
                  ["/filtered" #'my-filter #'my-handler]
                  ["/throw" #'my-throw-handler]
@@ -39,13 +39,19 @@
    :error-pages {400                        "/error"
                  clojure.lang.ExceptionInfo "/error"}})
 
-(def server-config
+(def config
   {:connectors [{:protocol :http :port 3000}]
    :handler    app})
 
 (defonce server
   (doto (srv.jetty/server)
-    (srv.jetty/configure-server server-config)))
+    (srv.jetty/configure-server config)))
+
+(defn configure-server
+  ([]
+   (configure-server config))
+  ([config]
+   (srv.jetty/configure-server server config)))
 
 (defn start
   []
@@ -54,12 +60,6 @@
 (defn stop
   []
   (srv.jetty/stop server))
-
-(defn configure-server
-  ([]
-   (configure-server server-config))
-  ([config]
-   (srv.jetty/configure-server server config)))
 
 (defn restart
   ([]

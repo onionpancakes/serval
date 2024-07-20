@@ -105,6 +105,15 @@
   (add-filter-to-context [this ^ServletContext ctx ^String filter-name]
     (.addFilter ctx filter-name (servlet/http-method-filter this)))
   (filter-dispatcher-types [_] nil)
+  ;; Http method keyword
+  clojure.lang.Keyword
+  (filter-name [this url-pattern]
+    (str "serval.servlet.route/filter:" (hash this) ":" url-pattern))
+  (add-filter-to-context [this ^ServletContext ctx ^String filter-name]
+    (let [allow-method? (partial identical? this)
+          filter        (servlet/http-method-filter allow-method?)]
+      (.addFilter ctx filter-name filter)))
+  (filter-dispatcher-types [_] nil)
   ;; Filter
   Filter
   (filter-name [this url-pattern]
