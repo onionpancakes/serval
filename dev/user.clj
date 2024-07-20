@@ -55,11 +55,11 @@
   []
   (srv.jetty/stop server))
 
-(defn configure
+(defn configure-server
   ([]
-   (configure server-config))
+   (configure-server server-config))
   ([config]
-   (srv.jetty/configure server config)))
+   (srv.jetty/configure-server server config)))
 
 (defn restart
   ([]
