@@ -1,9 +1,37 @@
 (ns dev.onionpancakes.serval.core
   (:require [dev.onionpancakes.serval.response.body :as resp.body]
             [dev.onionpancakes.serval.response.http :as resp.http])
-  (:import [jakarta.servlet FilterChain ServletRequest ServletResponse
-            ServletInputStream ServletOutputStream]
-           [jakarta.servlet.http HttpServletRequest HttpServletResponse]))
+  (:import [jakarta.servlet
+            ServletRequest
+            ServletResponse
+            ServletInputStream
+            ServletOutputStream
+            FilterChain]
+           [jakarta.servlet.http
+            HttpServletRequest
+            HttpServletResponse]))
+
+;; Request
+
+(defn get-input-stream
+  {:tag ServletInputStream}
+  [^ServletRequest request]
+  (.getInputStream request))
+
+(defn get-reader
+  {:tag java.io.BufferedReader}
+  [^ServletRequest request]
+  (.getReader request))
+
+(defn get-attribute
+  [^ServletRequest request name]
+  (.getAttribute request name))
+
+(defn set-attribute
+  [^ServletRequest request name obj]
+  (.setAttribute request name obj))
+
+;; Response
 
 (defn set-http
   {:tag HttpServletResponse}
@@ -29,20 +57,6 @@
   ([^HttpServletResponse response location]
    (.sendRedirect response location)))
 
-(defn do-filter
-  [^FilterChain chain request response]
-  (.doFilter chain request response))
-
-(defn get-input-stream
-  {:tag ServletInputStream}
-  [^ServletRequest request]
-  (.getInputStream request))
-
-(defn get-reader
-  {:tag java.io.BufferedReader}
-  [^ServletRequest request]
-  (.getReader request))
-
 (defn get-output-stream
   {:tag ServletOutputStream}
   [^ServletResponse response]
@@ -58,3 +72,9 @@
 
 (def writable-to-writer
   resp.body/writable-to-writer)
+
+;; Filter
+
+(defn do-filter
+  [^FilterChain chain request response]
+  (.doFilter chain request response))

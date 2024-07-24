@@ -7,6 +7,42 @@
             [clojure.string])
   (:import [jakarta.servlet.http HttpServletResponse]))
 
+;; Request
+
+(deftest test-get-input-stream
+  (with-handler (fn [_ request response]
+                  (srv/set-http response {:content-type       "text/plain"
+                                          :character-encoding "utf-8"})
+                  (->> (srv/get-input-stream request)
+                       (slurp)
+                       (srv/write-body response)))
+    (let [resp (send {:method :POST
+                      :body   "foo"})]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-get-reader
+  (with-handler (fn [_ request response]
+                  (srv/set-http response {:content-type       "text/plain"
+                                          :character-encoding "utf-8"})
+                  (->> (srv/get-reader request)
+                       (slurp)
+                       (srv/write-body response)))
+    (let [resp (send {:method :POST
+                      :body   "foo"})]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "foo")))))
+
+(deftest test-get-set-attribute
+  (with-handler (fn [_ request response]
+                  (srv/set-attribute request "foo" "bar")
+                  (srv/write-body response (srv/get-attribute request "foo")))
+    (let [resp (send)]
+      (is (= (:status resp) 200))
+      (is (= (:body resp) "bar")))))
+
+;; Response
+
 (deftest test-set-http
   (with-handler (fn [_ _ response]
                   (srv/set-http response
@@ -62,35 +98,6 @@
                   (srv/send-redirect response "/"))
     (is (= (:status (send)) 302))))
 
-(deftest test-do-filter
-  (with-handler {:routes [["/*" (fn [_ req resp chain]
-                                  (srv/do-filter chain req resp)) (constantly nil)]]}
-    (is (= (:status (send)) 200))))
-
-(deftest test-get-input-stream
-  (with-handler (fn [_ request response]
-                  (srv/set-http response {:content-type       "text/plain"
-                                          :character-encoding "utf-8"})
-                  (->> (srv/get-input-stream request)
-                       (slurp)
-                       (srv/write-body response)))
-    (let [resp (send {:method :POST
-                      :body   "foo"})]
-      (is (= (:status resp) 200))
-      (is (= (:body resp) "foo")))))
-
-(deftest test-get-reader
-  (with-handler (fn [_ request response]
-                  (srv/set-http response {:content-type       "text/plain"
-                                          :character-encoding "utf-8"})
-                  (->> (srv/get-reader request)
-                       (slurp)
-                       (srv/write-body response)))
-    (let [resp (send {:method :POST
-                      :body   "foo"})]
-      (is (= (:status resp) 200))
-      (is (= (:body resp) "foo")))))
-
 (deftest test-get-output-stream
   (with-handler (fn [_ request response]
                   (srv/set-http response {:content-type       "text/plain"
@@ -132,3 +139,10 @@
     (let [resp (send)]
       (is (= (:status resp) 200))
       (is (= (:body resp) "foo")))))
+
+;; Filter
+
+(deftest test-do-filter
+  (with-handler {:routes [["/*" (fn [_ req resp chain]
+                                  (srv/do-filter chain req resp)) (constantly nil)]]}
+    (is (= (:status (send)) 200))))
