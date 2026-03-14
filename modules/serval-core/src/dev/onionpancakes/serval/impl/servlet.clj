@@ -1,6 +1,29 @@
 (ns dev.onionpancakes.serval.impl.servlet
   (:require [dev.onionpancakes.serval.impl.servlet-request :as impl.request]))
 
+(defn context
+  [servlet request response]
+  {:serval.context/servlet  servlet
+   :serval.context/request  (impl.request/servlet-request-proxy request)
+   :serval.context/response response})
+
+(deftype HandlerServlet [^:volatile-mutable config handler]
+  jakarta.servlet.Servlet
+  (init [_ conf]
+    (set! config conf))
+  (getServletConfig [_] config)
+  (getServletInfo [_] "HandlerServlet")
+  (service [this request response]
+    (-> (context this request response)
+        (handler)))
+  (destroy [_]))
+
+(defn handler-servlet
+  [handler]
+  (->HandlerServlet nil handler))
+
+;;
+
 (deftype ServalServlet [^:volatile-mutable servlet-config
                         service-fn
                         destroy-fn]

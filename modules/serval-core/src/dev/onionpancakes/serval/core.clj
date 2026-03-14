@@ -78,3 +78,37 @@
 (defn do-filter
   [^FilterChain chain request response]
   (.doFilter chain request response))
+
+;;
+
+(defn set-http
+  [{:serval.context/keys [response] :as ctx} & {:as http-opts}]
+  (resp.http/set-http response http-opts)
+  ctx)
+
+(defn write-body
+  ([{:serval.context/keys [response] :as ctx} body]
+   (resp.body/write-body response body)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} body & more]
+   (resp.body/write-body response body)
+   (reduce resp.body/write-body response more)
+   ctx))
+
+(defn send-error
+  ([{:serval.context/keys [response] :as ctx} code]
+   (.sendError ^HttpServletResponse response code)
+   ctx)
+  ([{:serval.context/keys [response] :as ctx} code message]
+   (.sendError ^HttpServletResponse response code message)
+   ctx))
+
+(defn send-redirect
+  [{:serval.context/keys [response] :as ctx} location]
+  (.sendRedirect ^HttpServletResponse response location)
+  ctx)
+
+(defn do-filter
+  [{:serval.context/keys [request response filter-chain] :as ctx}]
+  (.doFilter ^FilterChain filter-chain request response)
+  ctx)

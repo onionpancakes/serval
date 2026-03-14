@@ -11,33 +11,45 @@
             [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]))
 
-(defn my-handler [_ req resp]
-  (doto resp
-    (srv/set-http :headers {:FOO "bar"}
-                  :content-type "text/html")
-    (srv/write-body "foobar" (:path-info req))))
+(defn my-handler
+  [ctx]
+  (doto ctx
+    (srv/set-http :status 200)
+    (srv/write-body "foobar" "lol")))
 
-(defn my-redirect-handler [_ _ resp]
+(defn my-redirect-handler
+  [ctx]
   )
 
-(defn my-throw-handler [_ _ _]
+(defn my-throw-handler
+  [ctx]
   (throw (ex-info "foooo" {})))
 
-(defn my-error-handler [_ _ _]
-  (srv/write-body "Foobar"))
+(defn my-error-handler
+  [ctx]
+  (srv/write-body ctx "Foobar"))
 
-(defn my-filter [_ _ _ _]
-  )
+(defn my-filter
+  [ctx]
+  (srv/do-filter ctx)
+  (srv/write-body ctx "after")
+  (srv/send-error ctx 400))
+
+(def routes
+  [["" #'my-handler]
+   ["/post" :POST #'my-handler]
+   ["/redirect" #'my-redirect-handler]
+   ["/filtered" #'my-filter #'my-handler]
+   ["/throw" #'my-throw-handler]
+   ["/error" #'my-error-handler]])
+
+(def errors
+  {400                        "/error"
+   clojure.lang.ExceptionInfo "/error"})
 
 (def app
-  {:routes      [["" #'my-handler]
-                 ["/post" :POST #'my-handler]
-                 ["/redirect" #'my-redirect-handler]
-                 ["/filtered" #'my-filter #'my-handler]
-                 ["/throw" #'my-throw-handler]
-                 ["/error" #'my-error-handler]]
-   :error-pages {400                        "/error"
-                 clojure.lang.ExceptionInfo "/error"}})
+  {:routes      routes
+   :error-pages errors})
 
 (def config
   {:connectors [{:protocol :http :port 3000}]

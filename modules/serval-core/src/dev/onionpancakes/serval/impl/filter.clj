@@ -2,6 +2,28 @@
   (:refer-clojure :exclude [filter])
   (:require [dev.onionpancakes.serval.impl.servlet-request :as impl.request]))
 
+(defn context
+  [filter request response filter-chain]
+  {:serval.context/filter       filter
+   :serval.context/request      (impl.request/servlet-request-proxy request)
+   :serval.context/response     response
+   :serval.context/filter-chain filter-chain})
+
+(deftype HandlerFilter [^:volatile-mutable config handler]
+  jakarta.servlet.Filter
+  (init [_ conf]
+    (set! config conf))
+  (doFilter [this request response chain]
+    (-> (context this request response chain)
+        (handler)))
+  (destroy [_]))
+
+(defn handler-filter
+  [handler]
+  (->HandlerFilter nil handler))
+
+;;
+
 (deftype ServalFilter [^:volatile-mutable filter-config
                         do-filter-fn
                         destroy-fn]
